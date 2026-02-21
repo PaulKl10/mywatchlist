@@ -1,0 +1,40 @@
+---
+description: Conventions pour les composants UI réutilisables
+globs: src/components/**/*
+alwaysApply: false
+---
+
+# Conventions Components
+
+## Emplacement
+
+- Tous les composants réutilisables dans `src/components/`
+- Un fichier par composant : `NomComposant.tsx`
+- Export nommé : `export function MovieCard(...)`
+
+## Props
+
+- Typer explicitement les props
+- Préférer les types importés de `@/types/` pour les entités
+
+```tsx
+// ✅ Bon
+export function MovieCard({ movie }: { movie: TMovie }) { ... }
+
+// ✅ Bon (interface dédiée)
+interface MovieCardProps {
+  movie: TMovie;
+}
+export function MovieCard({ movie }: MovieCardProps) { ... }
+```
+
+## Style
+
+- Tailwind CSS uniquement
+- Classes utilitaires, pas de CSS modules
+- Support dark mode avec `dark:` quand pertinent
+
+## Images
+
+- Utiliser `next/image` pour les images
+- Définir `sizes` pour l'optimisation responsive

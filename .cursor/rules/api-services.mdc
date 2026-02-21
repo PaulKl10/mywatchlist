@@ -1,0 +1,34 @@
+---
+description: Conventions pour les services API et routes
+globs: src/lib/api/**/*, src/app/api/**/*
+alwaysApply: false
+---
+
+# Conventions API et Services
+
+## Services (`lib/api/`)
+
+- Un fichier par domaine : `movies.service.ts`
+- Objet avec méthodes statiques, export default
+- Utiliser axios pour les requêtes
+- Appeler les routes Next.js (`/api/...`), jamais TMDB directement côté client
+- Typer les réponses avec les types de `@/types/`
+
+```ts
+const MoviesService = {
+  fetchDiscoverMovies: async (page = 1) => {
+    const { data } = await axios.get<TDiscoverMoviesResponse>("/api/discover", {
+      params: { page },
+    });
+    return data;
+  },
+};
+export default MoviesService;
+```
+
+## Routes API (`app/api/`)
+
+- Une route par endpoint : `app/api/discover/route.ts`
+- Proxy vers TMDB : la clé API reste côté serveur (`process.env.TMDB_API_KEY`)
+- Utiliser axios ou fetch
+- Retourner `NextResponse.json(data)` ou erreur avec status approprié

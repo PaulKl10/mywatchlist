@@ -1,0 +1,28 @@
+---
+description: Conventions pour les types TypeScript
+globs: src/types/**/*
+alwaysApply: false
+---
+
+# Conventions Types
+
+## Emplacement
+
+- Tous les types partagés dans `src/types/`
+- Un fichier par domaine : `movie.type.ts`
+
+## Nommage
+
+- Préfixer les types avec `T` : `TMovie`, `TDiscoverMoviesResponse`
+- Types d'entités : nom singulier (`TMovie`)
+- Types de réponse API : nom descriptif (`TDiscoverMoviesResponse`)
+
+## Export
+
+- Export nommé : `export type TMovie = { ... }`
+- Pas d'export default pour les types
+
+## Structure des réponses API
+
+- Typer les réponses TMDB avec `page` et `results` (ou autre selon l'endpoint)
+- Les champs optionnels (ex: `poster_path`) en `string | null` si l'API peut les renvoyer null

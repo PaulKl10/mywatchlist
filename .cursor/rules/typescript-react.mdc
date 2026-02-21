@@ -1,0 +1,30 @@
+---
+description: Standards TypeScript et React
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# Standards TypeScript et React
+
+## Général
+
+- TypeScript strict activé
+- Alias `@/` pour `src/` : `import { X } from "@/types/movie.type"`
+- Utiliser pnpm (pas npm/yarn)
+
+## React
+
+- Composants fonctionnels uniquement
+- "use client" uniquement quand nécessaire (hooks, interactivité)
+- Les pages peuvent rester Server Components si elles ne font que composer
+
+## TanStack Query
+
+- QueryClient dans `app/providers.tsx`
+- staleTime configuré (ex: 60s) pour limiter les refetch
+- Hooks dédiés dans `features/*/hooks/`
+
+## Langue
+
+- UI en français : labels, messages d'erreur, placeholders
+- Code (noms, commentaires) en anglais

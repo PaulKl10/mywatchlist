@@ -1,0 +1,43 @@
+---
+description: Architecture et structure du projet My Watchlist
+alwaysApply: true
+---
+
+# Architecture du projet My Watchlist
+
+## Structure des dossiers
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # Routes API (proxy vers TMDB)
+│   ├── layout.tsx
+│   ├── page.tsx           # Pages minces, délèguent aux Screens
+│   └── providers.tsx      # QueryClientProvider, etc.
+├── screens/               # Écrans = composition de features
+│   └── HomeScreen.tsx
+├── features/               # Modules feature-based
+│   └── DiscoverMovie/
+│       ├── View/          # Composants d'affichage
+│       └── hooks/         # Hooks TanStack Query
+├── components/             # Composants UI réutilisables
+├── lib/                    # Services API, utilitaires
+│   └── api/
+└── types/                  # Types TypeScript partagés
+```
+
+## Flux de données
+
+1. **Page** (`app/page.tsx`) → rend un **Screen**
+2. **Screen** (`screens/`) → compose des **Views** de features
+3. **View** (`features/*/View/`) → utilise des **hooks** et **components**
+4. **Hooks** (`features/*/hooks/`) → appellent les **Services** via TanStack Query
+5. **Services** (`lib/api/`) → appellent les routes API Next.js
+6. **API routes** (`app/api/`) → proxy vers TMDB (clé API côté serveur)
+
+## Règles
+
+- Les pages Next.js restent minces : elles délèguent à un Screen
+- Chaque feature a son dossier avec View et hooks
+- Les composants réutilisables vont dans `components/`
+- Les appels API passent toujours par les routes Next.js (sécurité de la clé)

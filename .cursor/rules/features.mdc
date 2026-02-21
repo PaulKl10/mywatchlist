@@ -1,0 +1,38 @@
+---
+description: Conventions pour les features (modules feature-based)
+globs: src/features/**/*
+alwaysApply: false
+---
+
+# Conventions Features
+
+## Structure d'une feature
+
+```
+features/
+└── NomFeature/
+    ├── View/
+    │   └── NomFeatureView.tsx    # Composant principal de la feature
+    └── hooks/
+        └── useGetNomQuery.ts      # Hook TanStack Query
+```
+
+## Nommage
+
+- Dossier : PascalCase (ex: `DiscoverMovie`)
+- View : `*View.tsx` (ex: `DiscoverMovieView.tsx`)
+- Hooks TanStack Query : `useGet*Query` (ex: `useGetDiscoverMoviesQuery`)
+
+## View
+
+- Marquer `"use client"` si utilisation de hooks
+- Importer les hooks de la feature et les components partagés
+- Gérer les états loading, error, success
+- Ne pas faire d'appels API directs : utiliser les hooks
+
+## Hooks
+
+- Un hook par endpoint/requête
+- Utiliser `useQuery` de TanStack Query
+- Le `queryKey` inclut les paramètres : `["discover", "movies", page]`
+- Le `queryFn` appelle le service correspondant

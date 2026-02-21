@@ -1,0 +1,31 @@
+---
+description: Conventions pour les Screens
+globs: src/screens/**/*
+alwaysApply: false
+---
+
+# Conventions Screens
+
+## Rôle
+
+- Les Screens sont des conteneurs de page qui composent des features
+- Ils font le lien entre les pages Next.js et les Views de features
+
+## Structure
+
+- Un fichier par écran : `HomeScreen.tsx`
+- Export nommé : `export function HomeScreen() { ... }`
+- Contenu minimal : composition de Views
+
+```tsx
+// ✅ Bon
+export function HomeScreen() {
+  return <DiscoverMovieView />;
+}
+```
+
+## Règles
+
+- Pas de logique métier : délégation aux Views
+- Pas d'appels API directs : les Views utilisent leurs hooks
+- Peuvent être Server Components si les Views ne nécessitent pas "use client"
