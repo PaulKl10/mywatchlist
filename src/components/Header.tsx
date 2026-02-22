@@ -55,11 +55,11 @@ export function Header({
                   {isUserMenuOpen && (
                     <>
                       <div
-                        className="fixed inset-0 z-9998"
+                        className="fixed inset-0"
                         aria-hidden
                         onClick={() => setIsUserMenuOpen(false)}
                       />
-                      <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800 z-9998">
                         <Link
                           href="/watchlist"
                           onClick={() => setIsUserMenuOpen(false)}
