@@ -78,7 +78,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
       <div className="mx-auto max-w-7xl px-6 -mt-64 z-50 relative py-8 md:py-0">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-primary transition-colors hover:text-zinc-100 border border-zinc-300 rounded-lg px-4 py-2 backdrop-blur-xl"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour aux films

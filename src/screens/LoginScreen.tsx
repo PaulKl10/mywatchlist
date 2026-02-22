@@ -14,6 +14,7 @@ export function LoginScreen() {
     try {
       const res = await fetch("/api/auth/request-token", {
         method: "POST",
+        credentials: "include",
       });
       const data = await res.json();
 

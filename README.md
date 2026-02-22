@@ -2,6 +2,24 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Connexion TMDB en local
+
+TMDB bloque les redirections vers `localhost` (erreur 403 CloudFront). Pour tester la connexion en développement :
+
+1. **Installer ngrok** : [ngrok.com](https://ngrok.com) (ou `brew install ngrok`)
+2. **Lancer le tunnel** dans un terminal :
+   ```bash
+   ngrok http 3000
+   ```
+3. **Copier l’URL générée** (ex. `https://abc123.ngrok-free.app`)
+4. **Définir la variable d’environnement** dans `.env.local` :
+   ```
+   NEXT_PUBLIC_APP_URL=https://votre-url-ngrok.ngrok-free.app
+   ```
+5. **Accéder à l’app via l’URL ngrok** (pas localhost) et tester la connexion TMDB
+
+### Lancer le projet
+
 First, run the development server:
 
 ```bash

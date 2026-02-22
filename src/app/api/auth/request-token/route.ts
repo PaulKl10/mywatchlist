@@ -20,8 +20,12 @@ export async function POST(request: Request) {
     );
 
     const requestToken = data.request_token;
-    const redirectTo = request.headers.get("origin") || "http://localhost:3000";
-    const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${redirectTo}/login/callback`;
+    const baseUrl =
+      request.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+    const redirectUrl = `${baseUrl.replace(/\/$/, "")}/login/callback`;
+    const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
 
     const response = NextResponse.json({
       request_token: requestToken,
