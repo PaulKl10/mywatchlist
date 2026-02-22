@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Clock, Star } from "lucide-react";
+import { ArrowLeft, Clock, Monitor, Star } from "lucide-react";
 import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
+import { WatchProviderCard } from "@/features/MovieDetails/components/WatchProviderCard";
 import { useGetMovieDetailsQuery } from "@/features/MovieDetails/hooks/useGetMovieDetailsQuery";
+import { useGetWatchProvidersQuery } from "@/features/MovieDetails/hooks/useGetWatchProvidersQuery";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 
@@ -14,6 +16,7 @@ interface MovieDetailsViewProps {
 
 export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
   const { data, isLoading, isError, error } = useGetMovieDetailsQuery(movieId);
+  const { data: watchProviders } = useGetWatchProvidersQuery(movieId);
 
   if (isLoading) {
     return (
@@ -150,6 +153,90 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                 {data.overview || "Aucune description disponible."}
               </p>
             </div>
+
+            {watchProviders &&
+              (watchProviders.flatrate.length > 0 ||
+                watchProviders.buy.length > 0 ||
+                watchProviders.rent.length > 0) && (
+                <div className="mt-6">
+                  <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-zinc-100">
+                    <Monitor className="h-5 w-5" />
+                    Où regarder
+                  </h2>
+                  <div className="space-y-4">
+                    {watchProviders.flatrate.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-sm text-zinc-500">
+                          En streaming
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          {watchProviders.flatrate
+                            .sort(
+                              (a, b) =>
+                                a.display_priority - b.display_priority
+                            )
+                            .map((provider) => (
+                              <WatchProviderCard
+                                key={provider.provider_id}
+                                provider={provider}
+                                link={watchProviders.link}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {watchProviders.rent.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-sm text-zinc-500">Location</p>
+                        <div className="flex flex-wrap gap-3">
+                          {watchProviders.rent
+                            .sort(
+                              (a, b) =>
+                                a.display_priority - b.display_priority
+                            )
+                            .map((provider) => (
+                              <WatchProviderCard
+                                key={provider.provider_id}
+                                provider={provider}
+                                link={watchProviders.link}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {watchProviders.buy.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-sm text-zinc-500">Achat</p>
+                        <div className="flex flex-wrap gap-3">
+                          {watchProviders.buy
+                            .sort(
+                              (a, b) =>
+                                a.display_priority - b.display_priority
+                            )
+                            .map((provider) => (
+                              <WatchProviderCard
+                                key={provider.provider_id}
+                                provider={provider}
+                                link={watchProviders.link}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs text-zinc-500">
+                    Données fournies par{" "}
+                    <a
+                      href="https://www.justwatch.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-zinc-400"
+                    >
+                      JustWatch
+                    </a>
+                  </p>
+                </div>
+              )}
           </div>
         </div>
       </div>

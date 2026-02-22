@@ -42,3 +42,17 @@ export type TMovieDetails = {
   tagline: string | null;
   homepage: string | null;
 };
+
+export type TWatchProvider = {
+  logo_path: string;
+  provider_id: number;
+  provider_name: string;
+  display_priority: number;
+};
+
+export type TWatchProviders = {
+  link: string;
+  flatrate: TWatchProvider[];
+  buy: TWatchProvider[];
+  rent: TWatchProvider[];
+};
