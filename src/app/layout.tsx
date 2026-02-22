@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "My Watchlist",
   description: "Ma liste de films à regarder",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
