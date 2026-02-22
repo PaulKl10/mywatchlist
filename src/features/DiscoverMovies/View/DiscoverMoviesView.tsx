@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Filter, X } from "lucide-react";
 import { MovieCard } from "@/components/MovieCard";
 import {
   DEFAULT_FILTER_VALUES,
@@ -13,6 +14,7 @@ import type {
   TDiscoverFiltersForm,
   TDiscoverMoviesParams,
 } from "@/features/DiscoverMovies/types/discover-movies.type";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function formValuesToParams(
   formValues: TDiscoverFiltersForm,
@@ -37,12 +39,14 @@ function formValuesToParams(
 
 export function DiscoverMoviesView() {
   const [page, setPage] = useState(1);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { register, watch, setValue, reset } = useForm<TDiscoverFiltersForm>({
     defaultValues: DEFAULT_FILTER_VALUES,
   });
 
   const formValues = watch();
-  const filterParams = formValuesToParams(formValues);
+  const formValuesDebounced = useDebounce(formValues, 500);
+  const filterParams = formValuesToParams(formValuesDebounced);
 
   const { data, isLoading, isError, error } = useGetDiscoverMoviesQuery({
     ...filterParams,
@@ -71,21 +75,54 @@ export function DiscoverMoviesView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-0 z-10 flex justify-between gap-8 border-b border-zinc-200 bg-zinc-50 py-4 dark:border-zinc-800 dark:bg-zinc-950 px-4 md:px-32">
-        <div className="flex-1">
-          <DiscoverFilters
-            register={register}
-            watch={watch}
-            setValue={setValue}
-            reset={reset}
+      <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-zinc-200 bg-zinc-50 py-4 dark:border-zinc-800 dark:bg-zinc-950 px-4 md:px-32">
+        <div className="flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 md:hidden dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <Filter className="h-4 w-4" />
+            Filtres
+          </button>
+          <div className="hidden flex-1 md:block">
+            <DiscoverFilters
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              reset={reset}
+            />
+          </div>
+          <PageFilter
+            currentPage={data?.page ?? 1}
+            totalPages={data?.total_pages ?? 1}
+            onPageChange={handlePageChange}
+            isLoading={isLoading}
           />
         </div>
-        <PageFilter
-          currentPage={data?.page ?? 1}
-          totalPages={data?.total_pages ?? 1}
-          onPageChange={handlePageChange}
-          isLoading={isLoading}
-        />
+        {isFiltersOpen && (
+          <div className="flex flex-col gap-3 md:hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Filtres
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsFiltersOpen(false)}
+                className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Fermer les filtres"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <DiscoverFilters
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              reset={reset}
+            />
+          </div>
+        )}
       </div>
       <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
         {isLoading ? (
