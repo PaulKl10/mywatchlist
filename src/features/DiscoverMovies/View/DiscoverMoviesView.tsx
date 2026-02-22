@@ -9,18 +9,24 @@ export function DiscoverMoviesView() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error } = useGetDiscoverMoviesQuery({
     page,
+    sort_by: "popularity.desc",
   });
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div
-            key={i}
-            className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
-          />
-        ))}
-      </div>
+      <>
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="h-10 w-full animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
+            />
+          ))}
+        </div>
+      </>
     );
   }
 
