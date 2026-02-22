@@ -5,7 +5,7 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 function MovieCardDetails({ movie }: { movie: TMovie }) {
   return (
-    <div className="hidden flex-1 flex-col p-3 group-hover:flex absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm">
+    <div className="hidden flex-1 flex-col p-3 group-hover:flex absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm rounded-b-lg">
       <h3 className="line-clamp-2 font-semibold text-zinc-900 dark:text-zinc-100">
         {movie.title}
       </h3>
