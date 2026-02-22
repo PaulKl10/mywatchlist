@@ -27,7 +27,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
   }, [debouncedQuery]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-zinc-50 dark:bg-zinc-950">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-zinc-50 dark:bg-zinc-950">
       <header className="flex items-center gap-4 border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 md:px-32">
         <form
           onSubmit={(e) => e.preventDefault()}
