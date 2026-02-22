@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock, Star } from "lucide-react";
+import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
 import { useGetMovieDetailsQuery } from "@/features/MovieDetails/hooks/useGetMovieDetailsQuery";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
@@ -138,6 +139,10 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
             {data.tagline && (
               <p className="mt-4 italic text-zinc-500">{data.tagline}</p>
             )}
+
+            <div className="mt-6">
+              <AddToWatchlistButton movieId={data.id} />
+            </div>
 
             <div className="mt-6">
               <h2 className="text-lg font-semibold text-zinc-100">Synopsis</h2>

@@ -1,0 +1,81 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
+import Link from "next/link";
+import {
+  useAddToWatchlistMutation,
+  useRemoveFromWatchlistMutation,
+} from "@/features/Watchlist/hooks/useWatchlistMutation";
+
+interface AddToWatchlistButtonProps {
+  movieId: number;
+}
+
+async function fetchAccountStates(movieId: number) {
+  const res = await fetch(`/api/movies/${movieId}/account-states`, {
+    credentials: "include",
+  });
+  const data = await res.json();
+  return data.watchlist ?? false;
+}
+
+export function AddToWatchlistButton({ movieId }: AddToWatchlistButtonProps) {
+  const { user } = useAuth();
+  const { data: inWatchlist, refetch: refetchStates } = useQuery({
+    queryKey: ["account-states", movieId],
+    queryFn: () => fetchAccountStates(movieId),
+    enabled: !!user,
+  });
+  const addMutation = useAddToWatchlistMutation();
+  const removeMutation = useRemoveFromWatchlistMutation();
+
+  if (!user) {
+    return (
+      <Link
+        href="/login"
+        className="inline-flex items-center gap-2 rounded-lg border border-amber-500 px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-amber-500/10"
+      >
+        <Bookmark className="h-4 w-4" />
+        Connectez-vous pour ajouter à votre watchlist
+      </Link>
+    );
+  }
+
+  const isPending = addMutation.isPending || removeMutation.isPending;
+
+  const handleClick = () => {
+    if (inWatchlist) {
+      removeMutation.mutate(movieId, {
+        onSuccess: () => refetchStates(),
+      });
+    } else {
+      addMutation.mutate(movieId, {
+        onSuccess: () => refetchStates(),
+      });
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={isPending}
+      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+        inWatchlist
+          ? "border border-amber-500 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+          : "border border-amber-500 text-amber-500 hover:bg-amber-500/10"
+      }`}
+    >
+      {isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : inWatchlist ? (
+        <BookmarkCheck className="h-4 w-4" />
+      ) : (
+        <Bookmark className="h-4 w-4" />
+      )}
+      {inWatchlist ? "Dans ma watchlist" : "Ajouter à ma watchlist"}
+    </button>
+  );
+}

@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { MovieDetailsView } from "@/features/MovieDetails/View/MovieDetailsView";
 
 interface MovieDetailsScreenProps {
