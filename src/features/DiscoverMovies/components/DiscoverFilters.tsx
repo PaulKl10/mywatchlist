@@ -17,6 +17,7 @@ interface DiscoverFiltersProps {
   watch: UseFormWatch<TDiscoverFiltersForm>;
   setValue: UseFormSetValue<TDiscoverFiltersForm>;
   reset: UseFormReset<TDiscoverFiltersForm>;
+  onReset?: () => void;
 }
 
 export function DiscoverFilters({
@@ -24,6 +25,7 @@ export function DiscoverFilters({
   watch,
   setValue,
   reset,
+  onReset,
 }: DiscoverFiltersProps) {
   const formValues = watch();
 
@@ -36,7 +38,11 @@ export function DiscoverFilters({
   };
 
   const handleReset = () => {
-    reset(DEFAULT_FILTER_VALUES);
+    if (onReset) {
+      onReset();
+    } else {
+      reset(DEFAULT_FILTER_VALUES);
+    }
   };
 
   return (

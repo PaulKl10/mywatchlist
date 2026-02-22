@@ -1,52 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Filter, X } from "lucide-react";
 import { MovieCard } from "@/components/MovieCard";
-import {
-  DEFAULT_FILTER_VALUES,
-  DiscoverFilters,
-} from "@/features/DiscoverMovies/components/DiscoverFilters";
+import { DiscoverFilters } from "@/features/DiscoverMovies/components/DiscoverFilters";
 import { PageFilter } from "@/components/PageFilter";
+import { useDiscoverFilters } from "@/features/DiscoverMovies/hooks/useDiscoverFilters";
+import { useDiscoverStatePersistence } from "@/features/DiscoverMovies/hooks/useDiscoverStatePersistence";
 import { useGetDiscoverMoviesQuery } from "@/features/DiscoverMovies/hooks/useGetDiscoverMoviesQuery";
-import type {
-  TDiscoverFiltersForm,
-  TDiscoverMoviesParams,
-} from "@/features/DiscoverMovies/types/discover-movies.type";
-import { useDebounce } from "@/hooks/useDebounce";
-
-function formValuesToParams(
-  formValues: TDiscoverFiltersForm,
-): Partial<TDiscoverMoviesParams> {
-  const params: Partial<TDiscoverMoviesParams> = {
-    sort_by: formValues.sort_by,
-  };
-  if (formValues.year && !Number.isNaN(Number(formValues.year))) {
-    params.year = Number(formValues.year);
-  }
-  if (formValues.with_genres?.length > 0) {
-    params.with_genres = formValues.with_genres.join(",");
-  }
-  if (
-    formValues.vote_average_gte &&
-    !Number.isNaN(Number(formValues.vote_average_gte))
-  ) {
-    params["vote_average.gte"] = Number(formValues.vote_average_gte);
-  }
-  return params;
-}
 
 export function DiscoverMoviesView() {
-  const [page, setPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const { register, watch, setValue, reset } = useForm<TDiscoverFiltersForm>({
-    defaultValues: DEFAULT_FILTER_VALUES,
-  });
-
-  const formValues = watch();
-  const formValuesDebounced = useDebounce(formValues, 500);
-  const filterParams = formValuesToParams(formValuesDebounced);
+  const {
+    register,
+    watch,
+    setValue,
+    reset,
+    formValues,
+    filterParams,
+  } = useDiscoverFilters();
+  const { page, setPage, handleFiltersReset } =
+    useDiscoverStatePersistence(formValues, reset);
 
   const { data, isLoading, isError, error } = useGetDiscoverMoviesQuery({
     ...filterParams,
@@ -91,6 +65,7 @@ export function DiscoverMoviesView() {
               watch={watch}
               setValue={setValue}
               reset={reset}
+              onReset={handleFiltersReset}
             />
           </div>
           <PageFilter
@@ -120,6 +95,7 @@ export function DiscoverMoviesView() {
               watch={watch}
               setValue={setValue}
               reset={reset}
+              onReset={handleFiltersReset}
             />
           </div>
         )}
