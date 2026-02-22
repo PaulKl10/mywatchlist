@@ -1,3 +1,10 @@
+export type TDiscoverFiltersForm = {
+  sort_by: TDiscoverMoviesParams["sort_by"];
+  year: string;
+  with_genres: number[];
+  vote_average_gte: string;
+};
+
 export type TDiscoverMoviesParams = {
   page?: number;
   certification?: string;
