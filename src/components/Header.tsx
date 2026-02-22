@@ -55,7 +55,7 @@ export function Header({
                   {isUserMenuOpen && (
                     <>
                       <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-9998"
                         aria-hidden
                         onClick={() => setIsUserMenuOpen(false)}
                       />
