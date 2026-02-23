@@ -21,7 +21,7 @@ export function WatchProviderCard({ provider, link }: WatchProviderCardProps) {
         src={
           provider.logo_path
             ? `${TMDB_IMAGE_BASE}/w92${provider.logo_path}`
-            : "https://placehold.co/46x46/27272a/71717a?text=?"
+            : "https://placehold.co/46x46/27272a/71717a.png?text=?"
         }
         alt={provider.provider_name}
         width={46}

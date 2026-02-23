@@ -53,7 +53,7 @@ export function WatchlistView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="sticky top-0 z-10 flex gap-4 items-center justify-between bg-zinc-50 dark:bg-zinc-950 py-2 px-4">
         <h2 className="text-lg font-medium text-zinc-700 dark:text-zinc-300">
           Ma watchlist ({data.total_results} film
           {data.total_results > 1 ? "s" : ""})
@@ -79,7 +79,7 @@ export function WatchlistView() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
           {data.results.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}

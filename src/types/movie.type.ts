@@ -56,3 +56,35 @@ export type TWatchProviders = {
   buy: TWatchProvider[];
   rent: TWatchProvider[];
 };
+
+export type TCastMember = {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+};
+
+export type TMovieCredits = {
+  cast: TCastMember[];
+};
+
+export type TPersonDetails = {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  biography: string | null;
+};
+
+export type TPersonMovieCredit = {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+  vote_average: number;
+  character: string;
+};
+
+export type TPersonMovieCredits = {
+  cast: TPersonMovieCredit[];
+};

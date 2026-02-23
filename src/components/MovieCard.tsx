@@ -36,7 +36,7 @@ export function MovieCard({ movie }: { movie: TMovie }) {
             src={
               movie.poster_path
                 ? `${TMDB_IMAGE_BASE}${movie.poster_path}`
-                : "https://placehold.co/500x750/1f2937/9ca3af?text=No+Poster"
+                : "https://placehold.co/500x750/1f2937/9ca3af.png?text=No+Poster"
             }
             alt={movie.title}
             fill

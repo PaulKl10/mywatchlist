@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Clock, Monitor, Star } from "lucide-react";
+import { ArrowLeft, Clock, Monitor, Star, Users } from "lucide-react";
 import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
+import { CastCard } from "@/features/MovieDetails/components/CastCard";
 import { WatchProviderCard } from "@/features/MovieDetails/components/WatchProviderCard";
 import { useGetMovieDetailsQuery } from "@/features/MovieDetails/hooks/useGetMovieDetailsQuery";
+import { useGetMovieCreditsQuery } from "@/features/MovieDetails/hooks/useGetMovieCreditsQuery";
 import { useGetWatchProvidersQuery } from "@/features/MovieDetails/hooks/useGetWatchProvidersQuery";
+import { useRouter } from "next/navigation";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 
@@ -15,8 +18,10 @@ interface MovieDetailsViewProps {
 }
 
 export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
+  const router = useRouter();
   const { data, isLoading, isError, error } = useGetMovieDetailsQuery(movieId);
   const { data: watchProviders } = useGetWatchProvidersQuery(movieId);
+  const { data: credits } = useGetMovieCreditsQuery(movieId);
 
   if (isLoading) {
     return (
@@ -61,13 +66,13 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
   if (!data) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <div className="relative h-64 md:h-[700px]">
         <Image
           src={
             data.backdrop_path
               ? `${TMDB_IMAGE_BASE}/original${data.backdrop_path}`
-              : "https://placehold.co/1920x1080/1f2937/9ca3af?text=No+Backdrop"
+              : "https://placehold.co/1920x1080/1f2937/9ca3af.png?text=No+Backdrop"
           }
           alt={data.title}
           fill
@@ -75,35 +80,39 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 via-zinc-50/60 to-transparent dark:from-zinc-950 dark:via-zinc-950/60 dark:to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 -mt-64 z-50 relative py-8 md:py-0">
-        <Link
-          href="/"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-primary transition-colors hover:text-zinc-100 border border-zinc-300 rounded-lg px-4 py-2 backdrop-blur-xl"
+      <div className="mx-auto max-w-[80%] md:pr-6 -mt-64 z-50 relative py-8 md:py-0">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-100 transition-colors hover:text-zinc-100 border border-zinc-300 rounded-lg px-4 py-2 backdrop-blur-xl dark:border-zinc-600 dark:hover:text-zinc-100 cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour aux films
-        </Link>
+          Retour
+        </button>
 
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">
-          <div className="relative aspect-2/3 w-full shrink-0 overflow-hidden rounded-lg md:w-64">
+          <div className="relative aspect-2/3 w-full shrink-0 overflow-hidden rounded-lg md:w-1/3">
             <Image
               src={
                 data.poster_path
                   ? `${TMDB_IMAGE_BASE}/w500${data.poster_path}`
-                  : "https://placehold.co/500x750/1f2937/9ca3af?text=No+Poster"
+                  : "https://placehold.co/500x750/1f2937/9ca3af.png?text=No+Poster"
               }
               alt={data.title}
               fill
               className="object-cover"
-              sizes="(max-width: 768px) 100vw, 256px"
+              sizes="(max-width: 1920px) 100vw, 256px"
             />
           </div>
 
           <div className="flex flex-1 flex-col">
-            <h1 className="text-3xl font-bold text-zinc-100 md:text-4xl">
+            <h1
+              id="movie-title"
+              className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 md:text-4xl"
+            >
               {data.title}
             </h1>
             {data.original_title !== data.title && (
@@ -140,7 +149,9 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
             )}
 
             {data.tagline && (
-              <p className="mt-4 italic text-zinc-500">{data.tagline}</p>
+              <p className="mt-4 italic text-zinc-500 dark:text-zinc-400">
+                {data.tagline}
+              </p>
             )}
 
             <div className="mt-6">
@@ -148,7 +159,9 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
             </div>
 
             <div className="mt-6">
-              <h2 className="text-lg font-semibold text-zinc-100">Synopsis</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Synopsis
+              </h2>
               <p className="mt-2 line-clamp-none text-zinc-400">
                 {data.overview || "Aucune description disponible."}
               </p>
@@ -158,8 +171,8 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
               (watchProviders.flatrate.length > 0 ||
                 watchProviders.buy.length > 0 ||
                 watchProviders.rent.length > 0) && (
-                <div className="mt-6">
-                  <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-zinc-100">
+                <div className="my-6">
+                  <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     <Monitor className="h-5 w-5" />
                     Où regarder
                   </h2>
@@ -172,8 +185,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                         <div className="flex flex-wrap gap-3">
                           {watchProviders.flatrate
                             .sort(
-                              (a, b) =>
-                                a.display_priority - b.display_priority
+                              (a, b) => a.display_priority - b.display_priority,
                             )
                             .map((provider) => (
                               <WatchProviderCard
@@ -191,8 +203,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                         <div className="flex flex-wrap gap-3">
                           {watchProviders.rent
                             .sort(
-                              (a, b) =>
-                                a.display_priority - b.display_priority
+                              (a, b) => a.display_priority - b.display_priority,
                             )
                             .map((provider) => (
                               <WatchProviderCard
@@ -210,8 +221,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                         <div className="flex flex-wrap gap-3">
                           {watchProviders.buy
                             .sort(
-                              (a, b) =>
-                                a.display_priority - b.display_priority
+                              (a, b) => a.display_priority - b.display_priority,
                             )
                             .map((provider) => (
                               <WatchProviderCard
@@ -237,6 +247,22 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                   </p>
                 </div>
               )}
+            {credits && credits.cast.length > 0 && (
+              <div className="my-6">
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  <Users className="h-5 w-5" />
+                  Distribution
+                </h2>
+                <div className="flex flex-wrap gap-4 pb-2">
+                  {credits.cast
+                    .sort((a, b) => a.order - b.order)
+                    .slice(0, 20)
+                    .map((castMember) => (
+                      <CastCard key={castMember.id} castMember={castMember} />
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
