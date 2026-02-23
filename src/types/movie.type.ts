@@ -88,3 +88,7 @@ export type TPersonMovieCredit = {
 export type TPersonMovieCredits = {
   cast: TPersonMovieCredit[];
 };
+
+export type TRatedMovie = TMovie & {
+  rating: number;
+};

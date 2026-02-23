@@ -1,0 +1,10 @@
+import { RatedMoviesScreen } from "@/screens/RatedMoviesScreen";
+
+export const metadata = {
+  title: "Mes films notés - My Watchlist",
+  description: "Les films que j'ai notés",
+};
+
+export default function RatedMoviesPage() {
+  return <RatedMoviesScreen />;
+}

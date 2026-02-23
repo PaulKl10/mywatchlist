@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock, Monitor, Star, Users } from "lucide-react";
 import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
+import { RateMovieButton } from "@/features/RatedMovies/components/RateMovieButton";
 import { CastCard } from "@/features/MovieDetails/components/CastCard";
 import { WatchProviderCard } from "@/features/MovieDetails/components/WatchProviderCard";
 import { useGetMovieDetailsQuery } from "@/features/MovieDetails/hooks/useGetMovieDetailsQuery";
@@ -154,8 +155,9 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
               </p>
             )}
 
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap gap-6">
               <AddToWatchlistButton movieId={data.id} />
+              <RateMovieButton movieId={data.id} />
             </div>
 
             <div className="mt-6">

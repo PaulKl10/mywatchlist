@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import Link from "next/link";
+import { useAccountStatesQuery } from "@/hooks/useAccountStatesQuery";
 import {
   useAddToWatchlistMutation,
   useRemoveFromWatchlistMutation,
@@ -13,21 +13,13 @@ interface AddToWatchlistButtonProps {
   movieId: number;
 }
 
-async function fetchAccountStates(movieId: number) {
-  const res = await fetch(`/api/movies/${movieId}/account-states`, {
-    credentials: "include",
-  });
-  const data = await res.json();
-  return data.watchlist ?? false;
-}
-
 export function AddToWatchlistButton({ movieId }: AddToWatchlistButtonProps) {
   const { user } = useAuth();
-  const { data: inWatchlist, refetch: refetchStates } = useQuery({
-    queryKey: ["account-states", movieId],
-    queryFn: () => fetchAccountStates(movieId),
-    enabled: !!user,
-  });
+  const { data: accountStates, refetch: refetchStates } = useAccountStatesQuery(
+    movieId,
+    !!user
+  );
+  const inWatchlist = accountStates?.watchlist ?? false;
   const addMutation = useAddToWatchlistMutation();
   const removeMutation = useRemoveFromWatchlistMutation();
 
