@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import { ServiceWorkerRegister } from "./ServiceWorkerRegister";
@@ -20,11 +20,14 @@ export const metadata: Metadata = {
   title: "My Watchlist",
   description: "Ma liste de films à regarder",
   applicationName: "My Watchlist",
-  themeColor: "#09090b",
   robots: {
     index: false,
     follow: false,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({

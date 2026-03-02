@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bookmark, LogOut, Search, Star, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchMoviesView } from "@/features/SearchMovies/View/SearchMoviesView";
+import Image from "next/image";
 
 interface HeaderProps {
   title?: string;
@@ -18,6 +19,20 @@ export function Header({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isLoading, logout } = useAuth();
+
+  const gravatarHash = user?.avatar?.gravatar?.hash;
+  const gravatarUrl = gravatarHash
+    ? `https://secure.gravatar.com/avatar/${gravatarHash}?s=64&d=identicon`
+    : null;
+
+  const tmdbAvatarPath = user?.avatar?.tmdb?.avatar_path;
+  const tmdbAvatarUrl = tmdbAvatarPath
+    ? tmdbAvatarPath.startsWith("http")
+      ? tmdbAvatarPath
+      : `https://image.tmdb.org/t/p/w185${tmdbAvatarPath}`
+    : null;
+
+  const avatarUrl = gravatarUrl ?? tmdbAvatarUrl;
 
   return (
     <>
@@ -58,8 +73,23 @@ export function Header({
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                   >
-                    <User className="h-4 w-4" />
-                    {user.username}
+                    {avatarUrl ? (
+                      <>
+                        <Image
+                          src={avatarUrl}
+                          alt={user.username}
+                          width={32}
+                          height={32}
+                          className="rounded-full"
+                        />
+                        {user.username}
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-4 w-4" />
+                        {user.username}
+                      </>
+                    )}
                   </button>
                   {isUserMenuOpen && (
                     <>
