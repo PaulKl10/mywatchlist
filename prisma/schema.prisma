@@ -1,0 +1,50 @@
+// https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Modèle Utilisateur
+model User {
+  id       String  @id @default(cuid())
+  tmdb_id  Int     @unique // L'ID récupéré depuis TMDB
+  username String?
+
+  // Relations pour les amis
+  sentFriendRequests     Friendship[] @relation("sender")
+  receivedFriendRequests Friendship[] @relation("receiver")
+
+  // Suggestions de films
+  sentSuggestions     Suggestion[] @relation("suggestedBy")
+  receivedSuggestions Suggestion[] @relation("suggestedTo")
+}
+
+// Table pivot pour gérer les amitiés
+model Friendship {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     String   @default("PENDING") // PENDING, ACCEPTED, BLOCKED
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("sender", fields: [senderId], references: [id])
+  receiver User @relation("receiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+// Table pour les suggestions de films
+model Suggestion {
+  id           String   @id @default(cuid())
+  tmdb_movie_id Int     // L'ID du film sur TMDB
+  fromUserId   String
+  toUserId     String
+  message      String?
+  createdAt    DateTime @default(now())
+
+  sender   User @relation("suggestedBy", fields: [fromUserId], references: [id])
+  receiver User @relation("suggestedTo", fields: [toUserId], references: [id])
+}
