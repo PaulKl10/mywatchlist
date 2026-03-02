@@ -20,19 +20,25 @@ export function Header({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isLoading, logout } = useAuth();
 
-  const gravatarHash = user?.avatar?.gravatar?.hash;
+  const gravatarHash = user?.avatar?.gravatar?.hash?.trim() || null;
   const gravatarUrl = gravatarHash
     ? `https://secure.gravatar.com/avatar/${gravatarHash}?s=64&d=identicon`
     : null;
 
-  const tmdbAvatarPath = user?.avatar?.tmdb?.avatar_path;
+  const tmdbAvatarPath = user?.avatar?.tmdb?.avatar_path?.trim() || null;
   const tmdbAvatarUrl = tmdbAvatarPath
     ? tmdbAvatarPath.startsWith("http")
       ? tmdbAvatarPath
       : `https://image.tmdb.org/t/p/w185${tmdbAvatarPath}`
     : null;
 
-  const avatarUrl = gravatarUrl ?? tmdbAvatarUrl;
+  const avatarUrl = gravatarUrl || tmdbAvatarUrl || null;
+  const safeAvatarUrl =
+    typeof avatarUrl === "string" &&
+    avatarUrl.startsWith("https://") &&
+    avatarUrl.length > 20
+      ? avatarUrl
+      : null;
 
   return (
     <>
@@ -73,10 +79,10 @@ export function Header({
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                   >
-                    {avatarUrl ? (
+                    {safeAvatarUrl ? (
                       <>
                         <Image
-                          src={avatarUrl}
+                          src={safeAvatarUrl}
                           alt={user.username}
                           width={32}
                           height={32}

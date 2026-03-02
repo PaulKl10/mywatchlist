@@ -1,6 +1,6 @@
-const STATIC_CACHE = "mywatchlist-static-v1";
-const API_CACHE = "mywatchlist-api-v1";
-const IMAGE_CACHE = "mywatchlist-image-v1";
+const STATIC_CACHE = "mywatchlist-static-v3";
+const API_CACHE = "mywatchlist-api-v3";
+const IMAGE_CACHE = "mywatchlist-image-v3";
 
 self.addEventListener("install", (event) => {
   // On peut pré-cacher des ressources ici si besoin plus tard

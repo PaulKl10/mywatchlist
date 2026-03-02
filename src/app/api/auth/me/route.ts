@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { prisma } from "@/lib/prisma";
 
 export type TAccount = {
   id: number;
@@ -11,21 +9,41 @@ export type TAccount = {
   avatar: { gravatar: { hash: string }; tmdb: { avatar_path: string | null } };
 };
 
+function toAccount(user: {
+  tmdb_id: number;
+  username: string | null;
+  gravatar_hash: string | null;
+  tmdb_avatar_path: string | null;
+}): TAccount {
+  const gravatarHash = user.gravatar_hash?.trim();
+  const tmdbAvatarPath = user.tmdb_avatar_path?.trim();
+  return {
+    id: user.tmdb_id,
+    username: user.username ?? "",
+    name: user.username ?? null,
+    avatar: {
+      gravatar: { hash: gravatarHash || "" },
+      tmdb: { avatar_path: tmdbAvatarPath || null },
+    },
+  };
+}
+
 export async function GET() {
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
 
-  try {
-    const { data } = await axios.get<TAccount>(`${TMDB_BASE_URL}/account`, {
-      params: { api_key: apiKey, session_id: sessionId },
-    });
-    return NextResponse.json({ user: data });
-  } catch {
+  const session = await prisma.session.findUnique({
+    where: { tmdb_session_id: sessionId },
+    include: { user: true },
+  });
+
+  if (!session?.user) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
+
+  return NextResponse.json({ user: toAccount(session.user) });
 }

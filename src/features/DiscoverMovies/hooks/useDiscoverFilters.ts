@@ -6,7 +6,6 @@ import type {
   TDiscoverFiltersForm,
   TDiscoverMoviesParams,
 } from "@/features/DiscoverMovies/types/discover-movies.type";
-import { getStoredDiscoverState } from "@/features/DiscoverMovies/utils/discover-storage";
 import { useDebounce } from "@/hooks/useDebounce";
 
 function formValuesToParams(
@@ -30,14 +29,9 @@ function formValuesToParams(
   return params;
 }
 
-function getInitialFilterValues(): TDiscoverFiltersForm {
-  const stored = getStoredDiscoverState();
-  return stored?.formValues ?? DEFAULT_FILTER_VALUES;
-}
-
 export function useDiscoverFilters() {
   const form = useForm<TDiscoverFiltersForm>({
-    defaultValues: getInitialFilterValues(),
+    defaultValues: DEFAULT_FILTER_VALUES,
   });
 
   const formValues = form.watch();

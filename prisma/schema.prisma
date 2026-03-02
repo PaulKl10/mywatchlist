@@ -9,9 +9,13 @@ datasource db {
 
 // Modèle Utilisateur
 model User {
-  id       String  @id @default(cuid())
-  tmdb_id  Int     @unique // L'ID récupéré depuis TMDB
-  username String?
+  id               String    @id @default(cuid())
+  tmdb_id          Int       @unique // L'ID récupéré depuis TMDB
+  username         String?
+  gravatar_hash    String?
+  tmdb_avatar_path String?
+
+  sessions Session[]
 
   // Relations pour les amis
   sentFriendRequests     Friendship[] @relation("sender")
@@ -20,6 +24,15 @@ model User {
   // Suggestions de films
   sentSuggestions     Suggestion[] @relation("suggestedBy")
   receivedSuggestions Suggestion[] @relation("suggestedTo")
+}
+
+model Session {
+  id               String @id @default(cuid())
+  tmdb_session_id  String @unique
+  userId           String
+  user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 // Table pivot pour gérer les amitiés
