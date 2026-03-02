@@ -18,6 +18,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "My Watchlist",
   description: "Ma liste de films à regarder",
+  applicationName: "My Watchlist",
+  themeColor: "#09090b",
   robots: {
     index: false,
     follow: false,
