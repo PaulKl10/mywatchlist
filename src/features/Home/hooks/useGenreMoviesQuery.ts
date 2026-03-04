@@ -12,10 +12,10 @@ async function fetchGenreMovies(
   return data;
 }
 
-export function useGenreMoviesQuery(genreId: number) {
+export function useGenreMoviesQuery(genreId: number, enabled = true) {
   return useQuery({
     queryKey: ["home", "genre", genreId],
     queryFn: () => fetchGenreMovies(genreId),
-    enabled: genreId > 0,
+    enabled: enabled && genreId > 0,
   });
 }

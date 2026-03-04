@@ -34,7 +34,7 @@ export function HomeView() {
   const friendsQuery = useFriendsWatchlistQuery(!!user);
 
   return (
-    <div className="flex flex-col gap-4 pb-12 md:pl-12">
+    <div className="flex flex-col gap-4 pb-12 md:pl-24">
       <MovieRow
         title="Populaires"
         movies={popularData?.results ?? []}

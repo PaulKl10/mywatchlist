@@ -10,9 +10,10 @@ async function fetchPopularMovies(): Promise<TDiscoverMoviesResponse> {
   return data;
 }
 
-export function usePopularMoviesQuery() {
+export function usePopularMoviesQuery(enabled = true) {
   return useQuery({
     queryKey: ["home", "popular-movies"],
     queryFn: fetchPopularMovies,
+    enabled,
   });
 }
