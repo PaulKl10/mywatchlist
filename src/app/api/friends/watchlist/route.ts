@@ -56,7 +56,7 @@ export async function GET() {
     },
   });
 
-  const friendIds = friendships.map((f) =>
+  const friendIds = friendships.map((f: (typeof friendships)[number]) =>
     f.senderId === session.user!.id ? f.receiverId : f.senderId
   );
 
