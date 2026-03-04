@@ -71,12 +71,14 @@ model Friendship {
 
 // Table pour les suggestions de films
 model Suggestion {
-  id           String   @id @default(cuid())
-  tmdb_movie_id Int     // L'ID du film sur TMDB
-  fromUserId   String
-  toUserId     String
-  message      String?
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  tmdb_movie_id Int      // L'ID du film sur TMDB
+  title         String   // Pour affichage sans appel TMDB
+  poster_path   String?
+  fromUserId    String
+  toUserId      String
+  message       String?
+  createdAt     DateTime @default(now())
 
   sender   User @relation("suggestedBy", fields: [fromUserId], references: [id])
   receiver User @relation("suggestedTo", fields: [toUserId], references: [id])

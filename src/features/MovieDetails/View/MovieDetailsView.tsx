@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Monitor, Star, Users } from "lucide-react";
 import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
 import { RateMovieButton } from "@/features/RatedMovies/components/RateMovieButton";
+import { SuggestToFriendForm } from "@/features/Suggestions/components/SuggestToFriendForm";
 import { CastCard } from "@/features/MovieDetails/components/CastCard";
 import { WatchProviderCard } from "@/features/MovieDetails/components/WatchProviderCard";
 import { useGetMovieDetailsQuery } from "@/features/MovieDetails/hooks/useGetMovieDetailsQuery";
@@ -161,10 +162,18 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
             </div>
 
             <div className="mt-6">
+              <SuggestToFriendForm
+                movieId={data.id}
+                movieTitle={data.title}
+                posterPath={data.poster_path}
+              />
+            </div>
+
+            <div className="mt-6">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 Synopsis
               </h2>
-              <p className="mt-2 line-clamp-none text-zinc-400">
+              <p className="mt-2 line-clamp-none text-zinc-400 text-justify">
                 {data.overview || "Aucune description disponible."}
               </p>
             </div>
@@ -255,7 +264,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                   <Users className="h-5 w-5" />
                   Distribution
                 </h2>
-                <div className="flex flex-wrap gap-4 pb-2">
+                <div className="flex flex-wrap gap-4 pb-2 justify-center md:justify-start">
                   {credits.cast
                     .sort((a, b) => a.order - b.order)
                     .slice(0, 20)

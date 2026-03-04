@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Filter, X } from "lucide-react";
 import { MovieCard } from "@/components/MovieCard";
 import { DiscoverFilters } from "@/features/DiscoverMovies/components/DiscoverFilters";
@@ -11,12 +12,26 @@ import { useGetDiscoverMoviesQuery } from "@/features/DiscoverMovies/hooks/useGe
 
 export function DiscoverMoviesView() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const searchParams = useSearchParams();
   const { register, watch, setValue, reset, formValues, filterParams } =
     useDiscoverFilters();
   const { page, setPage, handleFiltersReset } = useDiscoverStatePersistence(
     formValues,
     reset,
   );
+
+  useEffect(() => {
+    const withGenres = searchParams.get("with_genres");
+    if (withGenres) {
+      const ids = withGenres
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !Number.isNaN(n));
+      if (ids.length > 0) {
+        setValue("with_genres", ids);
+      }
+    }
+  }, [searchParams, setValue]);
 
   const { data, isLoading, isError, error } = useGetDiscoverMoviesQuery({
     ...filterParams,

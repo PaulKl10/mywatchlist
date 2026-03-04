@@ -9,6 +9,7 @@ import { useGetWatchlistQuery } from "@/features/Watchlist/hooks/useGetWatchlist
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
 import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
+import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
 
 const WATCHLIST_PREVIEW_COUNT = 6;
 
@@ -87,7 +88,9 @@ export function ProfileView() {
           </p>
         </div>
       </section>
-
+      <SuggestionsList />
+      <FriendsList />
+      <FriendRequestsList />
       {/* Watchlist - aperçu */}
       <section>
         <div className="mb-4 flex items-center justify-between">
@@ -139,9 +142,6 @@ export function ProfileView() {
             </Link>
           )}
       </section>
-
-      <FriendRequestsList />
-      <FriendsList />
     </div>
   );
 }

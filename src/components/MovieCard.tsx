@@ -30,7 +30,7 @@ export function MovieCard({ movie }: { movie: TMovie }) {
       href={`/movies/${movie.id}`}
       className="hover:scale-105 transition-all duration-300"
     >
-      <article className="group flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+      <article className="relative group flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
         <div className="relative aspect-2/3 w-full bg-zinc-200 dark:bg-zinc-800">
           <Image
             src={

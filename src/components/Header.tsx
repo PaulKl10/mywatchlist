@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, LogOut, Search, Star, User } from "lucide-react";
+import { Bookmark, Compass, LogOut, Search, Star, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchMoviesView } from "@/features/SearchMovies/View/SearchMoviesView";
 import Image from "next/image";
@@ -73,6 +73,13 @@ export function Header({
                 <Star className="h-4 w-4" />
                 Mes notes
               </Link>
+              <Link
+                href="/discover"
+                className="hidden md:flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <Compass className="h-4 w-4" />
+                Explorer
+              </Link>
             </>
           )}
         </div>
@@ -135,6 +142,14 @@ export function Header({
                         >
                           <Star className="h-4 w-4" />
                           Mes films notés
+                        </Link>
+                        <Link
+                          href="/discover"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                        >
+                          <Compass className="h-4 w-4" />
+                          Explorer
                         </Link>
                         <button
                           type="button"

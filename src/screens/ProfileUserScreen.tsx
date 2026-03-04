@@ -241,6 +241,15 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
               {watchlist.length - WATCHLIST_PREVIEW_COUNT > 1 ? "s" : ""})
             </button>
           )}
+          {showAllWatchlist && (
+            <button
+              type="button"
+              onClick={() => setShowAllWatchlist(false)}
+              className="mt-4 w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Voir moins
+            </button>
+          )}
         </section>
       ) : watchlist !== null ? (
         <section className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">

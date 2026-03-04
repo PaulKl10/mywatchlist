@@ -2,6 +2,7 @@
 
 import { Loader2, Star } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAccountStatesQuery } from "@/hooks/useAccountStatesQuery";
 import {
@@ -17,15 +18,34 @@ interface RateMovieButtonProps {
 
 export function RateMovieButton({ movieId }: RateMovieButtonProps) {
   const { user } = useAuth();
-  const { data: accountStates, refetch: refetchStates } = useAccountStatesQuery(
-    movieId,
-    !!user
-  );
-  const rated = accountStates?.rated;
-  const userRating =
-    typeof rated === "object" && rated?.value != null ? rated.value : null;
+  const { data: accountStates } = useAccountStatesQuery(movieId, !!user);
   const addMutation = useAddRatingMutation();
   const removeMutation = useRemoveRatingMutation();
+
+  const serverRating =
+    typeof accountStates?.rated === "object" && accountStates?.rated?.value != null
+      ? accountStates.rated.value
+      : null;
+
+  const [localRating, setLocalRating] = useState<number | null | "sync">("sync");
+
+  useEffect(() => {
+    setLocalRating("sync");
+  }, [movieId]);
+
+  const userRating =
+    localRating === "sync" ? serverRating : localRating;
+
+  const handleRate = (value: number) => {
+    const current = localRating === "sync" ? serverRating : localRating;
+    if (current === value) {
+      setLocalRating(null);
+      removeMutation.mutate(movieId);
+    } else {
+      setLocalRating(value);
+      addMutation.mutate({ movieId, value });
+    }
+  };
 
   if (!user) {
     return (
@@ -40,17 +60,6 @@ export function RateMovieButton({ movieId }: RateMovieButtonProps) {
   }
 
   const isPending = addMutation.isPending || removeMutation.isPending;
-
-  const handleRate = (value: number) => {
-    if (userRating === value) {
-      removeMutation.mutate(movieId, { onSuccess: () => refetchStates() });
-    } else {
-      addMutation.mutate(
-        { movieId, value },
-        { onSuccess: () => refetchStates() }
-      );
-    }
-  };
 
   return (
     <div className="flex flex-col gap-2">
