@@ -11,6 +11,7 @@ import {
 interface AddToWatchlistButtonProps {
   movieId: number;
   isAuthenticated: boolean;
+  isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
   onWatchlistChange?: () => void;
 }
@@ -18,12 +19,19 @@ interface AddToWatchlistButtonProps {
 export function AddToWatchlistButton({
   movieId,
   isAuthenticated,
+  isAuthLoading,
   accountStates,
   onWatchlistChange,
 }: AddToWatchlistButtonProps) {
   const inWatchlist = accountStates?.watchlist ?? false;
   const addMutation = useAddToWatchlistMutation();
   const removeMutation = useRemoveFromWatchlistMutation();
+
+  if (isAuthLoading) {
+    return (
+      <div className="inline-flex h-10 w-40 animate-pulse items-center rounded-lg border border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800" />
+    );
+  }
 
   if (!isAuthenticated) {
     return (

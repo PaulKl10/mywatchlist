@@ -14,10 +14,11 @@ const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 interface RateMovieButtonProps {
   movieId: number;
   isAuthenticated: boolean;
+  isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
 }
 
-export function RateMovieButton({ movieId, isAuthenticated, accountStates }: RateMovieButtonProps) {
+export function RateMovieButton({ movieId, isAuthenticated, isAuthLoading, accountStates }: RateMovieButtonProps) {
   const addMutation = useAddRatingMutation();
   const removeMutation = useRemoveRatingMutation();
 
@@ -45,6 +46,12 @@ export function RateMovieButton({ movieId, isAuthenticated, accountStates }: Rat
       addMutation.mutate({ movieId, value });
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="inline-flex h-10 w-44 animate-pulse items-center rounded-lg border border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800" />
+    );
+  }
 
   if (!isAuthenticated) {
     return (

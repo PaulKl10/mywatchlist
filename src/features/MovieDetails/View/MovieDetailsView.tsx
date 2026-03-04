@@ -23,7 +23,7 @@ interface MovieDetailsViewProps {
 
 export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { data, isLoading, isError, error } = useGetMovieDetailsQuery(movieId);
   const { data: watchProviders } = useGetWatchProvidersQuery(movieId);
   const { data: credits } = useGetMovieCreditsQuery(movieId);
@@ -165,12 +165,14 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
               <AddToWatchlistButton
                 movieId={data.id}
                 isAuthenticated={!!user}
+                isAuthLoading={isAuthLoading}
                 accountStates={accountStates}
                 onWatchlistChange={refetchAccountStates}
               />
               <RateMovieButton
                 movieId={data.id}
                 isAuthenticated={!!user}
+                isAuthLoading={isAuthLoading}
                 accountStates={accountStates}
               />
             </div>
