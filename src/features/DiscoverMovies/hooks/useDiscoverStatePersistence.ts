@@ -9,31 +9,29 @@ import {
   saveDiscoverState,
 } from "@/features/DiscoverMovies/utils/discover-storage";
 
+function getInitialPage(): number {
+  const stored = getStoredDiscoverState();
+  return stored?.page ?? 1;
+}
+
 export function useDiscoverStatePersistence(
-  formValues: TDiscoverFiltersForm,
+  formValues: Partial<TDiscoverFiltersForm>,
   reset: UseFormReset<TDiscoverFiltersForm>
 ) {
-  const [page, setPage] = useState(1);
-  const [hasRestored, setHasRestored] = useState(false);
+  const [page, setPage] = useState(getInitialPage);
 
   useEffect(() => {
-    const stored = getStoredDiscoverState();
-    if (stored) {
-      reset(stored.formValues);
-      setPage(stored.page);
-    }
-    setHasRestored(true);
-  }, [reset]);
-
-  useEffect(() => {
-    if (!hasRestored) return;
-    saveDiscoverState(formValues, page);
-  }, [formValues, page, hasRestored]);
+    const merged: TDiscoverFiltersForm = {
+      ...DEFAULT_FILTER_VALUES,
+      ...formValues,
+    };
+    saveDiscoverState(merged, page);
+  }, [formValues, page]);
 
   const handleFiltersReset = () => {
     reset(DEFAULT_FILTER_VALUES);
     setPage(1);
   };
 
-  return { page, setPage, hasRestored, handleFiltersReset };
+  return { page, setPage, handleFiltersReset };
 }

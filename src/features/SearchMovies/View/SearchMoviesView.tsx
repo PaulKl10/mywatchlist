@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Search, X } from "lucide-react";
 import { MovieCard } from "@/components/MovieCard";
 import { PageFilter } from "@/components/PageFilter";
@@ -13,18 +13,19 @@ interface SearchMoviesViewProps {
 
 export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const [pageByQuery, setPageByQuery] = useState<Record<string, number>>({});
 
   const debouncedQuery = useDebounce(query, 500);
+  const page = pageByQuery[debouncedQuery] ?? 1;
 
   const { data, isLoading, isError, error } = useSearchMoviesQuery(
     debouncedQuery,
     page,
   );
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery]);
+  const handlePageChange = (p: number) => {
+    setPageByQuery((prev) => ({ ...prev, [debouncedQuery]: p }));
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -84,7 +85,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
               <PageFilter
                 currentPage={data.page}
                 totalPages={data.total_pages}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
                 isLoading={isLoading}
               />
             </div>

@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import axios from "axios";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export type TSuggestion = {
   id: string;

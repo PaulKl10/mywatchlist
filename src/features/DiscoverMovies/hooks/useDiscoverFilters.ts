@@ -1,7 +1,9 @@
-import { useForm } from "react-hook-form";
+import { useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import {
   DEFAULT_FILTER_VALUES,
 } from "@/features/DiscoverMovies/components/DiscoverFilters";
+import { getStoredDiscoverState } from "@/features/DiscoverMovies/utils/discover-storage";
 import type {
   TDiscoverFiltersForm,
   TDiscoverMoviesParams,
@@ -29,14 +31,20 @@ function formValuesToParams(
   return params;
 }
 
+function getInitialFormValues(): TDiscoverFiltersForm {
+  const stored = getStoredDiscoverState();
+  return stored?.formValues ?? DEFAULT_FILTER_VALUES;
+}
+
 export function useDiscoverFilters() {
+  const defaultValues = useMemo(() => getInitialFormValues(), []);
   const form = useForm<TDiscoverFiltersForm>({
-    defaultValues: DEFAULT_FILTER_VALUES,
+    defaultValues,
   });
 
-  const formValues = form.watch();
+  const formValues = useWatch({ control: form.control });
   const formValuesDebounced = useDebounce(formValues, 500);
-  const filterParams = formValuesToParams(formValuesDebounced);
+  const filterParams = formValuesToParams(formValuesDebounced as TDiscoverFiltersForm);
 
   return {
     ...form,

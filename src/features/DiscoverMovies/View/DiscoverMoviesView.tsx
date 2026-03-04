@@ -113,7 +113,7 @@ export function DiscoverMoviesView() {
       </div>
       <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
         {isLoading
-          ? Array.from({ length: 10 }).map((_: unknown, i: number) => (
+          ? Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
                 className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"

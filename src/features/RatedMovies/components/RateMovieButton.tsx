@@ -2,7 +2,7 @@
 
 import { Loader2, Star } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
 import {
   useAddRatingMutation,
@@ -27,22 +27,21 @@ export function RateMovieButton({ movieId, isAuthenticated, isAuthLoading, accou
       ? accountStates.rated.value
       : null;
 
-  const [localRating, setLocalRating] = useState<number | null | "sync">("sync");
-
-  useEffect(() => {
-    setLocalRating("sync");
-  }, [movieId]);
+  const [localOverride, setLocalOverride] = useState<{
+    movieId: number;
+    rating: number | null;
+  } | null>(null);
 
   const userRating =
-    localRating === "sync" ? serverRating : localRating;
+    localOverride?.movieId === movieId ? localOverride.rating : serverRating;
 
   const handleRate = (value: number) => {
-    const current = localRating === "sync" ? serverRating : localRating;
+    const current = userRating;
     if (current === value) {
-      setLocalRating(null);
+      setLocalOverride({ movieId, rating: null });
       removeMutation.mutate(movieId);
     } else {
-      setLocalRating(value);
+      setLocalOverride({ movieId, rating: value });
       addMutation.mutate({ movieId, value });
     }
   };

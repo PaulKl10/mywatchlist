@@ -2,7 +2,7 @@ const STATIC_CACHE = "mywatchlist-static-v5";
 const API_CACHE = "mywatchlist-api-v5";
 const IMAGE_CACHE = "mywatchlist-image-v5";
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   // On peut pré-cacher des ressources ici si besoin plus tard
   self.skipWaiting();
 });
