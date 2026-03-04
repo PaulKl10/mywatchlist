@@ -61,7 +61,7 @@ export async function GET(
 
   const user = profileUser;
 
-  const items: TPublicWatchlistItem[] = user.watchlistItems.map((item) => ({
+  const items: TPublicWatchlistItem[] = user.watchlistItems.map((item: (typeof user.watchlistItems)[number]) => ({
     id: item.tmdb_movie_id,
     title: item.title,
     poster_path: item.poster_path,

@@ -198,7 +198,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                             .sort(
                               (a, b) => a.display_priority - b.display_priority,
                             )
-                            .map((provider) => (
+                            .map((provider: (typeof watchProviders.flatrate)[number]) => (
                               <WatchProviderCard
                                 key={provider.provider_id}
                                 provider={provider}
@@ -216,7 +216,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                             .sort(
                               (a, b) => a.display_priority - b.display_priority,
                             )
-                            .map((provider) => (
+                            .map((provider: (typeof watchProviders.rent)[number]) => (
                               <WatchProviderCard
                                 key={provider.provider_id}
                                 provider={provider}
@@ -234,7 +234,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                             .sort(
                               (a, b) => a.display_priority - b.display_priority,
                             )
-                            .map((provider) => (
+                            .map((provider: (typeof watchProviders.buy)[number]) => (
                               <WatchProviderCard
                                 key={provider.provider_id}
                                 provider={provider}
@@ -268,7 +268,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                   {credits.cast
                     .sort((a, b) => a.order - b.order)
                     .slice(0, 20)
-                    .map((castMember) => (
+                    .map((castMember: (typeof credits.cast)[number]) => (
                       <CastCard key={castMember.id} castMember={castMember} />
                     ))}
                 </div>

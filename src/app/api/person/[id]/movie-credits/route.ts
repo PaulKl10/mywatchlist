@@ -51,7 +51,7 @@ export async function GET(
           const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
           return dateB - dateA;
         })
-        .map((c) => ({
+        .map((c: (typeof data.cast)[number]) => ({
           id: c.id,
           title: c.title,
           poster_path: c.poster_path,

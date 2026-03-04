@@ -60,7 +60,7 @@ export function DiscoverFilters({
             {...register("sort_by")}
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
           >
-            {SORT_OPTIONS.map((opt) => (
+            {SORT_OPTIONS.map((opt: (typeof SORT_OPTIONS)[number]) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -101,7 +101,7 @@ export function DiscoverFilters({
           Genres
         </span>
         <div className="flex flex-wrap gap-2">
-          {TMDB_MOVIE_GENRES.map((genre) => (
+          {TMDB_MOVIE_GENRES.map((genre: (typeof TMDB_MOVIE_GENRES)[number]) => (
             <button
               key={genre.id}
               type="button"

@@ -25,8 +25,8 @@ export function DiscoverMoviesView() {
     if (withGenres) {
       const ids = withGenres
         .split(",")
-        .map((s) => parseInt(s.trim(), 10))
-        .filter((n) => !Number.isNaN(n));
+        .map((s: string) => parseInt(s.trim(), 10))
+        .filter((n: number) => !Number.isNaN(n));
       if (ids.length > 0) {
         setValue("with_genres", ids);
       }
@@ -113,14 +113,14 @@ export function DiscoverMoviesView() {
       </div>
       <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
         {isLoading
-          ? Array.from({ length: 10 }).map((_, i) => (
+          ? Array.from({ length: 10 }).map((_: unknown, i: number) => (
               <div
                 key={i}
                 className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
               />
             ))
           : data
-            ? data.results.map((movie) => (
+            ? data.results.map((movie: (typeof data.results)[number]) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))
             : null}

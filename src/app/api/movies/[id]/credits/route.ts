@@ -45,7 +45,7 @@ export async function GET(
     );
 
     const response: TMovieCredits = {
-      cast: data.cast.map((c) => ({
+      cast: data.cast.map((c: (typeof data.cast)[number]) => ({
         id: c.id,
         name: c.name,
         character: c.character,

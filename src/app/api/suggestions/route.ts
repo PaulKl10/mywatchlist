@@ -40,7 +40,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  const result: TSuggestion[] = suggestions.map((s) => ({
+  const result: TSuggestion[] = suggestions.map((s: (typeof suggestions)[number]) => ({
     id: s.id,
     tmdb_movie_id: s.tmdb_movie_id,
     title: s.title,

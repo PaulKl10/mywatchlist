@@ -68,14 +68,14 @@ export function MovieRow({ title, movies, isLoading, exploreHref }: MovieRowProp
         className="flex gap-3 overflow-x-auto px-4 pb-4 md:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
+          Array.from({ length: 8 }).map((_: unknown, i: number) => (
             <div
               key={i}
               className="h-[240px] w-[160px] shrink-0 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
             />
           ))
         ) : (
-          movies.map((movie) => (
+          movies.map((movie: (typeof movies)[number]) => (
             <div
               key={movie.id}
               className="w-[160px] shrink-0"

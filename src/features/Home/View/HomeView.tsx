@@ -42,7 +42,7 @@ export function HomeView() {
         exploreHref="/discover"
       />
 
-      {HOME_GENRES.map((genre) => (
+      {HOME_GENRES.map((genre: (typeof HOME_GENRES)[number]) => (
         <GenreRow
           key={genre.id}
           genreId={genre.id}

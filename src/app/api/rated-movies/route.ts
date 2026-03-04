@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       }
     );
 
-    const results: TRatedMovie[] = data.results.map((m) => ({
+    const results: TRatedMovie[] = data.results.map((m: (typeof data.results)[number]) => ({
       ...m,
       rating: m.rating ?? 0,
     }));

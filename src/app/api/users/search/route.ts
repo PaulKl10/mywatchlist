@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    users: users.map((u) => ({
+    users: users.map((u: (typeof users)[number]) => ({
       tmdb_id: u.tmdb_id,
       username: u.username,
       gravatar_hash: u.gravatar_hash,
