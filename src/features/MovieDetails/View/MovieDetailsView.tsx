@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Clock, Monitor, Star, Users } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
+import { useAccountStatesQuery } from "@/hooks/useAccountStatesQuery";
 import { AddToWatchlistButton } from "@/features/Watchlist/components/AddToWatchlistButton";
 import { RateMovieButton } from "@/features/RatedMovies/components/RateMovieButton";
 import { SuggestToFriendForm } from "@/features/Suggestions/components/SuggestToFriendForm";
@@ -21,9 +23,12 @@ interface MovieDetailsViewProps {
 
 export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { data, isLoading, isError, error } = useGetMovieDetailsQuery(movieId);
   const { data: watchProviders } = useGetWatchProvidersQuery(movieId);
   const { data: credits } = useGetMovieCreditsQuery(movieId);
+  const { data: accountStates, refetch: refetchAccountStates } =
+    useAccountStatesQuery(movieId, !!user);
 
   if (isLoading) {
     return (
@@ -157,8 +162,17 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
             )}
 
             <div className="mt-6 flex flex-wrap gap-6">
-              <AddToWatchlistButton movieId={data.id} />
-              <RateMovieButton movieId={data.id} />
+              <AddToWatchlistButton
+                movieId={data.id}
+                isAuthenticated={!!user}
+                accountStates={accountStates}
+                onWatchlistChange={refetchAccountStates}
+              />
+              <RateMovieButton
+                movieId={data.id}
+                isAuthenticated={!!user}
+                accountStates={accountStates}
+              />
             </div>
 
             <div className="mt-6">

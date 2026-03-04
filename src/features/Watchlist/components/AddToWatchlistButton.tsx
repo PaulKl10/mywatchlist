@@ -1,9 +1,8 @@
 "use client";
 
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
-import { useAuth } from "@/providers/AuthProvider";
 import Link from "next/link";
-import { useAccountStatesQuery } from "@/hooks/useAccountStatesQuery";
+import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
 import {
   useAddToWatchlistMutation,
   useRemoveFromWatchlistMutation,
@@ -11,19 +10,22 @@ import {
 
 interface AddToWatchlistButtonProps {
   movieId: number;
+  isAuthenticated: boolean;
+  accountStates?: TAccountStates | null;
+  onWatchlistChange?: () => void;
 }
 
-export function AddToWatchlistButton({ movieId }: AddToWatchlistButtonProps) {
-  const { user } = useAuth();
-  const { data: accountStates, refetch: refetchStates } = useAccountStatesQuery(
-    movieId,
-    !!user
-  );
+export function AddToWatchlistButton({
+  movieId,
+  isAuthenticated,
+  accountStates,
+  onWatchlistChange,
+}: AddToWatchlistButtonProps) {
   const inWatchlist = accountStates?.watchlist ?? false;
   const addMutation = useAddToWatchlistMutation();
   const removeMutation = useRemoveFromWatchlistMutation();
 
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <Link
         href="/login"
@@ -40,11 +42,11 @@ export function AddToWatchlistButton({ movieId }: AddToWatchlistButtonProps) {
   const handleClick = () => {
     if (inWatchlist) {
       removeMutation.mutate(movieId, {
-        onSuccess: () => refetchStates(),
+        onSuccess: () => onWatchlistChange?.(),
       });
     } else {
       addMutation.mutate(movieId, {
-        onSuccess: () => refetchStates(),
+        onSuccess: () => onWatchlistChange?.(),
       });
     }
   };

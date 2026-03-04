@@ -3,8 +3,7 @@
 import { Loader2, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/providers/AuthProvider";
-import { useAccountStatesQuery } from "@/hooks/useAccountStatesQuery";
+import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
 import {
   useAddRatingMutation,
   useRemoveRatingMutation,
@@ -14,11 +13,11 @@ const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 interface RateMovieButtonProps {
   movieId: number;
+  isAuthenticated: boolean;
+  accountStates?: TAccountStates | null;
 }
 
-export function RateMovieButton({ movieId }: RateMovieButtonProps) {
-  const { user } = useAuth();
-  const { data: accountStates } = useAccountStatesQuery(movieId, !!user);
+export function RateMovieButton({ movieId, isAuthenticated, accountStates }: RateMovieButtonProps) {
   const addMutation = useAddRatingMutation();
   const removeMutation = useRemoveRatingMutation();
 
@@ -47,7 +46,7 @@ export function RateMovieButton({ movieId }: RateMovieButtonProps) {
     }
   };
 
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <Link
         href="/login"
