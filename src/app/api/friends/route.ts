@@ -54,3 +54,87 @@ export async function GET() {
 
   return NextResponse.json({ friends });
 }
+
+export async function POST(request: Request) {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const session = await prisma.session.findUnique({
+    where: { tmdb_session_id: sessionId },
+    include: { user: true },
+  });
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { receiverTmdbId?: number };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  const receiverTmdbId = body.receiverTmdbId;
+  if (typeof receiverTmdbId !== "number") {
+    return NextResponse.json({ error: "receiverTmdbId required" }, { status: 400 });
+  }
+
+  const receiver = await prisma.user.findUnique({
+    where: { tmdb_id: receiverTmdbId },
+  });
+
+  if (!receiver) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (receiver.id === session.user.id) {
+    return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
+  }
+
+  const existing = await prisma.friendship.findUnique({
+    where: {
+      senderId_receiverId: {
+        senderId: session.user.id,
+        receiverId: receiver.id,
+      },
+    },
+  });
+
+  if (existing) {
+    return NextResponse.json(
+      { error: existing.status === "PENDING" ? "Request already sent" : "Already friends" },
+      { status: 400 }
+    );
+  }
+
+  const reverseExisting = await prisma.friendship.findUnique({
+    where: {
+      senderId_receiverId: {
+        senderId: receiver.id,
+        receiverId: session.user.id,
+      },
+    },
+  });
+
+  if (reverseExisting) {
+    return NextResponse.json(
+      { error: reverseExisting.status === "PENDING" ? "They already sent you a request" : "Already friends" },
+      { status: 400 }
+    );
+  }
+
+  await prisma.friendship.create({
+    data: {
+      senderId: session.user.id,
+      receiverId: receiver.id,
+      status: "PENDING",
+    },
+  });
+
+  return NextResponse.json({ success: true });
+}

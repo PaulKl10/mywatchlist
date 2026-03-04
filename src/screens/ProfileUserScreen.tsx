@@ -92,7 +92,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
       : null;
 
   return (
-    <div className="flex flex-col gap-10 px-4 md:px-32">
+    <div className="flex flex-col gap-10 px-4 md:px-32 py-12">
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
           {safeAvatarUrl ? (
@@ -113,7 +113,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {profileUser.username || `Utilisateur ${profileUser.tmdb_id}`}
           </h1>
-          <p className="text-zinc-500 dark:text-zinc-400">
+          <p className="text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
             La watchlist de cet utilisateur est privée
           </p>
         </div>
@@ -121,7 +121,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
 
       <section className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">
         <Bookmark className="mx-auto h-12 w-12 text-zinc-400" />
-        <p className="mt-2 text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
           La watchlist de cet utilisateur n&apos;est pas accessible
         </p>
       </section>
