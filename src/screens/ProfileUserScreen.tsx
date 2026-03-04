@@ -1,11 +1,12 @@
 "use client";
 
-import React, { use, useEffect } from "react";
+import React, { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Bookmark, User } from "lucide-react";
+import { Bookmark, User, UserMinus } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useRemoveFriendMutation } from "@/features/Profile/hooks/useRemoveFriendMutation";
 import { MovieCard } from "@/components/MovieCard";
 import type { TMovie } from "@/types/movie.type";
 
@@ -60,7 +61,9 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
   } | null>(null);
   const [watchlist, setWatchlist] = React.useState<TPublicWatchlistItem[] | null>(null);
   const [showAllWatchlist, setShowAllWatchlist] = React.useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [loading, setLoading] = React.useState(true);
+  const removeMutation = useRemoveFriendMutation();
   const [error, setError] = React.useState<boolean>(false);
 
   useEffect(() => {
@@ -130,6 +133,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
   return (
     <div className="flex flex-col gap-10 px-4 md:px-32 py-12">
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <div className="flex flex-1 flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
           {safeAvatarUrl ? (
             <Image
@@ -157,7 +161,62 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
               : "Ajoutez cette personne en ami pour voir sa watchlist"}
           </p>
         </div>
+        {watchlist !== null && (
+          <button
+            type="button"
+            onClick={() => setShowRemoveConfirm(true)}
+            className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+          >
+            <UserMinus className="h-4 w-4" />
+            Supprimer des amis
+          </button>
+        )}
+        </div>
       </section>
+
+      {showRemoveConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            aria-hidden
+            onClick={() => setShowRemoveConfirm(false)}
+          />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Supprimer un ami
+            </h3>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+              Êtes-vous sûr de vouloir supprimer{" "}
+              <strong>
+                {profileUser.username || `Utilisateur ${profileUser.tmdb_id}`}
+              </strong>{" "}
+              de vos amis ?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRemoveConfirm(false)}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeMutation.mutate(tmdbIdNum, {
+                    onSuccess: () => router.push("/profile"),
+                    onSettled: () => setShowRemoveConfirm(false),
+                  });
+                }}
+                disabled={removeMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {removeMutation.isPending ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {watchlist && watchlist.length > 0 ? (
         <section>
