@@ -24,6 +24,26 @@ model User {
   // Suggestions de films
   sentSuggestions     Suggestion[] @relation("suggestedBy")
   receivedSuggestions Suggestion[] @relation("suggestedTo")
+
+  // Watchlist en BDD (pour affichage public sur profils)
+  watchlistItems WatchlistItem[]
+}
+
+// Cache watchlist pour affichage sur profils publics
+model WatchlistItem {
+  id            String   @id @default(cuid())
+  userId        String
+  tmdb_movie_id Int
+  poster_path   String?
+  title         String
+  release_date  String?
+  vote_average  Float?
+  overview      String?
+  added_at      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tmdb_movie_id])
 }
 
 model Session {

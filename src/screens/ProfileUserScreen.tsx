@@ -6,10 +6,37 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Bookmark, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
+import { MovieCard } from "@/components/MovieCard";
+import type { TMovie } from "@/types/movie.type";
 
 type ProfileUserScreenProps = {
   params: Promise<{ tmdbId: string }>;
 };
+
+const WATCHLIST_PREVIEW_COUNT = 6;
+
+type TPublicWatchlistItem = {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+  vote_average: number;
+  overview: string;
+};
+
+function toMovie(item: TPublicWatchlistItem): TMovie {
+  return {
+    ...item,
+    adult: false,
+    backdrop_path: "",
+    genre_ids: [],
+    original_language: "fr",
+    original_title: item.title,
+    popularity: 0,
+    video: false,
+    vote_count: 0,
+  };
+}
 
 export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
   const { tmdbId } = use(params);
@@ -31,17 +58,26 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
     gravatar_hash: string | null;
     tmdb_avatar_path: string | null;
   } | null>(null);
+  const [watchlist, setWatchlist] = React.useState<TPublicWatchlistItem[] | null>(null);
+  const [showAllWatchlist, setShowAllWatchlist] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<boolean>(false);
 
   useEffect(() => {
     if (user && isOwnProfile) return;
-    fetch(`/api/users/${tmdbId}`)
-      .then((res) => {
+    Promise.all([
+      fetch(`/api/users/${tmdbId}`).then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
+      }),
+      fetch(`/api/users/${tmdbId}/watchlist`).then((res) =>
+        res.ok ? res.json() : null
+      ),
+    ])
+      .then(([userData, watchlistData]) => {
+        setProfileUser(userData);
+        setWatchlist(watchlistData?.watchlist ?? null);
       })
-      .then(setProfileUser)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [tmdbId, user, isOwnProfile]);
@@ -114,17 +150,54 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
             {profileUser.username || `Utilisateur ${profileUser.tmdb_id}`}
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
-            La watchlist de cet utilisateur est privée
+            {watchlist !== null
+              ? watchlist.length > 0
+                ? `${watchlist.length} film${watchlist.length > 1 ? "s" : ""} dans sa watchlist`
+                : "Sa watchlist est vide"
+              : "Ajoutez cette personne en ami pour voir sa watchlist"}
           </p>
         </div>
       </section>
 
-      <section className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">
-        <Bookmark className="mx-auto h-12 w-12 text-zinc-400" />
-        <p className="mt-2 text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
-          La watchlist de cet utilisateur n&apos;est pas accessible
-        </p>
-      </section>
+      {watchlist && watchlist.length > 0 ? (
+        <section>
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+            <Bookmark className="h-5 w-5" />
+            Watchlist
+          </h2>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+            {(showAllWatchlist ? watchlist : watchlist.slice(0, WATCHLIST_PREVIEW_COUNT)).map(
+              (item) => (
+                <MovieCard key={item.id} movie={toMovie(item)} />
+              )
+            )}
+          </div>
+          {!showAllWatchlist && watchlist.length > WATCHLIST_PREVIEW_COUNT && (
+            <button
+              type="button"
+              onClick={() => setShowAllWatchlist(true)}
+              className="mt-4 w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Voir plus ({watchlist.length - WATCHLIST_PREVIEW_COUNT} film
+              {watchlist.length - WATCHLIST_PREVIEW_COUNT > 1 ? "s" : ""})
+            </button>
+          )}
+        </section>
+      ) : watchlist !== null ? (
+        <section className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">
+          <Bookmark className="mx-auto h-12 w-12 text-zinc-400" />
+          <p className="mt-2 text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
+            Sa watchlist est vide
+          </p>
+        </section>
+      ) : (
+        <section className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">
+          <Bookmark className="mx-auto h-12 w-12 text-zinc-400" />
+          <p className="mt-2 text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
+            Ajoutez cette personne en ami pour voir sa watchlist
+          </p>
+        </section>
+      )}
 
       <section>
         <Link
