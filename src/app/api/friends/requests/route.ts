@@ -38,7 +38,7 @@ export async function GET() {
     include: { sender: true },
   });
 
-  const requests: TFriendRequest[] = friendships.map((f) => ({
+  const requests: TFriendRequest[] = friendships.map((f: (typeof friendships)[number]) => ({
     id: f.id,
     sender: {
       id: f.sender.id,
