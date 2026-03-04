@@ -19,6 +19,9 @@ Application web pour gérer sa liste de films à regarder, noter des films et pa
 - **Mon profil** : Aperçu de votre watchlist, liste d’amis, demandes d’ami en attente et suggestions reçues.
 - **Amis** : Ajoutez des amis par nom ou ID TMDB. Une fois amis, vous pouvez voir leurs watchlists et leur suggérer des films.
 - **Suggestions** : Quand un ami vous suggère un film, acceptez pour l’ajouter à votre watchlist ou refusez pour l’ignorer.
+<img width="1913" height="730" alt="Capture d’écran 2026-03-04 à 22 04 47" src="https://github.com/user-attachments/assets/c3af1da3-2b1a-4ed3-bb8a-b0c2f15bcdad" />
+
+
 
 ### À propos de TMDB
 
