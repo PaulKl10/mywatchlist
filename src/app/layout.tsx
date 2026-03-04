@@ -41,7 +41,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
       >
         <Providers>
-          <div className="flex min-h-screen flex-col">
+          <div id="app-root" className="flex min-h-screen flex-col">
             <Header title="My Watchlist" />
             <main className="flex-1">{children}</main>
             <Footer />
