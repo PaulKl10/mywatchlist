@@ -53,6 +53,13 @@ export function Header({
           {user && (
             <>
               <Link
+                href="/profile"
+                className="hidden md:flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <User className="h-4 w-4" />
+                Mon profil
+              </Link>
+              <Link
                 href="/watchlist"
                 className="hidden md:flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
@@ -105,6 +112,14 @@ export function Header({
                         onClick={() => setIsUserMenuOpen(false)}
                       />
                       <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800 z-9998">
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                        >
+                          <User className="h-4 w-4" />
+                          Mon profil
+                        </Link>
                         <Link
                           href="/watchlist"
                           onClick={() => setIsUserMenuOpen(false)}
