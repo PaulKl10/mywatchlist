@@ -5,6 +5,7 @@ import { ServiceWorkerRegister } from "./ServiceWorkerRegister";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
           </div>
         </Providers>
         <ServiceWorkerRegister />
+        <SpeedInsights />
       </body>
     </html>
   );
