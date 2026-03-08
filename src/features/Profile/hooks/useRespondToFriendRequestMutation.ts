@@ -25,6 +25,7 @@ export function useRespondToFriendRequestMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
     },
   });
 }

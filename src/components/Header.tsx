@@ -7,6 +7,9 @@ import { Menu, Search } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchMoviesView } from "@/features/SearchMovies/View/SearchMoviesView";
 import { MenuBurger } from "@/components/MenuBurger";
+import { NotificationBadge } from "@/components/NotificationBadge";
+import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
+import { useAppBadge } from "@/features/Notifications/hooks/useAppBadge";
 
 const PATH_TITLES: Record<string, string> = {
   "/": "My Watchlist",
@@ -57,6 +60,11 @@ export function Header({ showSearch = true }: HeaderProps) {
       ? avatarUrl
       : null;
 
+  const { data: notificationCounts } = useNotificationCountsQuery(!!user);
+  const totalNotifications = notificationCounts?.total ?? 0;
+
+  useAppBadge(totalNotifications);
+
   return (
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 md:px-32">
@@ -64,10 +72,19 @@ export function Header({ showSearch = true }: HeaderProps) {
           <button
             type="button"
             onClick={() => setIsBurgerOpen(true)}
-            className="rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            aria-label="Ouvrir le menu"
+            className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            aria-label={
+              totalNotifications > 0
+                ? `Ouvrir le menu (${totalNotifications} notification${totalNotifications > 1 ? "s" : ""})`
+                : "Ouvrir le menu"
+            }
           >
             <Menu className="h-6 w-6" />
+            {totalNotifications > 0 && (
+              <span className="absolute -right-0.5 -top-0.5">
+                <NotificationBadge count={totalNotifications} />
+              </span>
+            )}
           </button>
           <Link
             href="/"
@@ -104,6 +121,7 @@ export function Header({ showSearch = true }: HeaderProps) {
         user={user}
         onLogout={logout}
         avatarUrl={safeAvatarUrl}
+        notificationCounts={notificationCounts}
       />
 
       {isSearchOpen && (

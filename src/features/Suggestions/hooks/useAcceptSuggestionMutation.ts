@@ -19,6 +19,7 @@ export function useAcceptSuggestionMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suggestions"] });
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
     },
   });
 }
