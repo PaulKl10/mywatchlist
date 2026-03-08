@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+
+async function fetchMovieRuntime(
+  movieId: number,
+  apiKey: string
+): Promise<number | null> {
+  try {
+    const { data } = await axios.get<{ runtime: number | null }>(
+      `${TMDB_BASE_URL}/movie/${movieId}`,
+      { params: { api_key: apiKey, language: "fr-FR" } }
+    );
+    return data.runtime ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(
   request: Request,
@@ -24,7 +40,7 @@ export async function POST(
     );
   }
 
-  let body: { value: number };
+  let body: { value: number; runtime?: number };
   try {
     body = await request.json();
   } catch {
@@ -34,7 +50,7 @@ export async function POST(
     );
   }
 
-  const { value } = body;
+  const { value, runtime: runtimeFromBody } = body;
   if (
     typeof value !== "number" ||
     value < 0.5 ||
@@ -56,6 +72,35 @@ export async function POST(
         headers: { "Content-Type": "application/json" },
       }
     );
+
+    // Stocker le runtime pour le compteur (tracking interne, pas de double-comptage)
+    const session = await prisma.session.findUnique({
+      where: { tmdb_session_id: sessionId },
+      include: { user: true },
+    });
+
+    if (session?.user) {
+      const runtime =
+        typeof runtimeFromBody === "number" && runtimeFromBody >= 0
+          ? runtimeFromBody
+          : await fetchMovieRuntime(Number(id), apiKey);
+
+      await prisma.watchTimeEntry.upsert({
+        where: {
+          userId_tmdb_movie_id: {
+            userId: session.user.id,
+            tmdb_movie_id: Number(id),
+          },
+        },
+        create: {
+          userId: session.user.id,
+          tmdb_movie_id: Number(id),
+          runtime,
+        },
+        update: { runtime },
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
@@ -85,6 +130,10 @@ export async function DELETE(
     );
   }
 
+  const session = await prisma.session.findUnique({
+    where: { tmdb_session_id: sessionId },
+  });
+
   try {
     await axios.delete(
       `${TMDB_BASE_URL}/movie/${id}/rating`,
@@ -92,11 +141,31 @@ export async function DELETE(
         params: { api_key: apiKey, session_id: sessionId },
       }
     );
-    return NextResponse.json({ success: true });
   } catch {
+    // Même en cas d'échec TMDB, on supprime de notre BDD pour garder le compteur cohérent
+    if (session) {
+      await prisma.watchTimeEntry.deleteMany({
+        where: {
+          userId: session.userId,
+          tmdb_movie_id: Number(id),
+        },
+      });
+    }
     return NextResponse.json(
       { error: "Impossible de supprimer la note" },
       { status: 500 }
     );
   }
+
+  // Supprimer du tracking (le film n'est plus compté)
+  if (session) {
+    await prisma.watchTimeEntry.deleteMany({
+      where: {
+        userId: session.userId,
+        tmdb_movie_id: Number(id),
+      },
+    });
+  }
+
+  return NextResponse.json({ success: true });
 }

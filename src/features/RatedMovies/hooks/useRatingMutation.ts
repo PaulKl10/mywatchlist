@@ -6,8 +6,15 @@ export const useAddRatingMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ movieId, value }: { movieId: number; value: number }) =>
-      RatingService.addRating(movieId, value),
+    mutationFn: ({
+      movieId,
+      value,
+      runtime,
+    }: {
+      movieId: number;
+      value: number;
+      runtime?: number | null;
+    }) => RatingService.addRating(movieId, value, runtime),
     onMutate: async ({ movieId, value }) => {
       const queryKey = ["account-states", movieId] as const;
       await queryClient.cancelQueries({ queryKey });
@@ -28,10 +35,9 @@ export const useAddRatingMutation = () => {
         );
       }
     },
-    onSettled: (_, __, { movieId }) => {
-      // Ne pas invalider account-states : TMDB peut renvoyer des données pas encore à jour
-      // et écraser notre mise à jour optimiste. On garde le cache tel quel.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["rated-movies"] });
+      queryClient.invalidateQueries({ queryKey: ["watch-time"] });
     },
   });
 };
@@ -62,8 +68,8 @@ export const useRemoveRatingMutation = () => {
       }
     },
     onSettled: () => {
-      // Ne pas invalider account-states : TMDB peut renvoyer des données pas encore à jour
       queryClient.invalidateQueries({ queryKey: ["rated-movies"] });
+      queryClient.invalidateQueries({ queryKey: ["watch-time"] });
     },
   });
 };

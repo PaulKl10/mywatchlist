@@ -27,6 +27,20 @@ model User {
 
   // Watchlist en BDD (pour affichage public sur profils)
   watchlistItems WatchlistItem[]
+
+  // Films comptés pour le temps de visionnage (tracking interne uniquement)
+  watchTimeEntries WatchTimeEntry[]
+}
+
+model WatchTimeEntry {
+  id            String @id @default(cuid())
+  userId        String
+  tmdb_movie_id Int
+  runtime       Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tmdb_movie_id])
 }
 
 // Cache watchlist pour affichage sur profils publics

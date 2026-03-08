@@ -9,6 +9,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useRemoveFriendMutation } from "@/features/Profile/hooks/useRemoveFriendMutation";
 import { MovieCard } from "@/components/MovieCard";
 import type { TMovie } from "@/types/movie.type";
+import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
 
 type ProfileUserScreenProps = {
   params: Promise<{ tmdbId: string }>;
@@ -59,7 +60,9 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
     gravatar_hash: string | null;
     tmdb_avatar_path: string | null;
   } | null>(null);
-  const [watchlist, setWatchlist] = React.useState<TPublicWatchlistItem[] | null>(null);
+  const [watchlist, setWatchlist] = React.useState<
+    TPublicWatchlistItem[] | null
+  >(null);
   const [showAllWatchlist, setShowAllWatchlist] = React.useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [loading, setLoading] = React.useState(true);
@@ -74,7 +77,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
         return res.json();
       }),
       fetch(`/api/users/${tmdbId}/watchlist`).then((res) =>
-        res.ok ? res.json() : null
+        res.ok ? res.json() : null,
       ),
     ])
       .then(([userData, watchlistData]) => {
@@ -134,43 +137,43 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
     <div className="flex flex-col gap-10 px-4 md:px-32 py-12">
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="flex flex-1 flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-          {safeAvatarUrl ? (
-            <Image
-              src={safeAvatarUrl}
-              alt={profileUser.username || "Avatar"}
-              fill
-              className="object-cover"
-              sizes="96px"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <User className="h-12 w-12 text-zinc-400" />
-            </div>
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            {safeAvatarUrl ? (
+              <Image
+                src={safeAvatarUrl}
+                alt={profileUser.username || "Avatar"}
+                fill
+                className="object-cover"
+                sizes="96px"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <User className="h-12 w-12 text-zinc-400" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              {profileUser.username || `Utilisateur ${profileUser.tmdb_id}`}
+            </h1>
+            <p className="text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
+              {watchlist !== null
+                ? watchlist.length > 0
+                  ? `${watchlist.length} film${watchlist.length > 1 ? "s" : ""} dans sa watchlist`
+                  : "Sa watchlist est vide"
+                : "Ajoutez cette personne en ami pour voir sa watchlist"}
+            </p>
+          </div>
+          {watchlist !== null && (
+            <button
+              type="button"
+              onClick={() => setShowRemoveConfirm(true)}
+              className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+            >
+              <UserMinus className="h-4 w-4" />
+              Supprimer des amis
+            </button>
           )}
-        </div>
-        <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {profileUser.username || `Utilisateur ${profileUser.tmdb_id}`}
-          </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 px-8 md:px-0">
-            {watchlist !== null
-              ? watchlist.length > 0
-                ? `${watchlist.length} film${watchlist.length > 1 ? "s" : ""} dans sa watchlist`
-                : "Sa watchlist est vide"
-              : "Ajoutez cette personne en ami pour voir sa watchlist"}
-          </p>
-        </div>
-        {watchlist !== null && (
-          <button
-            type="button"
-            onClick={() => setShowRemoveConfirm(true)}
-            className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-          >
-            <UserMinus className="h-4 w-4" />
-            Supprimer des amis
-          </button>
-        )}
         </div>
       </section>
 
@@ -218,6 +221,8 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
         </>
       )}
 
+      <WatchTimeStats tmdbId={tmdbIdNum} />
+
       {watchlist && watchlist.length > 0 ? (
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
@@ -225,11 +230,12 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
             Watchlist
           </h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-            {(showAllWatchlist ? watchlist : watchlist.slice(0, WATCHLIST_PREVIEW_COUNT)).map(
-              (item) => (
-                <MovieCard key={item.id} movie={toMovie(item)} />
-              )
-            )}
+            {(showAllWatchlist
+              ? watchlist
+              : watchlist.slice(0, WATCHLIST_PREVIEW_COUNT)
+            ).map((item) => (
+              <MovieCard key={item.id} movie={toMovie(item)} />
+            ))}
           </div>
           {!showAllWatchlist && watchlist.length > WATCHLIST_PREVIEW_COUNT && (
             <button

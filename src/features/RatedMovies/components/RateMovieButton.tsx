@@ -16,9 +16,16 @@ interface RateMovieButtonProps {
   isAuthenticated: boolean;
   isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
+  runtime?: number | null;
 }
 
-export function RateMovieButton({ movieId, isAuthenticated, isAuthLoading, accountStates }: RateMovieButtonProps) {
+export function RateMovieButton({
+  movieId,
+  isAuthenticated,
+  isAuthLoading,
+  accountStates,
+  runtime,
+}: RateMovieButtonProps) {
   const addMutation = useAddRatingMutation();
   const removeMutation = useRemoveRatingMutation();
 
@@ -42,7 +49,7 @@ export function RateMovieButton({ movieId, isAuthenticated, isAuthLoading, accou
       removeMutation.mutate(movieId);
     } else {
       setLocalOverride({ movieId, rating: value });
-      addMutation.mutate({ movieId, value });
+      addMutation.mutate({ movieId, value, runtime });
     }
   };
 

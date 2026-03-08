@@ -174,6 +174,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
                 isAuthenticated={!!user}
                 isAuthLoading={isAuthLoading}
                 accountStates={accountStates}
+                runtime={data.runtime}
               />
             </div>
 

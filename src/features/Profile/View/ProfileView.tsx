@@ -10,6 +10,7 @@ import { formatUserId } from "@/features/Profile/utils/formatUserId";
 import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
 import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
+import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
 
 const WATCHLIST_PREVIEW_COUNT = 6;
 
@@ -88,6 +89,7 @@ export function ProfileView() {
           </p>
         </div>
       </section>
+      <WatchTimeStats />
       <SuggestionsList />
       <FriendsList />
       <FriendRequestsList />
