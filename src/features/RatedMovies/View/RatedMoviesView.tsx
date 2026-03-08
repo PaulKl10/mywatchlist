@@ -72,7 +72,7 @@ export function RatedMoviesView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-950 md:px-32">
+      <div className="sticky top-16 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950 md:px-32">
         <h2 className="flex items-center gap-2 text-lg font-medium text-zinc-700 dark:text-zinc-300">
           <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
           Mes films notés ({data.total_results})
