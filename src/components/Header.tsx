@@ -3,9 +3,19 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search } from "lucide-react";
+import {
+  Bookmark,
+  Compass,
+  Home,
+  LogOut,
+  Menu,
+  Search,
+  Star,
+  User,
+} from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchMoviesView } from "@/features/SearchMovies/View/SearchMoviesView";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { MenuBurger } from "@/components/MenuBurger";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
@@ -35,10 +45,30 @@ interface HeaderProps {
 
 export function Header({ showSearch = true }: HeaderProps) {
   const pathname = usePathname();
-  const title = useMemo(() => getTitleFromPathname(pathname ?? "/"), [pathname]);
+  const title = useMemo(
+    () => getTitleFromPathname(pathname ?? "/"),
+    [pathname],
+  );
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { user, isLoading, logout } = useAuth();
+
+  const handleLogoutClick = () => {
+    setIsBurgerOpen(false);
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutConfirmOpen(false);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const gravatarHash = user?.avatar?.gravatar?.hash?.trim() || null;
   const gravatarUrl = gravatarHash
@@ -72,7 +102,7 @@ export function Header({ showSearch = true }: HeaderProps) {
           <button
             type="button"
             onClick={() => setIsBurgerOpen(true)}
-            className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 lg:hidden"
             aria-label={
               totalNotifications > 0
                 ? `Ouvrir le menu (${totalNotifications} notification${totalNotifications > 1 ? "s" : ""})`
@@ -92,6 +122,85 @@ export function Header({ showSearch = true }: HeaderProps) {
           >
             {title}
           </Link>
+          <nav className="hidden lg:flex items-center gap-1">
+            <Link
+              href="/"
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === "/"
+                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              }`}
+            >
+              <Home className="h-4 w-4" />
+            </Link>
+            {user && (
+              <>
+                <Link
+                  href="/watchlist"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/watchlist"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Ma watchlist"
+                >
+                  <Bookmark className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/rated-movies"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/rated-movies"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Mes films notés"
+                >
+                  <Star className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/discover"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/discover"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Explorer"
+                >
+                  <Compass className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/profile"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/profile" || pathname?.startsWith("/profile/")
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Mon profil"
+                >
+                  <span className="relative">
+                    <User className="h-4 w-4" />
+                    {totalNotifications > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5">
+                        <NotificationBadge count={totalNotifications} />
+                      </span>
+                    )}
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogoutClick}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/profile" || pathname?.startsWith("/profile/")
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Mon profil"
+                >
+                  <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 dark:hover:bg-zinc-700 dark:hover:text-red-300" />
+                </button>
+              </>
+            )}
+          </nav>
         </div>
         <div className="flex items-center gap-2">
           {!isLoading && !user && (
@@ -119,9 +228,21 @@ export function Header({ showSearch = true }: HeaderProps) {
         isOpen={isBurgerOpen}
         onClose={() => setIsBurgerOpen(false)}
         user={user}
-        onLogout={logout}
+        onLogout={handleLogoutClick}
         avatarUrl={safeAvatarUrl}
         notificationCounts={notificationCounts}
+      />
+
+      <ConfirmModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Déconnexion"
+        message="Êtes-vous sûr de vouloir vous déconnecter ?"
+        confirmLabel="Déconnexion"
+        cancelLabel="Annuler"
+        variant="danger"
+        isLoading={isLoggingOut}
       />
 
       {isSearchOpen && (

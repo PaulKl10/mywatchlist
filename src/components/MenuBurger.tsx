@@ -132,10 +132,7 @@ export function MenuBurger({
               <div className="my-2 border-t border-zinc-200 dark:border-zinc-700" />
               <button
                 type="button"
-                onClick={() => {
-                  onLogout();
-                  onClose();
-                }}
+                onClick={onLogout}
                 className={`${navLinkClass} w-full text-left`}
               >
                 <LogOut className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400 dark:hover:bg-zinc-700 dark:hover:text-red-300" />
