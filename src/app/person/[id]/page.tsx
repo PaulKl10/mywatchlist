@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { PersonMovieCreditsScreen } from "@/screens/PersonMovieCreditsScreen";
 
 interface PersonPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Filmographie - My Watchlist",
+  };
 }
 
 export default async function PersonPage({ params }: PersonPageProps) {

@@ -53,7 +53,7 @@ export function WatchlistView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-0 z-10 flex gap-4 items-center justify-between bg-zinc-50 dark:bg-zinc-950 py-2 px-4">
+      <div className="sticky top-16 z-10 flex gap-4 items-center justify-between bg-zinc-50 pt-5 pb-3 dark:bg-zinc-950 px-4 md:px-32">
         <h2 className="text-lg font-medium text-zinc-700 dark:text-zinc-300">
           Ma watchlist ({data.total_results} film
           {data.total_results > 1 ? "s" : ""})

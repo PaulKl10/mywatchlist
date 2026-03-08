@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DiscoverMoviesScreen } from "@/screens/DiscoverMoviesScreen";
+
+export const metadata: Metadata = {
+  title: "Explorer - My Watchlist",
+  description: "Découvrez des films",
+};
 
 export default function DiscoverPage() {
   return (

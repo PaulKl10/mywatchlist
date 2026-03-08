@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { LoginScreen } from "@/screens/LoginScreen";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Connexion - My Watchlist",
   description: "Connectez-vous avec votre compte TMDB",
 };

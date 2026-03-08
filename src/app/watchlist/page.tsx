@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { WatchlistScreen } from "@/screens/WatchlistScreen";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Ma Watchlist - My Watchlist",
   description: "Ma liste de films à regarder",
 };

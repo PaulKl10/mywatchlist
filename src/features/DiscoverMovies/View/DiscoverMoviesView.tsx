@@ -60,7 +60,7 @@ export function DiscoverMoviesView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-zinc-200 bg-zinc-50 py-4 dark:border-zinc-800 dark:bg-zinc-950 px-4 md:px-32">
+      <div className="sticky top-16 z-10 flex flex-col gap-4 border-b border-zinc-200 bg-zinc-50 pt-5 pb-3 dark:border-zinc-800 dark:bg-zinc-950 px-4 md:px-32">
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
