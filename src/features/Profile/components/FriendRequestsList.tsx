@@ -11,6 +11,8 @@ export function FriendRequestsList() {
   const { data: friendRequests, isLoading } = useFriendRequestsQuery(true);
   const respondMutation = useRespondToFriendRequestMutation();
 
+  if (!friendRequests || friendRequests.length === 0) return null;
+
   return (
     <section>
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200">

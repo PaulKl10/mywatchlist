@@ -57,23 +57,23 @@ export function WatchTimeStats({ tmdbId }: WatchTimeStatsProps = {}) {
           {data.movieCount > 1 ? "s" : ""})
         </span>
       </div>
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+      <div className="flex items-baseline gap-2 h-16">
         {days > 0 && (
-          <div className="flex items-center justify-center px-3 py-6 border border-zinc-200 dark:border-zinc-700 rounded-md">
+          <div className="flex items-center justify-center flex-1 h-full border border-zinc-200 dark:border-zinc-700 rounded-md">
             <span className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
               {days} J{days > 1 ? "s" : ""}
             </span>
           </div>
         )}
         {hours > 0 && (
-          <div className="flex items-center justify-center px-3 py-6 border border-zinc-200 dark:border-zinc-700 rounded-md">
+          <div className="flex items-center justify-center border flex-1 h-full border-zinc-200 dark:border-zinc-700 rounded-md">
             <span className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
               {hours} H
             </span>
           </div>
         )}
         {minutes > 0 && (
-          <div className="flex items-center justify-center px-3 py-6 border border-zinc-200 dark:border-zinc-700 rounded-md">
+          <div className="flex items-center justify-center border flex-1 h-full border-zinc-200 dark:border-zinc-700 rounded-md">
             <span className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
               {minutes} min
             </span>
