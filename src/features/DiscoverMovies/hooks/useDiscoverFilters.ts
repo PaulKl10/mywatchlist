@@ -16,6 +16,14 @@ function formValuesToParams(
   const params: Partial<TDiscoverMoviesParams> = {
     sort_by: formValues.sort_by,
   };
+
+  if (
+    formValues.sort_by === "vote_average.asc" ||
+    formValues.sort_by === "vote_average.desc"
+  ) {
+    params["vote_count.gte"] = 300;
+  }
+
   if (formValues.year && !Number.isNaN(Number(formValues.year))) {
     params.year = Number(formValues.year);
   }
