@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { fetchMovieDetails } from "@/lib/tmdb";
 import type { TDiscoverMoviesResponse } from "@/types/movie.type";
+import { getUserFromSessionId, syncWatchlistItem } from "@/lib/server/services";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -92,49 +91,9 @@ export async function POST(request: Request) {
       }
     );
 
-    // Sync avec notre BDD pour affichage sur profils publics
-    const session = await prisma.session.findUnique({
-      where: { tmdb_session_id: sessionId },
-      include: { user: true },
-    });
-
-    if (session?.user) {
-      if (watchlist) {
-        const movie = await fetchMovieDetails(media_id);
-        if (movie) {
-          await prisma.watchlistItem.upsert({
-            where: {
-              userId_tmdb_movie_id: {
-                userId: session.user.id,
-                tmdb_movie_id: media_id,
-              },
-            },
-            create: {
-              userId: session.user.id,
-              tmdb_movie_id: media_id,
-              poster_path: movie.poster_path,
-              title: movie.title,
-              release_date: movie.release_date || null,
-              vote_average: movie.vote_average,
-              overview: movie.overview || null,
-            },
-            update: {
-              poster_path: movie.poster_path,
-              title: movie.title,
-              release_date: movie.release_date || null,
-              vote_average: movie.vote_average,
-              overview: movie.overview || null,
-            },
-          });
-        }
-      } else {
-        await prisma.watchlistItem.deleteMany({
-          where: {
-            userId: session.user.id,
-            tmdb_movie_id: media_id,
-          },
-        });
-      }
+    const user = await getUserFromSessionId(sessionId);
+    if (user) {
+      await syncWatchlistItem(user.id, media_id, watchlist);
     }
 
     return NextResponse.json({ success: true });

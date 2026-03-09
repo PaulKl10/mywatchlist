@@ -1,76 +1,20 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { getFriends, addFriend, type TFriend } from "@/lib/server/services";
 
-export type TFriend = {
-  id: string;
-  tmdb_id: number;
-  username: string | null;
-  gravatar_hash: string | null;
-  tmdb_avatar_path: string | null;
-};
+export type { TFriend };
 
 export async function GET() {
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!sessionId) {
-    return NextResponse.json({ friends: [] }, { status: 200 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
-    return NextResponse.json({ friends: [] }, { status: 200 });
-  }
-
-  const friendships = await prisma.friendship.findMany({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { senderId: session.user.id },
-        { receiverId: session.user.id },
-      ],
-    },
-    include: {
-      sender: true,
-      receiver: true,
-    },
-  });
-
-  const friends = friendships.map((f: (typeof friendships)[number]) => {
-    const friend = f.senderId === session.user.id ? f.receiver : f.sender;
-    return {
-      id: friend.id,
-      tmdb_id: friend.tmdb_id,
-      username: friend.username,
-      gravatar_hash: friend.gravatar_hash,
-      tmdb_avatar_path: friend.tmdb_avatar_path,
-    } satisfies TFriend;
-  });
-
+  const friends = await getFriends(sessionId);
   return NextResponse.json({ friends });
 }
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   let body: { receiverTmdbId?: number };
   try {
@@ -81,60 +25,42 @@ export async function POST(request: Request) {
 
   const receiverTmdbId = body.receiverTmdbId;
   if (typeof receiverTmdbId !== "number") {
-    return NextResponse.json({ error: "receiverTmdbId required" }, { status: 400 });
-  }
-
-  const receiver = await prisma.user.findUnique({
-    where: { tmdb_id: receiverTmdbId },
-  });
-
-  if (!receiver) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  if (receiver.id === session.user.id) {
-    return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
-  }
-
-  const existing = await prisma.friendship.findUnique({
-    where: {
-      senderId_receiverId: {
-        senderId: session.user.id,
-        receiverId: receiver.id,
-      },
-    },
-  });
-
-  if (existing) {
     return NextResponse.json(
-      { error: existing.status === "PENDING" ? "Request already sent" : "Already friends" },
+      { error: "receiverTmdbId required" },
       { status: 400 }
     );
   }
 
-  const reverseExisting = await prisma.friendship.findUnique({
-    where: {
-      senderId_receiverId: {
-        senderId: receiver.id,
-        receiverId: session.user.id,
-      },
-    },
-  });
+  const result = await addFriend(sessionId, receiverTmdbId);
 
-  if (reverseExisting) {
-    return NextResponse.json(
-      { error: reverseExisting.status === "PENDING" ? "They already sent you a request" : "Already friends" },
-      { status: 400 }
-    );
+  if ("success" in result) {
+    return NextResponse.json({ success: true });
   }
 
-  await prisma.friendship.create({
-    data: {
-      senderId: session.user.id,
-      receiverId: receiver.id,
-      status: "PENDING",
-    },
-  });
-
-  return NextResponse.json({ success: true });
+  switch (result.error) {
+    case "unauthorized":
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    case "user_not_found":
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    case "cannot_add_self":
+      return NextResponse.json(
+        { error: "Cannot add yourself" },
+        { status: 400 }
+      );
+    case "request_already_sent":
+      return NextResponse.json(
+        { error: "Request already sent" },
+        { status: 400 }
+      );
+    case "they_sent_you_request":
+      return NextResponse.json(
+        { error: "They already sent you a request" },
+        { status: 400 }
+      );
+    case "already_friends":
+      return NextResponse.json(
+        { error: "Already friends" },
+        { status: 400 }
+      );
+  }
 }
