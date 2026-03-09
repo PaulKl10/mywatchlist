@@ -20,6 +20,7 @@ import { MenuBurger } from "@/components/MenuBurger";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
 import { useAppBadge } from "@/features/Notifications/hooks/useAppBadge";
+import Image from "next/image";
 
 const PATH_TITLES: Record<string, string> = {
   "/": "My Watchlist",
@@ -116,6 +117,7 @@ export function Header({ showSearch = true }: HeaderProps) {
               </span>
             )}
           </button>
+          <Image src="/app512.png" alt="My Watchlist" width={40} height={40} />
           <Link
             href="/"
             className="text-xl font-bold text-zinc-900 dark:text-zinc-100"
@@ -127,7 +129,7 @@ export function Header({ showSearch = true }: HeaderProps) {
               href="/"
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 pathname === "/"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                   : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               }`}
             >
@@ -139,7 +141,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   href="/watchlist"
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     pathname === "/watchlist"
-                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                   title="Ma watchlist"
@@ -150,7 +152,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   href="/rated-movies"
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     pathname === "/rated-movies"
-                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                   title="Mes films notés"
@@ -161,7 +163,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   href="/discover"
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     pathname === "/discover"
-                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                   title="Explorer"
@@ -172,7 +174,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   href="/profile"
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     pathname === "/profile" || pathname?.startsWith("/profile/")
-                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                   title="Mon profil"
@@ -191,7 +193,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   onClick={handleLogoutClick}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     pathname === "/profile" || pathname?.startsWith("/profile/")
-                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                   title="Mon profil"

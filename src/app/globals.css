@@ -3,7 +3,7 @@
 :root {
   --background: var(--color-zinc-50);
   --foreground: #171717;
-  --primary: #ffaa00;
+  --primary: #ffdd00;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,6 +16,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

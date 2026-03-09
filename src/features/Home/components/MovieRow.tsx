@@ -35,7 +35,7 @@ export function MovieRow({ title, movies, isLoading, exploreHref }: MovieRowProp
         {exploreHref ? (
           <Link
             href={exploreHref}
-            className="flex items-center gap-1.5 text-lg font-semibold text-zinc-900 transition-colors hover:text-amber-600 dark:text-zinc-100 dark:hover:text-amber-500"
+            className="flex items-center gap-1.5 text-lg font-semibold text-zinc-900 transition-colors hover:text-primary dark:text-zinc-100 dark:hover:text-primary"
           >
             {title} <ChevronRight className="h-5 w-5" />
           </Link>
