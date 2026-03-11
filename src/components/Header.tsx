@@ -20,6 +20,7 @@ import { MenuBurger } from "@/components/MenuBurger";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
 import { useAppBadge } from "@/features/Notifications/hooks/useAppBadge";
+import { useTheme } from "@/hooks/useTheme";
 import Image from "next/image";
 
 const PATH_TITLES: Record<string, string> = {
@@ -50,6 +51,7 @@ export function Header({ showSearch = true }: HeaderProps) {
     () => getTitleFromPathname(pathname ?? "/"),
     [pathname],
   );
+  const isDarkMode = useTheme();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -117,7 +119,12 @@ export function Header({ showSearch = true }: HeaderProps) {
               </span>
             )}
           </button>
-          <Image src="/app512.png" alt="My Watchlist" width={40} height={40} />
+          <Image
+            src={isDarkMode ? "/appDark.png" : "/appLight.png"}
+            alt="My Watchlist"
+            width={40}
+            height={40}
+          />
           <Link
             href="/"
             className="text-xl font-bold text-zinc-900 dark:text-zinc-100"
@@ -205,14 +212,6 @@ export function Header({ showSearch = true }: HeaderProps) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          {!isLoading && !user && (
-            <Link
-              href="/login"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              Connexion
-            </Link>
-          )}
           {showSearch && (
             <button
               type="button"
