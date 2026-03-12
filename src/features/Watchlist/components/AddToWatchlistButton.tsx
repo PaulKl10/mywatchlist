@@ -9,7 +9,8 @@ import {
 } from "@/features/Watchlist/hooks/useWatchlistMutation";
 
 interface AddToWatchlistButtonProps {
-  movieId: number;
+  mediaId: number;
+  mediaType?: "movie" | "tv";
   isAuthenticated: boolean;
   isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
@@ -17,7 +18,8 @@ interface AddToWatchlistButtonProps {
 }
 
 export function AddToWatchlistButton({
-  movieId,
+  mediaId,
+  mediaType = "movie",
   isAuthenticated,
   isAuthLoading,
   accountStates,
@@ -49,11 +51,11 @@ export function AddToWatchlistButton({
 
   const handleClick = () => {
     if (inWatchlist) {
-      removeMutation.mutate(movieId, {
+      removeMutation.mutate({ mediaId, mediaType }, {
         onSuccess: () => onWatchlistChange?.(),
       });
     } else {
-      addMutation.mutate(movieId, {
+      addMutation.mutate({ mediaId, mediaType }, {
         onSuccess: () => onWatchlistChange?.(),
       });
     }

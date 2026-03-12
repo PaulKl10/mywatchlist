@@ -6,6 +6,7 @@ import { User, X, UserPlus, Loader2 } from "lucide-react";
 import { useSearchUsersQuery } from "@/features/Profile/hooks/useSearchUsersQuery";
 import { useAddFriendMutation } from "@/features/Profile/hooks/useAddFriendMutation";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 type AddFriendModalProps = {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export function AddFriendModal({ isOpen, onClose }: AddFriendModalProps) {
                   ? `https://secure.gravatar.com/avatar/${u.gravatar_hash}?s=64&d=identicon`
                   : null;
                 const tmdbUrl = u.tmdb_avatar_path
-                  ? `https://image.tmdb.org/t/p/w185${u.tmdb_avatar_path}`
+                  ? `${TMDB_IMAGE_BASE}/w185${u.tmdb_avatar_path}`
                   : null;
                 const avatarUrl = gravatarUrl || tmdbUrl;
                 const safeAvatar =

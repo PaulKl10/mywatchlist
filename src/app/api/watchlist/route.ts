@@ -1,41 +1,58 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
-import type { TDiscoverMoviesResponse } from "@/types/movie.type";
+import type {
+  TDiscoverMoviesResponse,
+  TWatchlistTvResponse,
+} from "@/types/movie.type";
 import { getUserFromSessionId, syncWatchlistItem } from "@/lib/server/services";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 export async function GET(request: Request) {
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
     );
   }
 
+  if (!tmdbClient.isConfigured()) {
+    return NextResponse.json(
+      { error: "TMDB_API_KEY is not configured" },
+      { status: 500 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") ?? "1";
+  const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const accountRes = await axios.get(`${TMDB_BASE_URL}/account`, {
-      params: { api_key: apiKey, session_id: sessionId },
+    const account = await tmdbClient.get<{ id: number }>("/account", {
+      session_id: sessionId,
     });
-    const accountId = accountRes.data.id;
+    const accountId = account.id;
 
-    const { data } = await axios.get<TDiscoverMoviesResponse>(
-      `${TMDB_BASE_URL}/account/${accountId}/watchlist/movies`,
-      {
-        params: {
-          api_key: apiKey,
+    if (mediaType === "tv") {
+      const data = await tmdbClient.get<TWatchlistTvResponse>(
+        `/account/${accountId}/watchlist/tv`,
+        {
           session_id: sessionId,
           page,
           language: "fr-FR",
-        },
+        }
+      );
+      return NextResponse.json(data);
+    }
+
+    const data = await tmdbClient.get<TDiscoverMoviesResponse>(
+      `/account/${accountId}/watchlist/movies`,
+      {
+        session_id: sessionId,
+        page,
+        language: "fr-FR",
       }
     );
     return NextResponse.json(data);
@@ -48,21 +65,28 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
     );
   }
 
+  if (!tmdbClient.isConfigured()) {
+    return NextResponse.json(
+      { error: "TMDB_API_KEY is not configured" },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json();
-  const { media_id, watchlist } = body as {
+  const { media_id, watchlist, media_type = "movie" } = body as {
     media_id: number;
     watchlist: boolean;
+    media_type?: "movie" | "tv";
   };
 
   if (typeof media_id !== "number" || typeof watchlist !== "boolean") {
@@ -72,28 +96,28 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const accountRes = await axios.get(`${TMDB_BASE_URL}/account`, {
-      params: { api_key: apiKey, session_id: sessionId },
-    });
-    const accountId = accountRes.data.id;
+  const validMediaType =
+    media_type === "tv" ? "tv" : "movie";
 
-    await axios.post(
-      `${TMDB_BASE_URL}/account/${accountId}/watchlist`,
+  try {
+    const account = await tmdbClient.get<{ id: number }>("/account", {
+      session_id: sessionId,
+    });
+    const accountId = account.id;
+
+    await tmdbClient.post(
+      `/account/${accountId}/watchlist`,
       {
-        media_type: "movie",
+        media_type: validMediaType,
         media_id,
         watchlist,
       },
-      {
-        params: { api_key: apiKey, session_id: sessionId },
-        headers: { "Content-Type": "application/json" },
-      }
+      { session_id: sessionId }
     );
 
     const user = await getUserFromSessionId(sessionId);
     if (user) {
-      await syncWatchlistItem(user.id, media_id, watchlist);
+      await syncWatchlistItem(user.id, media_id, validMediaType, watchlist);
     }
 
     return NextResponse.json({ success: true });

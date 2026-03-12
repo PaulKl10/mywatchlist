@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 export type TSuggestion = {
   id: string;
   tmdb_movie_id: number;
+  media_type: "movie" | "tv";
   title: string;
   poster_path: string | null;
   sender: {
@@ -24,6 +25,7 @@ export async function getSuggestions(
   return suggestions.map((s) => ({
     id: s.id,
     tmdb_movie_id: s.tmdb_movie_id,
+    media_type: (s.media_type as "movie" | "tv") || "movie",
     title: s.title,
     poster_path: s.poster_path,
     sender: {
@@ -37,6 +39,7 @@ export async function getSuggestions(
 export type CreateSuggestionInput = {
   receiverId: string;
   tmdbMovieId: number;
+  media_type?: "movie" | "tv";
   title: string;
   poster_path?: string | null;
 };
@@ -51,7 +54,8 @@ export async function createSuggestion(
   | { error: "not_friends" }
   | { error: "already_suggested" }
 > {
-  const { receiverId, tmdbMovieId, title, poster_path } = input;
+  const { receiverId, tmdbMovieId, media_type = "movie", title, poster_path } =
+    input;
 
   const receiver = await prisma.user.findUnique({
     where: { id: receiverId },
@@ -76,6 +80,7 @@ export async function createSuggestion(
       fromUserId: userId,
       toUserId: receiver.id,
       tmdb_movie_id: tmdbMovieId,
+      media_type: media_type,
     },
   });
   if (existing) return { error: "already_suggested" };
@@ -85,6 +90,7 @@ export async function createSuggestion(
       fromUserId: userId,
       toUserId: receiver.id,
       tmdb_movie_id: tmdbMovieId,
+      media_type: media_type,
       title,
       poster_path:
         typeof poster_path === "string" || poster_path === null

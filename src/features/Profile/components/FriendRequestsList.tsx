@@ -6,6 +6,7 @@ import { Check, User, UserPlus, X } from "lucide-react";
 import { useFriendRequestsQuery } from "@/features/Profile/hooks/useFriendRequestsQuery";
 import { useRespondToFriendRequestMutation } from "@/features/Profile/hooks/useRespondToFriendRequestMutation";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 export function FriendRequestsList() {
   const { data: friendRequests, isLoading } = useFriendRequestsQuery(true);
@@ -42,7 +43,7 @@ export function FriendRequestsList() {
               ? `https://secure.gravatar.com/avatar/${s.gravatar_hash}?s=64&d=identicon`
               : null;
             const tmdbUrl = s.tmdb_avatar_path
-              ? `https://image.tmdb.org/t/p/w185${s.tmdb_avatar_path}`
+              ? `${TMDB_IMAGE_BASE}/w185${s.tmdb_avatar_path}`
               : null;
             const avatarUrl = gravatarUrl || tmdbUrl;
             const safeAvatar =

@@ -8,8 +8,7 @@ import { useAcceptSuggestionMutation } from "@/features/Suggestions/hooks/useAcc
 import { useDeclineSuggestionMutation } from "@/features/Suggestions/hooks/useDeclineSuggestionMutation";
 import { useAuth } from "@/providers/AuthProvider";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 export function SuggestionsList() {
   const { user } = useAuth();
@@ -50,13 +49,17 @@ export function SuggestionsList() {
             className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
           >
             <Link
-              href={`/movies/${suggestion.tmdb_movie_id}`}
+              href={
+                suggestion.media_type === "tv"
+                  ? `/tv/${suggestion.tmdb_movie_id}`
+                  : `/movies/${suggestion.tmdb_movie_id}`
+              }
               className="relative aspect-2/3 block bg-zinc-200 dark:bg-zinc-800"
             >
               <Image
                 src={
                   suggestion.poster_path
-                    ? `${TMDB_IMAGE_BASE}${suggestion.poster_path}`
+                    ? `${TMDB_IMAGE_BASE}/w500${suggestion.poster_path}`
                     : "https://placehold.co/500x750/1f2937/9ca3af.png?text=No+Poster"
                 }
                 alt={suggestion.title}
@@ -67,7 +70,11 @@ export function SuggestionsList() {
             </Link>
             <div className="flex flex-1 flex-col p-3">
               <Link
-                href={`/movies/${suggestion.tmdb_movie_id}`}
+                href={
+                  suggestion.media_type === "tv"
+                    ? `/tv/${suggestion.tmdb_movie_id}`
+                    : `/movies/${suggestion.tmdb_movie_id}`
+                }
                 className="line-clamp-2 font-medium text-zinc-900 hover:text-amber-600 dark:text-zinc-100 dark:hover:text-amber-500"
               >
                 {suggestion.title}

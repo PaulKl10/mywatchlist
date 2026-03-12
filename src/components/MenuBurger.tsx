@@ -123,7 +123,7 @@ export function MenuBurger({
                 className={navLinkClass}
               >
                 <Star className="h-5 w-5 shrink-0" />
-                Mes films notés
+                Mes notes
               </Link>
               <Link href="/discover" onClick={onClose} className={navLinkClass}>
                 <Compass className="h-5 w-5 shrink-0" />

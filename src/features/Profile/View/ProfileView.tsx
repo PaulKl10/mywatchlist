@@ -4,20 +4,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { Bookmark, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
-import { MovieCard } from "@/components/MovieCard";
-import { useGetWatchlistQuery } from "@/features/Watchlist/hooks/useGetWatchlistQuery";
+import { ProfileWatchlistCard } from "@/features/Watchlist/components/ProfileWatchlistCard";
+import { useGetMyWatchlistFromDbQuery } from "@/features/Watchlist/hooks/useGetWatchlistQuery";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
 import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
 import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 const WATCHLIST_PREVIEW_COUNT = 6;
 
 export function ProfileView() {
   const { user } = useAuth();
   const { data: watchlistData, isLoading: watchlistLoading } =
-    useGetWatchlistQuery(1);
+    useGetMyWatchlistFromDbQuery();
 
   if (!user) {
     return (
@@ -43,7 +44,7 @@ export function ProfileView() {
   const tmdbAvatarUrl = tmdbAvatarPath
     ? tmdbAvatarPath.startsWith("http")
       ? tmdbAvatarPath
-      : `https://image.tmdb.org/t/p/w185${tmdbAvatarPath}`
+      : `${TMDB_IMAGE_BASE}/w185${tmdbAvatarPath}`
     : null;
   const avatarUrl = gravatarUrl || tmdbAvatarUrl;
   const safeAvatarUrl =
@@ -53,8 +54,8 @@ export function ProfileView() {
       ? avatarUrl
       : null;
 
-  const previewMovies =
-    watchlistData?.results?.slice(0, WATCHLIST_PREVIEW_COUNT) ?? [];
+  const previewItems =
+    watchlistData?.items?.slice(0, WATCHLIST_PREVIEW_COUNT) ?? [];
 
   return (
     <div className="flex flex-col gap-10 px-4 md:px-32">
@@ -84,7 +85,7 @@ export function ProfileView() {
           </p>
           <p className="text-zinc-600 dark:text-zinc-400">
             {watchlistData
-              ? `${watchlistData.total_results} film${watchlistData.total_results > 1 ? "s" : ""} dans ma watchlist`
+              ? `${watchlistData.total} élément${watchlistData.total > 1 ? "s" : ""} dans ma watchlist`
               : "Ma watchlist"}
           </p>
         </div>
@@ -110,7 +111,7 @@ export function ProfileView() {
               />
             ))}
           </div>
-        ) : previewMovies.length === 0 ? (
+        ) : previewItems.length === 0 ? (
           <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center dark:border-zinc-700">
             <p className="text-zinc-500 dark:text-zinc-400">
               Votre watchlist est vide
@@ -124,25 +125,24 @@ export function ProfileView() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {previewMovies.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} />
+            {previewItems.map((item) => (
+              <ProfileWatchlistCard
+                key={`${item.media_type}-${item.id}`}
+                item={item}
+              />
             ))}
           </div>
         )}
-        {watchlistData &&
-          watchlistData.total_results > WATCHLIST_PREVIEW_COUNT && (
-            <Link
-              href="/watchlist"
-              className="mt-4 flex w-full justify-center rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Afficher plus (
-              {watchlistData.total_results - WATCHLIST_PREVIEW_COUNT} film
-              {watchlistData.total_results - WATCHLIST_PREVIEW_COUNT > 1
-                ? "s"
-                : ""}
-              )
-            </Link>
-          )}
+        {watchlistData && watchlistData.total > WATCHLIST_PREVIEW_COUNT && (
+          <Link
+            href="/watchlist"
+            className="mt-4 flex w-full justify-center rounded-lg border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Afficher plus (
+            {watchlistData.total - WATCHLIST_PREVIEW_COUNT} élément
+            {watchlistData.total - WATCHLIST_PREVIEW_COUNT > 1 ? "s" : ""})
+          </Link>
+        )}
       </section>
     </div>
   );

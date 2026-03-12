@@ -5,7 +5,13 @@ export const useAddToWatchlistMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (movieId: number) => WatchlistService.addToWatchlist(movieId),
+    mutationFn: ({
+      mediaId,
+      mediaType = "movie",
+    }: {
+      mediaId: number;
+      mediaType?: "movie" | "tv";
+    }) => WatchlistService.addToWatchlist(mediaId, mediaType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },
@@ -16,8 +22,13 @@ export const useRemoveFromWatchlistMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (movieId: number) =>
-      WatchlistService.removeFromWatchlist(movieId),
+    mutationFn: ({
+      mediaId,
+      mediaType = "movie",
+    }: {
+      mediaId: number;
+      mediaType?: "movie" | "tv";
+    }) => WatchlistService.removeFromWatchlist(mediaId, mediaType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },

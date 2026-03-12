@@ -1,22 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
-import RatingService from "@/features/RatedMovies/services/rating.service";
+import RatingService from "@/features/RatedMedias/services/rating.service";
 
 export const useAddRatingMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      movieId,
+      mediaId,
       value,
+      mediaType = "movie",
       runtime,
     }: {
-      movieId: number;
+      mediaId: number;
       value: number;
+      mediaType?: "movie" | "tv";
       runtime?: number | null;
-    }) => RatingService.addRating(movieId, value, runtime),
-    onMutate: async ({ movieId, value }) => {
-      const queryKey = ["account-states", movieId] as const;
+    }) =>
+      RatingService.addRating(mediaId, value, mediaType, runtime),
+    onMutate: async ({ mediaId, value, mediaType = "movie" }) => {
+      const queryKey = ["account-states", mediaType, mediaId] as const;
       await queryClient.cancelQueries({ queryKey });
 
       const previous = queryClient.getQueryData<TAccountStates>(queryKey);
@@ -27,10 +30,10 @@ export const useAddRatingMutation = () => {
 
       return { previous };
     },
-    onError: (_err, { movieId }, context) => {
+    onError: (_err, { mediaId, mediaType = "movie" }, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
-          ["account-states", movieId],
+          ["account-states", mediaType, mediaId],
           context.previous
         );
       }
@@ -46,9 +49,15 @@ export const useRemoveRatingMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (movieId: number) => RatingService.removeRating(movieId),
-    onMutate: async (movieId) => {
-      const queryKey = ["account-states", movieId] as const;
+    mutationFn: ({
+      mediaId,
+      mediaType = "movie",
+    }: {
+      mediaId: number;
+      mediaType?: "movie" | "tv";
+    }) => RatingService.removeRating(mediaId, mediaType),
+    onMutate: async ({ mediaId, mediaType = "movie" }) => {
+      const queryKey = ["account-states", mediaType, mediaId] as const;
       await queryClient.cancelQueries({ queryKey });
 
       const previous = queryClient.getQueryData<TAccountStates>(queryKey);
@@ -59,10 +68,10 @@ export const useRemoveRatingMutation = () => {
 
       return { previous };
     },
-    onError: (_err, movieId, context) => {
+    onError: (_err, { mediaId, mediaType = "movie" }, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
-          ["account-states", movieId],
+          ["account-states", mediaType, mediaId],
           context.previous
         );
       }

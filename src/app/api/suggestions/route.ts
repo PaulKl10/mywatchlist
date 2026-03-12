@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   let body: {
     receiverId?: string;
     tmdbMovieId?: number;
+    media_type?: "movie" | "tv";
     title?: string;
     poster_path?: string | null;
   };
@@ -43,7 +44,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const { receiverId, tmdbMovieId, title, poster_path } = body;
+  const { receiverId, tmdbMovieId, media_type = "movie", title, poster_path } =
+    body;
   if (
     typeof receiverId !== "string" ||
     typeof tmdbMovieId !== "number" ||
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
   const result = await createSuggestion(user.id, {
     receiverId,
     tmdbMovieId,
+    media_type: media_type === "tv" ? "tv" : "movie",
     title,
     poster_path,
   });

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Search, X } from "lucide-react";
-import { MovieCard } from "@/components/MovieCard";
+import { MediaCard } from "@/components/MediaCard";
 import { PageFilter } from "@/components/PageFilter";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useSearchMoviesQuery } from "@/features/SearchMovies/hooks/useSearchMoviesQuery";
+import { useSearchMultiQuery } from "@/features/SearchMovies/hooks/useSearchMoviesQuery";
 
 interface SearchMoviesViewProps {
   onClose: () => void;
@@ -18,7 +18,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
   const debouncedQuery = useDebounce(query, 500);
   const page = pageByQuery[debouncedQuery] ?? 1;
 
-  const { data, isLoading, isError, error } = useSearchMoviesQuery(
+  const { data, isLoading, isError, error } = useSearchMultiQuery(
     debouncedQuery,
     page,
   );
@@ -39,7 +39,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un film..."
+            placeholder="Rechercher un film, une série ou une personne..."
             className="flex-1 bg-transparent text-lg text-zinc-900 placeholder-zinc-500 focus:outline-none dark:text-zinc-100"
             autoFocus
           />
@@ -57,7 +57,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
       <main className="flex-1 overflow-y-auto px-4 py-6 md:px-32">
         {!debouncedQuery ? (
           <p className="text-center text-zinc-500">
-            Saisissez un titre de film pour rechercher
+            Saisissez un titre pour rechercher
           </p>
         ) : isLoading ? (
           <>
@@ -77,7 +77,7 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
           <p className="text-center text-zinc-600 dark:text-zinc-400">
             {error instanceof Error
               ? error.message
-              : "Impossible de rechercher les films"}
+              : "Impossible de rechercher"}
           </p>
         ) : data && data.results.length > 0 ? (
           <>
@@ -90,14 +90,18 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
               />
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {data.results.map((movie) => (
-                <MovieCard key={movie.id} movie={movie} />
+              {data.results.map((item) => (
+                <MediaCard
+                  key={`${item.media_type}-${item.id}`}
+                  item={item}
+                  onClick={onClose}
+                />
               ))}
             </div>
           </>
         ) : (
           <p className="text-center text-zinc-500">
-            Aucun film trouvé pour &quot;{debouncedQuery}&quot;
+            Aucun résultat pour &quot;{debouncedQuery}&quot;
           </p>
         )}
       </main>

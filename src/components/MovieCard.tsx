@@ -1,7 +1,6 @@
 import Image from "next/image";
 import type { TMovie } from "@/types/movie.type";
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 function MovieCardDetails({ movie }: { movie: TMovie }) {
   return (
@@ -35,7 +34,7 @@ export function MovieCard({ movie }: { movie: TMovie }) {
           <Image
             src={
               movie.poster_path
-                ? `${TMDB_IMAGE_BASE}${movie.poster_path}`
+                ? `${TMDB_IMAGE_BASE}/w500${movie.poster_path}`
                 : "https://placehold.co/500x750/1f2937/9ca3af.png?text=No+Poster"
             }
             alt={movie.title}

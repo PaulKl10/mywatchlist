@@ -10,42 +10,93 @@ import type {
 } from "@/features/DiscoverMovies/types/discover-movies.type";
 import { useDebounce } from "@/hooks/useDebounce";
 
+export type TDiscoverFilterParams = {
+  media_type: "movie" | "tv";
+  movieParams: Partial<TDiscoverMoviesParams>;
+  tvParams: {
+    sort_by?: string;
+    year?: number;
+    first_air_date_year?: number;
+    with_genres?: string;
+    "vote_average.gte"?: number;
+    "vote_count.gte"?: number;
+  };
+};
+
 function formValuesToParams(
   formValues: TDiscoverFiltersForm
-): Partial<TDiscoverMoviesParams> {
-  const params: Partial<TDiscoverMoviesParams> = {
-    sort_by: formValues.sort_by,
+): TDiscoverFilterParams {
+  const mediaType = formValues.media_type ?? "movie";
+  const year = formValues.year && !Number.isNaN(Number(formValues.year))
+    ? Number(formValues.year)
+    : undefined;
+  const voteAverageGte = formValues.vote_average_gte &&
+    !Number.isNaN(Number(formValues.vote_average_gte))
+    ? Number(formValues.vote_average_gte)
+    : undefined;
+  const withGenres = formValues.with_genres?.length > 0
+    ? formValues.with_genres.join(",")
+    : undefined;
+  const needsVoteCount =
+    formValues.sort_by === "vote_average.asc" ||
+    formValues.sort_by === "vote_average.desc";
+
+  const sortBy = formValues.sort_by ?? "popularity.desc";
+
+  const movieSortMap: Record<string, TDiscoverMoviesParams["sort_by"]> = {
+    "first_air_date.asc": "primary_release_date.asc",
+    "first_air_date.desc": "primary_release_date.desc",
+    "name.asc": "original_title.asc",
+    "name.desc": "original_title.desc",
+    "title.asc": "original_title.asc",
+    "title.desc": "original_title.desc",
+  };
+  const movieSortBy =
+    movieSortMap[sortBy] ?? (sortBy as TDiscoverMoviesParams["sort_by"]);
+
+  const tvSortMap: Record<string, string> = {
+    "primary_release_date.asc": "first_air_date.asc",
+    "primary_release_date.desc": "first_air_date.desc",
+    "title.asc": "name.asc",
+    "title.desc": "name.desc",
+  };
+  const tvSortBy = tvSortMap[sortBy] ?? sortBy;
+
+  const movieParams: Partial<TDiscoverMoviesParams> = {
+    sort_by: movieSortBy as TDiscoverMoviesParams["sort_by"],
+    year,
+    with_genres: withGenres,
+    "vote_average.gte": voteAverageGte,
+    ...(needsVoteCount && { "vote_count.gte": 300 }),
   };
 
-  if (
-    formValues.sort_by === "vote_average.asc" ||
-    formValues.sort_by === "vote_average.desc"
-  ) {
-    params["vote_count.gte"] = 300;
-  }
+  const tvParams = {
+    sort_by: tvSortBy,
+    first_air_date_year: year,
+    with_genres: withGenres,
+    "vote_average.gte": voteAverageGte,
+    ...(needsVoteCount && { "vote_count.gte": 300 }),
+  };
 
-  if (formValues.year && !Number.isNaN(Number(formValues.year))) {
-    params.year = Number(formValues.year);
-  }
-  if (formValues.with_genres?.length > 0) {
-    params.with_genres = formValues.with_genres.join(",");
-  }
-  if (
-    formValues.vote_average_gte &&
-    !Number.isNaN(Number(formValues.vote_average_gte))
-  ) {
-    params["vote_average.gte"] = Number(formValues.vote_average_gte);
-  }
-  return params;
+  return { media_type: mediaType, movieParams, tvParams };
 }
 
-function getInitialFormValues(): TDiscoverFiltersForm {
+function getInitialFormValues(
+  mediaTypeFromUrl?: "movie" | "tv" | null
+): TDiscoverFiltersForm {
   const stored = getStoredDiscoverState();
-  return stored?.formValues ?? DEFAULT_FILTER_VALUES;
+  const base = stored?.formValues ?? DEFAULT_FILTER_VALUES;
+  if (mediaTypeFromUrl && mediaTypeFromUrl !== base.media_type) {
+    return { ...base, media_type: mediaTypeFromUrl, with_genres: [] };
+  }
+  return base;
 }
 
-export function useDiscoverFilters() {
-  const defaultValues = useMemo(() => getInitialFormValues(), []);
+export function useDiscoverFilters(mediaTypeFromUrl?: "movie" | "tv" | null) {
+  const defaultValues = useMemo(
+    () => getInitialFormValues(mediaTypeFromUrl),
+    [mediaTypeFromUrl]
+  );
   const form = useForm<TDiscoverFiltersForm>({
     defaultValues,
   });

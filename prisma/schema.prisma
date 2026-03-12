@@ -33,14 +33,15 @@ model User {
 }
 
 model WatchTimeEntry {
-  id            String @id @default(cuid())
+  id            String   @id @default(cuid())
   userId        String
   tmdb_movie_id Int
+  media_type    String   @default("movie") // "movie" | "tv"
   runtime       Int?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, tmdb_movie_id])
+  @@unique([userId, media_type, tmdb_movie_id])
 }
 
 // Cache watchlist pour affichage sur profils publics
@@ -48,6 +49,7 @@ model WatchlistItem {
   id            String   @id @default(cuid())
   userId        String
   tmdb_movie_id Int
+  media_type    String   @default("movie") // "movie" | "tv"
   poster_path   String?
   title         String
   release_date  String?
@@ -57,7 +59,7 @@ model WatchlistItem {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, tmdb_movie_id])
+  @@unique([userId, media_type, tmdb_movie_id])
 }
 
 model Session {
@@ -83,10 +85,11 @@ model Friendship {
   @@unique([senderId, receiverId])
 }
 
-// Table pour les suggestions de films
+// Table pour les suggestions de films et séries
 model Suggestion {
   id            String   @id @default(cuid())
-  tmdb_movie_id Int      // L'ID du film sur TMDB
+  tmdb_movie_id Int      // L'ID du film/série sur TMDB
+  media_type    String   @default("movie") // "movie" | "tv"
   title         String   // Pour affichage sans appel TMDB
   poster_path   String?
   fromUserId    String
@@ -96,4 +99,6 @@ model Suggestion {
 
   sender   User @relation("suggestedBy", fields: [fromUserId], references: [id])
   receiver User @relation("suggestedTo", fields: [toUserId], references: [id])
+
+  @@unique([fromUserId, toUserId, media_type, tmdb_movie_id])
 }

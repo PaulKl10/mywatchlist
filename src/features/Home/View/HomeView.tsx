@@ -2,7 +2,9 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { MovieRow } from "@/features/Home/components/MovieRow";
+import { TvRow } from "@/features/Home/components/TvRow";
 import { usePopularMoviesQuery } from "@/features/Home/hooks/usePopularMoviesQuery";
+import { usePopularTvQuery } from "@/features/Home/hooks/usePopularTvQuery";
 import { useGenreMoviesQuery } from "@/features/Home/hooks/useGenreMoviesQuery";
 import { useFriendsWatchlistQuery } from "@/features/Home/hooks/useFriendsWatchlistQuery";
 
@@ -11,8 +13,6 @@ const HOME_GENRES = [
   { id: 35, name: "Comédie" },
   { id: 878, name: "Science-Fiction" },
   { id: 18, name: "Drame" },
-  { id: 27, name: "Horreur" },
-  { id: 10749, name: "Romance" },
 ];
 
 function GenreRow({ genreId, genreName }: { genreId: number; genreName: string }) {
@@ -31,6 +31,8 @@ export function HomeView() {
   const { user } = useAuth();
   const { data: popularData, isLoading: popularLoading } =
     usePopularMoviesQuery();
+  const { data: popularTvData, isLoading: popularTvLoading } =
+    usePopularTvQuery();
   const friendsQuery = useFriendsWatchlistQuery(!!user);
 
   return (
@@ -40,6 +42,13 @@ export function HomeView() {
         movies={popularData?.results ?? []}
         isLoading={popularLoading}
         exploreHref="/discover"
+      />
+
+      <TvRow
+        title="Séries populaires"
+        tvShows={popularTvData?.results ?? []}
+        isLoading={popularTvLoading}
+        exploreHref="/discover?media_type=tv"
       />
 
       {HOME_GENRES.map((genre: (typeof HOME_GENRES)[number]) => (

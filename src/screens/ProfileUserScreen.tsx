@@ -10,6 +10,7 @@ import { useRemoveFriendMutation } from "@/features/Profile/hooks/useRemoveFrien
 import { MovieCard } from "@/components/MovieCard";
 import type { TMovie } from "@/types/movie.type";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 type ProfileUserScreenProps = {
   params: Promise<{ tmdbId: string }>;
@@ -125,7 +126,7 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
     ? `https://secure.gravatar.com/avatar/${profileUser.gravatar_hash}?s=128&d=identicon`
     : null;
   const tmdbUrl = profileUser.tmdb_avatar_path
-    ? `https://image.tmdb.org/t/p/w185${profileUser.tmdb_avatar_path}`
+    ? `${TMDB_IMAGE_BASE}/w185${profileUser.tmdb_avatar_path}`
     : null;
   const avatarUrl = gravatarUrl || tmdbUrl;
   const safeAvatarUrl =

@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBAccount = {
   id: number;
@@ -16,10 +14,9 @@ type TMDBAccount = {
 };
 
 export async function POST() {
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
 
-  if (!apiKey) {
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { error: "TMDB_API_KEY is not configured" },
       { status: 500 }
@@ -36,21 +33,16 @@ export async function POST() {
   }
 
   try {
-    const { data: sessionData } = await axios.post<{ session_id: string }>(
-      `${TMDB_BASE_URL}/authentication/session/new`,
-      { request_token: requestToken },
-      {
-        params: { api_key: apiKey },
-        headers: { "Content-Type": "application/json" },
-      }
+    const sessionData = await tmdbClient.post<{ session_id: string }>(
+      "/authentication/session/new",
+      { request_token: requestToken }
     );
 
     const sessionId = sessionData.session_id;
 
-    const { data: account } = await axios.get<TMDBAccount>(
-      `${TMDB_BASE_URL}/account`,
-      { params: { api_key: apiKey, session_id: sessionId } }
-    );
+    const account = await tmdbClient.get<TMDBAccount>("/account", {
+      session_id: sessionId,
+    });
 
     const gravatarHash = account.avatar?.gravatar?.hash?.trim() || null;
     const tmdbAvatarPath = account.avatar?.tmdb?.avatar_path?.trim() || null;

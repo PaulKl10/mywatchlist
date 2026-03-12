@@ -11,14 +11,16 @@ type FormValues = {
 };
 
 type SuggestToFriendFormProps = {
-  movieId: number;
-  movieTitle: string;
+  mediaId: number;
+  mediaType?: "movie" | "tv";
+  title: string;
   posterPath?: string | null;
 };
 
 export function SuggestToFriendForm({
-  movieId,
-  movieTitle,
+  mediaId,
+  mediaType = "movie",
+  title,
   posterPath,
 }: SuggestToFriendFormProps) {
   const { user } = useAuth();
@@ -39,8 +41,9 @@ export function SuggestToFriendForm({
     mutation.mutate(
       {
         receiverId: values.receiverId,
-        tmdbMovieId: movieId,
-        title: movieTitle,
+        tmdbMovieId: mediaId,
+        media_type: mediaType,
+        title,
         poster_path: posterPath ?? null,
       },
       {

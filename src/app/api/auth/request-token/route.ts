@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 export async function POST(request: Request) {
-  const apiKey = process.env.TMDB_API_KEY;
-
-  if (!apiKey) {
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { error: "TMDB_API_KEY is not configured" },
       { status: 500 }
@@ -14,9 +10,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { data } = await axios.get(
-      `${TMDB_BASE_URL}/authentication/token/new`,
-      { params: { api_key: apiKey } }
+    const data = await tmdbClient.get<{ request_token: string }>(
+      "/authentication/token/new"
     );
 
     const requestToken = data.request_token;

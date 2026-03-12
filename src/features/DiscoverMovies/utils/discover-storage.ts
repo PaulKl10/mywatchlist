@@ -3,7 +3,7 @@ import type { TDiscoverFiltersForm } from "@/features/DiscoverMovies/types/disco
 const STORAGE_KEY = "mywatchlist-discover-state";
 
 export type StoredDiscoverState = {
-  formValues: TDiscoverFiltersForm;
+  formValues: TDiscoverFiltersForm & { media_type?: "movie" | "tv" };
   page: number;
 };
 

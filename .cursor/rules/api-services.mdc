@@ -29,6 +29,6 @@ export default MoviesService;
 ## Routes API (`app/api/`)
 
 - Une route par endpoint : `app/api/discover/route.ts`
-- Proxy vers TMDB : la clé API reste côté serveur (`process.env.TMDB_API_KEY`)
-- Utiliser axios ou fetch
+- Proxy vers TMDB : utiliser `tmdbClient` de `@/lib/tmdb-client` (clé API centralisée côté serveur)
+- Utiliser `tmdbClient.get()`, `tmdbClient.post()`, `tmdbClient.delete()` avec le path TMDB (ex: `/movie/123`)
 - Retourner `NextResponse.json(data)` ou erreur avec status approprié

@@ -4,17 +4,23 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Filter, X } from "lucide-react";
 import { MovieCard } from "@/components/MovieCard";
+import { TvCard } from "@/components/TvCard";
+import type { TMovie, TDiscoverTv } from "@/types/movie.type";
 import { DiscoverFilters } from "@/features/DiscoverMovies/components/DiscoverFilters";
 import { PageFilter } from "@/components/PageFilter";
 import { useDiscoverFilters } from "@/features/DiscoverMovies/hooks/useDiscoverFilters";
 import { useDiscoverStatePersistence } from "@/features/DiscoverMovies/hooks/useDiscoverStatePersistence";
 import { useGetDiscoverMoviesQuery } from "@/features/DiscoverMovies/hooks/useGetDiscoverMoviesQuery";
+import { useGetDiscoverTvQuery } from "@/features/DiscoverMovies/hooks/useGetDiscoverTvQuery";
 
 export function DiscoverMoviesView() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const searchParams = useSearchParams();
+  const mediaTypeFromUrl = searchParams.get("media_type") as "movie" | "tv" | null;
+  const effectiveMediaType = mediaTypeFromUrl === "tv" ? "tv" : "movie";
+
   const { register, watch, setValue, reset, formValues, filterParams } =
-    useDiscoverFilters();
+    useDiscoverFilters(effectiveMediaType);
   const { page, setPage, handleFiltersReset } = useDiscoverStatePersistence(
     formValues,
     reset,
@@ -33,14 +39,32 @@ export function DiscoverMoviesView() {
     }
   }, [searchParams, setValue]);
 
-  const { data, isLoading, isError, error } = useGetDiscoverMoviesQuery({
-    ...filterParams,
-    page,
-  });
+  useEffect(() => {
+    if (effectiveMediaType === "tv") {
+      setValue("media_type", "tv");
+    }
+  }, [effectiveMediaType, setValue]);
+
+  const isMovies = filterParams.media_type === "movie";
+
+  const moviesQuery = useGetDiscoverMoviesQuery(
+    { ...filterParams.movieParams, page },
+    isMovies
+  );
+  const tvQuery = useGetDiscoverTvQuery(
+    { ...filterParams.tvParams, page },
+    !isMovies
+  );
+
+  const { data, isLoading, isError, error } = isMovies ? moviesQuery : tvQuery;
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleMediaTypeChange = () => {
+    setPage(1);
   };
 
   if (isError) {
@@ -77,6 +101,7 @@ export function DiscoverMoviesView() {
               setValue={setValue}
               reset={reset}
               onReset={handleFiltersReset}
+              onMediaTypeChange={handleMediaTypeChange}
             />
           </div>
           <PageFilter
@@ -107,6 +132,7 @@ export function DiscoverMoviesView() {
               setValue={setValue}
               reset={reset}
               onReset={handleFiltersReset}
+              onMediaTypeChange={handleMediaTypeChange}
             />
           </div>
         )}
@@ -120,9 +146,13 @@ export function DiscoverMoviesView() {
               />
             ))
           : data
-            ? data.results.map((movie: (typeof data.results)[number]) => (
-                <MovieCard key={movie.id} movie={movie} />
-              ))
+            ? isMovies
+              ? (data as { results: TMovie[] }).results.map((movie) => (
+                  <MovieCard key={movie.id} movie={movie} />
+                ))
+              : (data as { results: TDiscoverTv[] }).results.map((tv) => (
+                  <TvCard key={tv.id} tv={tv} />
+                ))
             : null}
       </div>
     </div>

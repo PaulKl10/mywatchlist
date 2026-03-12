@@ -1,7 +1,6 @@
 import Image from "next/image";
 import type { TPersonMovieCredit } from "@/types/movie.type";
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 interface PersonMovieCardProps {
   credit: TPersonMovieCredit;
@@ -17,7 +16,7 @@ export function PersonMovieCard({ credit }: PersonMovieCardProps) {
         <Image
           src={
             credit.poster_path
-              ? `${TMDB_IMAGE_BASE}${credit.poster_path}`
+              ? `${TMDB_IMAGE_BASE}/w500${credit.poster_path}`
               : "https://placehold.co/500x750/1f2937/9ca3af.png?text=No+Poster"
           }
           alt={credit.title}

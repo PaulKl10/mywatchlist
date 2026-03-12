@@ -1,12 +1,12 @@
 import axios from "axios";
-import type { TDiscoverMoviesResponse } from "@/types/movie.type";
+import type { TMultiSearchResponse } from "@/types/search.type";
 
 const SearchMoviesService = {
-  searchMovies: async (
+  searchMulti: async (
     query: string,
     page = 1
-  ): Promise<TDiscoverMoviesResponse> => {
-    const { data } = await axios.get<TDiscoverMoviesResponse>("/api/search", {
+  ): Promise<TMultiSearchResponse> => {
+    const { data } = await axios.get<TMultiSearchResponse>("/api/search", {
       params: { query, page },
     });
     return data;

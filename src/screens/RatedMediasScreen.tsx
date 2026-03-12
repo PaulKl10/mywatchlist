@@ -1,10 +1,10 @@
-import { RatedMoviesView } from "@/features/RatedMovies/View/RatedMoviesView";
+import { RatedMediasView } from "@/features/RatedMedias/View/RatedMediasView";
 
-export function RatedMoviesScreen() {
+export function RatedMediasScreen() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto py-6">
-        <RatedMoviesView />
+        <RatedMediasView />
       </main>
     </div>
   );

@@ -22,12 +22,13 @@ import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNo
 import { useAppBadge } from "@/features/Notifications/hooks/useAppBadge";
 import { useTheme } from "@/hooks/useTheme";
 import Image from "next/image";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 const PATH_TITLES: Record<string, string> = {
   "/": "My Watchlist",
   "/discover": "Explorer",
   "/watchlist": "Ma watchlist",
-  "/rated-movies": "Mes films notés",
+  "/rated-movies": "Mes notes",
   "/profile": "Mon profil",
   "/login": "Connexion",
   "/login/callback": "Connexion",
@@ -82,7 +83,7 @@ export function Header({ showSearch = true }: HeaderProps) {
   const tmdbAvatarUrl = tmdbAvatarPath
     ? tmdbAvatarPath.startsWith("http")
       ? tmdbAvatarPath
-      : `https://image.tmdb.org/t/p/w185${tmdbAvatarPath}`
+      : `${TMDB_IMAGE_BASE}/w185${tmdbAvatarPath}`
     : null;
 
   const avatarUrl = gravatarUrl || tmdbAvatarUrl || null;
@@ -162,7 +163,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                       ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
-                  title="Mes films notés"
+                  title="Mes notes"
                 >
                   <Star className="h-4 w-4" />
                 </Link>

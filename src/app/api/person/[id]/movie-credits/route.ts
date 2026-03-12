@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import type { TPersonMovieCredits } from "@/types/movie.type";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBPersonMovieCreditsResponse = {
   cast: {
@@ -20,9 +18,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const apiKey = process.env.TMDB_API_KEY;
 
-  if (!apiKey) {
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { error: "TMDB_API_KEY is not configured" },
       { status: 500 }
@@ -37,11 +34,9 @@ export async function GET(
   }
 
   try {
-    const { data } = await axios.get<TMDBPersonMovieCreditsResponse>(
-      `${TMDB_BASE_URL}/person/${id}/movie_credits`,
-      {
-        params: { api_key: apiKey, language: "fr-FR" },
-      }
+    const data = await tmdbClient.get<TMDBPersonMovieCreditsResponse>(
+      `/person/${id}/movie_credits`,
+      { language: "fr-FR" }
     );
 
     const response: TPersonMovieCredits = {

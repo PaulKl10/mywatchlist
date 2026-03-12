@@ -1,5 +1,15 @@
+export type TDiscoverMediaType = "movie" | "tv";
+
+export type TDiscoverSortBy =
+  | TDiscoverMoviesParams["sort_by"]
+  | "first_air_date.asc"
+  | "first_air_date.desc"
+  | "name.asc"
+  | "name.desc";
+
 export type TDiscoverFiltersForm = {
-  sort_by: TDiscoverMoviesParams["sort_by"];
+  media_type: TDiscoverMediaType;
+  sort_by: TDiscoverSortBy;
   year: string;
   with_genres: number[];
   vote_average_gte: string;

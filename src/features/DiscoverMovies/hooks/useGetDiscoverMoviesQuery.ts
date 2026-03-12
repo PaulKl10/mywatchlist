@@ -3,12 +3,13 @@ import type { TDiscoverMoviesParams } from "@/features/DiscoverMovies/types/disc
 import { useQuery } from "@tanstack/react-query";
 
 export const useGetDiscoverMoviesQuery = (
-  params: TDiscoverMoviesParams = {}
+  params: TDiscoverMoviesParams = {},
+  enabled = true
 ) => {
   const page = params.page ?? 1;
   return useQuery({
     queryKey: ["discover", "movies", params],
     queryFn: () => MoviesService.fetchDiscoverMovies(params),
-    enabled: page > 0,
+    enabled: enabled && page > 0,
   });
 };

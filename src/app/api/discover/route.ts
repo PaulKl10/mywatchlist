@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import type { TDiscoverMoviesResponse } from "@/types/movie.type";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 const TMDB_DISCOVER_PARAMS = [
   "page",
@@ -47,9 +45,8 @@ const TMDB_DISCOVER_PARAMS = [
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const apiKey = process.env.TMDB_API_KEY;
 
-  if (!apiKey) {
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { error: "TMDB_API_KEY is not configured" },
       { status: 500 }
@@ -57,7 +54,6 @@ export async function GET(request: Request) {
   }
 
   const params: Record<string, string | number | boolean> = {
-    api_key: apiKey,
     language: searchParams.get("language") ?? "fr-FR",
     page: searchParams.get("page") ?? "1",
   };
@@ -91,9 +87,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data } = await axios.get<TDiscoverMoviesResponse>(
-      `${TMDB_BASE_URL}/discover/movie`,
-      { params }
+    const data = await tmdbClient.get<TDiscoverMoviesResponse>(
+      "/discover/movie",
+      params
     );
     return NextResponse.json(data);
   } catch {

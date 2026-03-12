@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 export type TAccountStates = {
   watchlist: boolean;
@@ -15,11 +13,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
+    return NextResponse.json(
+      { watchlist: false, favorite: false, rated: false },
+      { status: 200 }
+    );
+  }
+
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { watchlist: false, favorite: false, rated: false },
       { status: 200 }
@@ -34,11 +38,9 @@ export async function GET(
   }
 
   try {
-    const { data } = await axios.get<TAccountStates>(
-      `${TMDB_BASE_URL}/movie/${id}/account_states`,
-      {
-        params: { api_key: apiKey, session_id: sessionId },
-      }
+    const data = await tmdbClient.get<TAccountStates>(
+      `/movie/${id}/account_states`,
+      { session_id: sessionId }
     );
     return NextResponse.json(data);
   } catch {

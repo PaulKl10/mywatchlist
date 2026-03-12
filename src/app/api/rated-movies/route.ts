@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
-import type { TRatedMovie } from "@/types/movie.type";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import type { TRatedMovie, TRatedTv } from "@/types/movie.type";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBRatedMoviesResponse = {
   page: number;
@@ -12,40 +10,74 @@ type TMDBRatedMoviesResponse = {
   total_results: number;
 };
 
+type TMDBRatedTvResponse = {
+  page: number;
+  results: (Omit<TRatedTv, "rating"> & { rating?: number })[];
+  total_pages: number;
+  total_results: number;
+};
+
 export async function GET(request: Request) {
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
     );
   }
 
+  if (!tmdbClient.isConfigured()) {
+    return NextResponse.json(
+      { error: "TMDB_API_KEY is not configured" },
+      { status: 500 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") ?? "1";
+  const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const accountRes = await axios.get(`${TMDB_BASE_URL}/account`, {
-      params: { api_key: apiKey, session_id: sessionId },
+    const account = await tmdbClient.get<{ id: number }>("/account", {
+      session_id: sessionId,
     });
-    const accountId = accountRes.data.id;
+    const accountId = account.id;
 
-    const { data } = await axios.get<TMDBRatedMoviesResponse>(
-      `${TMDB_BASE_URL}/account/${accountId}/rated/movies`,
-      {
-        params: {
-          api_key: apiKey,
+    if (mediaType === "tv") {
+      const data = await tmdbClient.get<TMDBRatedTvResponse>(
+        `/account/${accountId}/rated/tv`,
+        {
           session_id: sessionId,
           page,
           language: "fr-FR",
-        },
+        }
+      );
+
+      const results: TRatedTv[] = data.results.map((m) => ({
+        ...m,
+        rating: m.rating ?? 0,
+      }));
+
+      return NextResponse.json({
+        page: data.page,
+        results,
+        total_pages: data.total_pages,
+        total_results: data.total_results,
+      });
+    }
+
+    const data = await tmdbClient.get<TMDBRatedMoviesResponse>(
+      `/account/${accountId}/rated/movies`,
+      {
+        session_id: sessionId,
+        page,
+        language: "fr-FR",
       }
     );
 
-    const results: TRatedMovie[] = data.results.map((m: (typeof data.results)[number]) => ({
+    const results: TRatedMovie[] = data.results.map((m) => ({
       ...m,
       rating: m.rating ?? 0,
     }));
@@ -58,7 +90,7 @@ export async function GET(request: Request) {
     });
   } catch {
     return NextResponse.json(
-      { error: "Impossible de charger les films notés" },
+      { error: "Impossible de charger les notes" },
       { status: 500 }
     );
   }

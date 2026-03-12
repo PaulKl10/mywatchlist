@@ -7,12 +7,13 @@ import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
 import {
   useAddRatingMutation,
   useRemoveRatingMutation,
-} from "@/features/RatedMovies/hooks/useRatingMutation";
+} from "@/features/RatedMedias/hooks/useRatingMutation";
 
 const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 interface RateMovieButtonProps {
-  movieId: number;
+  mediaId: number;
+  mediaType?: "movie" | "tv";
   isAuthenticated: boolean;
   isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
@@ -20,7 +21,8 @@ interface RateMovieButtonProps {
 }
 
 export function RateMovieButton({
-  movieId,
+  mediaId,
+  mediaType = "movie",
   isAuthenticated,
   isAuthLoading,
   accountStates,
@@ -35,21 +37,26 @@ export function RateMovieButton({
       : null;
 
   const [localOverride, setLocalOverride] = useState<{
-    movieId: number;
+    mediaId: number;
     rating: number | null;
   } | null>(null);
 
   const userRating =
-    localOverride?.movieId === movieId ? localOverride.rating : serverRating;
+    localOverride?.mediaId === mediaId ? localOverride.rating : serverRating;
 
   const handleRate = (value: number) => {
     const current = userRating;
     if (current === value) {
-      setLocalOverride({ movieId, rating: null });
-      removeMutation.mutate(movieId);
+      setLocalOverride({ mediaId, rating: null });
+      removeMutation.mutate({ mediaId, mediaType });
     } else {
-      setLocalOverride({ movieId, rating: value });
-      addMutation.mutate({ movieId, value, runtime });
+      setLocalOverride({ mediaId, rating: value });
+      addMutation.mutate({
+        mediaId,
+        value,
+        mediaType,
+        runtime: mediaType === "movie" ? runtime : undefined,
+      });
     }
   };
 
@@ -66,7 +73,7 @@ export function RateMovieButton({
         className="inline-flex items-center gap-2 rounded-lg border border-amber-500 px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-amber-500/10"
       >
         <Star className="h-4 w-4" />
-        Connectez-vous pour noter ce film
+        Connectez-vous pour noter {mediaType === "tv" ? "cette série" : "ce film"}
       </Link>
     );
   }
@@ -78,7 +85,9 @@ export function RateMovieButton({
       <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
         {userRating != null
           ? `Votre note : ${userRating}/10`
-          : "Noter ce film"}
+          : mediaType === "tv"
+            ? "Noter cette série"
+            : "Noter ce film"}
       </p>
       <div className="flex items-center justify-between">
         {RATING_OPTIONS.map((value) => (

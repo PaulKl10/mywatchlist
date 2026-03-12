@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import type { TWatchProviders } from "@/types/movie.type";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBCountryProviders = {
   link: string;
@@ -23,9 +21,8 @@ export async function GET(
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const country = searchParams.get("country") || "FR";
-  const apiKey = process.env.TMDB_API_KEY;
 
-  if (!apiKey) {
+  if (!tmdbClient.isConfigured()) {
     return NextResponse.json(
       { error: "TMDB_API_KEY is not configured" },
       { status: 500 }
@@ -40,9 +37,8 @@ export async function GET(
   }
 
   try {
-    const { data } = await axios.get<TMDBWatchProvidersResponse>(
-      `${TMDB_BASE_URL}/movie/${id}/watch/providers`,
-      { params: { api_key: apiKey } }
+    const data = await tmdbClient.get<TMDBWatchProvidersResponse>(
+      `/movie/${id}/watch/providers`
     );
 
     const countryData = data.results[country.toUpperCase()];

@@ -22,6 +22,39 @@ export type TDiscoverMoviesResponse = {
   total_results: number;
 };
 
+export type TDiscoverTv = {
+  id: number;
+  name: string;
+  poster_path: string | null;
+  first_air_date?: string;
+  overview?: string;
+  vote_average: number;
+  vote_count: number;
+};
+
+export type TDiscoverTvResponse = {
+  page: number;
+  results: TDiscoverTv[];
+  total_pages: number;
+  total_results: number;
+};
+
+export type TWatchlistTv = {
+  id: number;
+  name: string;
+  poster_path: string | null;
+  first_air_date?: string;
+  overview?: string;
+  vote_average?: number;
+};
+
+export type TWatchlistTvResponse = {
+  page: number;
+  results: TWatchlistTv[];
+  total_pages: number;
+  total_results: number;
+};
+
 export type TGenre = {
   id: number;
   name: string;
@@ -91,4 +124,33 @@ export type TPersonMovieCredits = {
 
 export type TRatedMovie = TMovie & {
   rating: number;
+};
+
+export type TRatedTv = {
+  id: number;
+  name: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string;
+  first_air_date: string;
+  vote_average: number;
+  vote_count: number;
+  genre_ids: number[];
+  rating: number;
+};
+
+export type TTvDetails = {
+  id: number;
+  name: string;
+  original_name: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  first_air_date: string;
+  vote_average: number;
+  vote_count: number;
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  genres: TGenre[];
+  homepage: string | null;
 };

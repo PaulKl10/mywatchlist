@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { TCastMember } from "@/types/movie.type";
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 interface CastCardProps {
   castMember: TCastMember;

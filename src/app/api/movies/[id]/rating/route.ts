@@ -1,36 +1,26 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-
-async function fetchMovieRuntime(
-  movieId: number,
-  apiKey: string
-): Promise<number | null> {
-  try {
-    const { data } = await axios.get<{ runtime: number | null }>(
-      `${TMDB_BASE_URL}/movie/${movieId}`,
-      { params: { api_key: apiKey, language: "fr-FR" } }
-    );
-    return data.runtime ?? null;
-  } catch {
-    return null;
-  }
-}
+import { fetchMovieRuntime } from "@/lib/tmdb";
+import { tmdbClient } from "@/lib/tmdb-client";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  if (!tmdbClient.isConfigured()) {
+    return NextResponse.json(
+      { error: "TMDB_API_KEY is not configured" },
+      { status: 500 }
+    );
   }
 
   if (!id || Number.isNaN(Number(id))) {
@@ -64,13 +54,10 @@ export async function POST(
   }
 
   try {
-    await axios.post(
-      `${TMDB_BASE_URL}/movie/${id}/rating`,
+    await tmdbClient.post(
+      `/movie/${id}/rating`,
       { value },
-      {
-        params: { api_key: apiKey, session_id: sessionId },
-        headers: { "Content-Type": "application/json" },
-      }
+      { session_id: sessionId }
     );
 
     // Stocker le runtime pour le compteur (tracking interne, pas de double-comptage)
@@ -83,18 +70,20 @@ export async function POST(
       const runtime =
         typeof runtimeFromBody === "number" && runtimeFromBody >= 0
           ? runtimeFromBody
-          : await fetchMovieRuntime(Number(id), apiKey);
+          : await fetchMovieRuntime(Number(id));
 
       await prisma.watchTimeEntry.upsert({
         where: {
-          userId_tmdb_movie_id: {
+          userId_media_type_tmdb_movie_id: {
             userId: session.user.id,
+            media_type: "movie",
             tmdb_movie_id: Number(id),
           },
         },
         create: {
           userId: session.user.id,
           tmdb_movie_id: Number(id),
+          media_type: "movie",
           runtime,
         },
         update: { runtime },
@@ -115,12 +104,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const apiKey = process.env.TMDB_API_KEY;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("tmdb_session_id")?.value;
 
-  if (!apiKey || !sessionId) {
+  if (!sessionId) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  if (!tmdbClient.isConfigured()) {
+    return NextResponse.json(
+      { error: "TMDB_API_KEY is not configured" },
+      { status: 500 }
+    );
   }
 
   if (!id || Number.isNaN(Number(id))) {
@@ -135,18 +130,16 @@ export async function DELETE(
   });
 
   try {
-    await axios.delete(
-      `${TMDB_BASE_URL}/movie/${id}/rating`,
-      {
-        params: { api_key: apiKey, session_id: sessionId },
-      }
-    );
+    await tmdbClient.delete(`/movie/${id}/rating`, {
+      session_id: sessionId,
+    });
   } catch {
     // Même en cas d'échec TMDB, on supprime de notre BDD pour garder le compteur cohérent
     if (session) {
       await prisma.watchTimeEntry.deleteMany({
         where: {
           userId: session.userId,
+          media_type: "movie",
           tmdb_movie_id: Number(id),
         },
       });
@@ -162,6 +155,7 @@ export async function DELETE(
     await prisma.watchTimeEntry.deleteMany({
       where: {
         userId: session.userId,
+        media_type: "movie",
         tmdb_movie_id: Number(id),
       },
     });

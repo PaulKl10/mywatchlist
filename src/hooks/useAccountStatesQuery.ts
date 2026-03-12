@@ -7,9 +7,11 @@ export type TAccountStates = {
 };
 
 async function fetchAccountStates(
-  movieId: number
+  mediaId: number,
+  mediaType: "movie" | "tv"
 ): Promise<TAccountStates> {
-  const res = await fetch(`/api/movies/${movieId}/account-states`, {
+  const base = mediaType === "tv" ? "/api/tv" : "/api/movies";
+  const res = await fetch(`${base}/${mediaId}/account-states`, {
     credentials: "include",
   });
   const data = await res.json();
@@ -20,10 +22,14 @@ async function fetchAccountStates(
   };
 }
 
-export function useAccountStatesQuery(movieId: number, enabled: boolean) {
+export function useAccountStatesQuery(
+  mediaId: number,
+  enabled: boolean,
+  mediaType: "movie" | "tv" = "movie"
+) {
   return useQuery({
-    queryKey: ["account-states", movieId],
-    queryFn: () => fetchAccountStates(movieId),
-    enabled: enabled && movieId > 0,
+    queryKey: ["account-states", mediaType, mediaId],
+    queryFn: () => fetchAccountStates(mediaId, mediaType),
+    enabled: enabled && mediaId > 0,
   });
 }

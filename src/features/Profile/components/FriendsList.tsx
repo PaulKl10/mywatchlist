@@ -5,6 +5,7 @@ import Image from "next/image";
 import { User, Users } from "lucide-react";
 import { useFriendsQuery } from "@/features/Profile/hooks/useFriendsQuery";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import { AddFriendButton } from "./AddFriendButton";
 
 export function FriendsList() {
@@ -41,7 +42,7 @@ export function FriendsList() {
               ? `https://secure.gravatar.com/avatar/${friend.gravatar_hash}?s=64&d=identicon`
               : null;
             const friendTmdbUrl = friend.tmdb_avatar_path
-              ? `https://image.tmdb.org/t/p/w185${friend.tmdb_avatar_path}`
+              ? `${TMDB_IMAGE_BASE}/w185${friend.tmdb_avatar_path}`
               : null;
             const friendAvatarUrl = friendGravatarUrl || friendTmdbUrl;
             const friendSafeAvatar =

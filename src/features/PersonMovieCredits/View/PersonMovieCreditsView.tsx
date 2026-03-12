@@ -6,8 +6,7 @@ import { ArrowLeft, Film } from "lucide-react";
 import { PersonMovieCard } from "@/features/PersonMovieCredits/components/PersonMovieCard";
 import { useGetPersonDetailsQuery } from "@/features/PersonMovieCredits/hooks/useGetPersonDetailsQuery";
 import { useGetPersonMovieCreditsQuery } from "@/features/PersonMovieCredits/hooks/useGetPersonMovieCreditsQuery";
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
+import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 interface PersonMovieCreditsViewProps {
   personId: number;
@@ -74,7 +73,7 @@ export function PersonMovieCreditsView({
           Retour
         </button>
 
-        <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <div className="flex flex-col justify-center items-center gap-6 md:flex-row md:gap-8">
           <div className="relative aspect-square w-48 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
             <Image
               src={
@@ -89,7 +88,7 @@ export function PersonMovieCreditsView({
             />
           </div>
           <div className="flex flex-1 flex-col">
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 md:text-4xl">
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 md:text-4xl text-center md:text-start">
               {person.name}
             </h1>
             {person.biography && (
@@ -97,7 +96,7 @@ export function PersonMovieCreditsView({
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Biographie
                 </h2>
-                <p className="mt-2 line-clamp-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-2 line-clamp-6 text-zinc-600 dark:text-zinc-400 text-justify">
                   {person.biography}
                 </p>
               </div>
