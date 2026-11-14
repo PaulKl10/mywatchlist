@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useRef } from "react";
+import {
+  RowScrollButtons,
+  type TScrollDirection,
+} from "@/features/Home/components/RowScrollButtons";
 import { MovieCard } from "@/components/MovieCard";
 import type { TMovie } from "@/types/movie.type";
 
@@ -19,7 +23,7 @@ const GAP = 12;
 export function MovieRow({ title, movies, isLoading, exploreHref }: MovieRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = (direction: TScrollDirection) => {
     const el = scrollRef.current;
     if (!el) return;
     const amount = (CARD_WIDTH + GAP) * 4;
@@ -44,24 +48,7 @@ export function MovieRow({ title, movies, isLoading, exploreHref }: MovieRowProp
             {title}
           </h2>
         )}
-        <div className="flex gap-1 opacity-0 transition-opacity group-hover/row:opacity-100">
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            className="rounded-full bg-zinc-200/80 p-2 text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-            aria-label="Défiler à gauche"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            className="rounded-full bg-zinc-200/80 p-2 text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-            aria-label="Défiler à droite"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
+        <RowScrollButtons onScroll={scroll} />
       </div>
       <div
         ref={scrollRef}
