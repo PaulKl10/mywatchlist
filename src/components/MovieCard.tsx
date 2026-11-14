@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { TMovie } from "@/types/movie.type";
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
 function MovieCardDetails({ movie }: { movie: TMovie }) {
   return (
@@ -23,7 +23,14 @@ function MovieCardDetails({ movie }: { movie: TMovie }) {
   );
 }
 
-export function MovieCard({ movie }: { movie: TMovie }) {
+export function MovieCard({
+  movie,
+  sizes = POSTER_GRID_SIZES,
+}: {
+  movie: TMovie;
+  /** Largeur affichée, pour choisir la taille de poster TMDB. */
+  sizes?: string;
+}) {
   return (
     <a
       href={`/movies/${movie.id}`}
@@ -39,9 +46,8 @@ export function MovieCard({ movie }: { movie: TMovie }) {
             }
             alt={movie.title}
             fill
-            loading="eager"
             className="object-cover"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            sizes={sizes}
           />
         </div>
         <MovieCardDetails movie={movie} />

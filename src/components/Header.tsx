@@ -125,6 +125,7 @@ export function Header({ showSearch = true }: HeaderProps) {
             alt="My Watchlist"
             width={40}
             height={40}
+            unoptimized
           />
           <Link
             href="/"

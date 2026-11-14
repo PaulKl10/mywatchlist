@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { TWatchlistTv } from "@/types/movie.type";
 
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
 function WatchlistTvCardDetails({ tv }: { tv: TWatchlistTv }) {
   return (
@@ -48,9 +48,8 @@ export function WatchlistTvCard({ tv }: WatchlistTvCardProps) {
           }
           alt={tv.name}
           fill
-          loading="eager"
           className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          sizes={POSTER_GRID_SIZES}
         />
       </div>
       <WatchlistTvCardDetails tv={tv} />

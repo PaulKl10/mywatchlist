@@ -82,7 +82,7 @@ export function TvRow({
         ) : (
           tvShows.map((tv) => (
             <div key={tv.id} className="w-[160px] shrink-0">
-              <TvCard tv={tv} />
+              <TvCard tv={tv} sizes={`${CARD_WIDTH}px`} />
             </div>
           ))
         )}

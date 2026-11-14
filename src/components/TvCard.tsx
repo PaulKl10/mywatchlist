@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { TDiscoverTv } from "@/types/movie.type";
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
 function TvCardDetails({ tv }: { tv: TDiscoverTv }) {
   return (
@@ -26,7 +26,14 @@ function TvCardDetails({ tv }: { tv: TDiscoverTv }) {
   );
 }
 
-export function TvCard({ tv }: { tv: TDiscoverTv }) {
+export function TvCard({
+  tv,
+  sizes = POSTER_GRID_SIZES,
+}: {
+  tv: TDiscoverTv;
+  /** Largeur affichée, pour choisir la taille de poster TMDB. */
+  sizes?: string;
+}) {
   return (
     <Link
       href={`/tv/${tv.id}`}
@@ -42,9 +49,8 @@ export function TvCard({ tv }: { tv: TDiscoverTv }) {
             }
             alt={tv.name}
             fill
-            loading="eager"
             className="object-cover"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            sizes={sizes}
           />
         </div>
         <TvCardDetails tv={tv} />

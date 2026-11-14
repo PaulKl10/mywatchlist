@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
 type TProfileWatchlistItem = {
   id: number;
@@ -59,9 +59,8 @@ export function ProfileWatchlistCard({ item }: ProfileWatchlistCardProps) {
           }
           alt={item.title}
           fill
-          loading="eager"
           className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          sizes={POSTER_GRID_SIZES}
         />
       </div>
       <CardDetails item={item} />

@@ -6,7 +6,7 @@ import type {
   TMultiSearchPerson,
 } from "@/types/search.type";
 
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
 function MovieOrTvCardDetails({
   title,
@@ -61,9 +61,8 @@ function MovieCard({
             }
             alt={item.title}
             fill
-            loading="eager"
             className="object-cover"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            sizes={POSTER_GRID_SIZES}
           />
         </div>
         <MovieOrTvCardDetails
@@ -100,9 +99,8 @@ function TvCard({
             }
             alt={item.name}
             fill
-            loading="eager"
             className="object-cover"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            sizes={POSTER_GRID_SIZES}
           />
         </div>
         <MovieOrTvCardDetails
@@ -139,9 +137,8 @@ function PersonCard({
             }
             alt={item.name}
             fill
-            loading="eager"
             className="object-cover object-top"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            sizes={POSTER_GRID_SIZES}
           />
         </div>
         <div className="flex-1 flex-col p-3 flex absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm rounded-b-lg">

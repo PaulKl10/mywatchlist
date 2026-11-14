@@ -80,7 +80,7 @@ export function MovieRow({ title, movies, isLoading, exploreHref }: MovieRowProp
               key={movie.id}
               className="w-[160px] shrink-0"
             >
-              <MovieCard movie={movie} />
+              <MovieCard movie={movie} sizes={`${CARD_WIDTH}px`} />
             </div>
           ))
         )}

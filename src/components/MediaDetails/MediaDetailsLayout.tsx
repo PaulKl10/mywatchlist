@@ -25,14 +25,15 @@ export function MediaDetailsLayout({
         <Image
           src={
             backdropPath
-              ? `${TMDB_IMAGE_BASE}/original${backdropPath}`
+              ? `${TMDB_IMAGE_BASE}/w1280${backdropPath}`
               : "https://placehold.co/1920x1080/1f2937/9ca3af.png?text=No+Backdrop"
           }
           alt={posterAlt}
           fill
           className="object-cover object-top"
           sizes="100vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 via-zinc-50/60 to-transparent dark:from-zinc-950 dark:via-zinc-950/60 dark:to-transparent" />
       </div>
@@ -58,7 +59,8 @@ export function MediaDetailsLayout({
               alt={posterAlt}
               fill
               className="object-cover"
-              sizes="(max-width: 1920px) 100vw, 256px"
+              sizes="(max-width: 768px) 80vw, 27vw"
+              loading="eager"
             />
           </div>
 
