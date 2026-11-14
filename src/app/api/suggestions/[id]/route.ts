@@ -41,7 +41,7 @@ export async function PATCH(_request: Request, { params }: TSuggestionRouteConte
 
   try {
     await updateTmdbWatchlist(
-      current.sessionId,
+      current,
       suggestion.tmdb_movie_id,
       mediaType,
       true

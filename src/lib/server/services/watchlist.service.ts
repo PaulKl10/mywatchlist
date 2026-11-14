@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { fetchMovieDetails, fetchTvDetails, getTmdbAccountId } from "@/lib/tmdb";
+import { fetchMovieDetails, fetchTvDetails } from "@/lib/tmdb";
 import { tmdbClient } from "@/lib/tmdb-client";
 import type { TMediaType } from "@/types/movie.type";
+import type { TCurrentSession } from "./session.service";
 
 type TWatchlistSnapshot = {
   title: string;
@@ -42,14 +43,13 @@ async function fetchWatchlistSnapshot(
 
 /** Ajoute ou retire un média de la watchlist TMDB du compte connecté. */
 export async function updateTmdbWatchlist(
-  sessionId: string,
+  { sessionId, user }: TCurrentSession,
   mediaId: number,
   mediaType: TMediaType,
   watchlist: boolean
 ): Promise<void> {
-  const accountId = await getTmdbAccountId(sessionId);
   await tmdbClient.post(
-    `/account/${accountId}/watchlist`,
+    `/account/${user.tmdb_id}/watchlist`,
     { media_type: mediaType, media_id: mediaId, watchlist },
     { session_id: sessionId }
   );

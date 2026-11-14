@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
-  getSessionId,
-  getUserFromSessionId,
+  getCurrentSession,
   recordWatchTime,
   removeWatchTime,
   syncWatchlistItem,
   updateTmdbWatchlist,
+  type TCurrentSession,
 } from "@/lib/server/services";
 import {
   isTmdbNotFoundError,
@@ -48,9 +48,9 @@ export function createRatingHandlers({
 }: TRatingHandlersConfig) {
   async function POST(request: Request, { params }: TRatingRouteContext) {
     const { id } = await params;
-    const sessionId = await getSessionId();
+    const current = await getCurrentSession();
 
-    if (!sessionId) {
+    if (!current) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
@@ -85,7 +85,7 @@ export function createRatingHandlers({
       await tmdbClient.post(
         `/${mediaType}/${mediaId}/rating`,
         { value },
-        { session_id: sessionId }
+        { session_id: current.sessionId }
       );
     } catch {
       return NextResponse.json(
@@ -94,7 +94,7 @@ export function createRatingHandlers({
       );
     }
 
-    await applyRatingSideEffects(sessionId, mediaId);
+    await applyRatingSideEffects(current, mediaId);
 
     return NextResponse.json({ success: true });
   }
@@ -104,21 +104,23 @@ export function createRatingHandlers({
    * et entre dans le temps de visionnage. Best effort : la note est déjà enregistrée
    * sur TMDB, un échec ici est loggé mais ne la fait pas échouer.
    */
-  async function applyRatingSideEffects(sessionId: string, mediaId: number) {
+  async function applyRatingSideEffects(
+    current: TCurrentSession,
+    mediaId: number
+  ) {
+    const userId = current.user.id;
     const [watchlistResult, dbResult] = await Promise.allSettled([
       // TMDB retire en principe un média noté de la watchlist, mais ce comportement
       // dépend d'un réglage du compte TMDB : on le fait explicitement.
-      updateTmdbWatchlist(sessionId, mediaId, mediaType, false),
-      getUserFromSessionId(sessionId).then(async (user) => {
-        if (!user) return;
+      updateTmdbWatchlist(current, mediaId, mediaType, false),
+      Promise.all([
+        syncWatchlistItem(userId, mediaId, mediaType, false),
         // Durée toujours récupérée côté serveur : une valeur fournie par le client
         // permettrait de gonfler le compteur.
-        const runtime = await fetchRuntime(mediaId);
-        await Promise.all([
-          syncWatchlistItem(user.id, mediaId, mediaType, false),
-          recordWatchTime(user.id, mediaType, mediaId, runtime),
-        ]);
-      }),
+        fetchRuntime(mediaId).then((runtime) =>
+          recordWatchTime(userId, mediaType, mediaId, runtime)
+        ),
+      ]),
     ]);
 
     if (watchlistResult.status === "rejected") {
@@ -137,9 +139,9 @@ export function createRatingHandlers({
 
   async function DELETE(_request: Request, { params }: TRatingRouteContext) {
     const { id } = await params;
-    const sessionId = await getSessionId();
+    const current = await getCurrentSession();
 
-    if (!sessionId) {
+    if (!current) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
@@ -157,7 +159,7 @@ export function createRatingHandlers({
 
     try {
       await tmdbClient.delete(`/${mediaType}/${mediaId}/rating`, {
-        session_id: sessionId,
+        session_id: current.sessionId,
       });
     } catch (error) {
       // 404 : la note n'existe déjà plus sur TMDB, on aligne le compteur.
@@ -170,10 +172,7 @@ export function createRatingHandlers({
       }
     }
 
-    const user = await getUserFromSessionId(sessionId);
-    if (user) {
-      await removeWatchTime(user.id, mediaType, mediaId);
-    }
+    await removeWatchTime(current.user.id, mediaType, mediaId);
 
     return NextResponse.json({ success: true });
   }

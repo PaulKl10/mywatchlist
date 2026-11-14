@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { TRatedMovie, TRatedTv } from "@/types/movie.type";
-import { getSessionId } from "@/lib/server/services";
-import { getTmdbAccountId } from "@/lib/tmdb";
+import { getCurrentSession } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBRatedMoviesResponse = {
@@ -19,9 +18,9 @@ type TMDBRatedTvResponse = {
 };
 
 export async function GET(request: Request) {
-  const sessionId = await getSessionId();
+  const current = await getCurrentSession();
 
-  if (!sessionId) {
+  if (!current) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
@@ -40,7 +39,8 @@ export async function GET(request: Request) {
   const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const accountId = await getTmdbAccountId(sessionId);
+    const { sessionId, user } = current;
+    const accountId = user.tmdb_id;
 
     if (mediaType === "tv") {
       const data = await tmdbClient.get<TMDBRatedTvResponse>(

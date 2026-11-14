@@ -5,18 +5,16 @@ import type {
   TWatchlistTvResponse,
 } from "@/types/movie.type";
 import {
-  getSessionId,
-  getUserFromSessionId,
+  getCurrentSession,
   syncWatchlistItem,
   updateTmdbWatchlist,
 } from "@/lib/server/services";
-import { getTmdbAccountId } from "@/lib/tmdb";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 export async function GET(request: Request) {
-  const sessionId = await getSessionId();
+  const current = await getCurrentSession();
 
-  if (!sessionId) {
+  if (!current) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
@@ -35,7 +33,8 @@ export async function GET(request: Request) {
   const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const accountId = await getTmdbAccountId(sessionId);
+    const { sessionId, user } = current;
+    const accountId = user.tmdb_id;
 
     if (mediaType === "tv") {
       const data = await tmdbClient.get<TWatchlistTvResponse>(
@@ -67,9 +66,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const sessionId = await getSessionId();
+  const current = await getCurrentSession();
 
-  if (!sessionId) {
+  if (!current) {
     return NextResponse.json(
       { error: "Non authentifié" },
       { status: 401 }
@@ -101,12 +100,8 @@ export async function POST(request: Request) {
   const validMediaType: TMediaType = media_type === "tv" ? "tv" : "movie";
 
   try {
-    await updateTmdbWatchlist(sessionId, media_id, validMediaType, watchlist);
-
-    const user = await getUserFromSessionId(sessionId);
-    if (user) {
-      await syncWatchlistItem(user.id, media_id, validMediaType, watchlist);
-    }
+    await updateTmdbWatchlist(current, media_id, validMediaType, watchlist);
+    await syncWatchlistItem(current.user.id, media_id, validMediaType, watchlist);
 
     return NextResponse.json({ success: true });
   } catch {
