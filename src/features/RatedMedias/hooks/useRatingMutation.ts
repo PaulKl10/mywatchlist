@@ -20,8 +20,10 @@ export const useAddRatingMutation = () => {
       await queryClient.cancelQueries({ queryKey });
 
       const previous = queryClient.getQueryData<TAccountStates>(queryKey);
+      // Un média noté sort de la watchlist (fait côté serveur).
       queryClient.setQueryData<TAccountStates>(queryKey, (old) => ({
-        ...(old ?? { watchlist: false, favorite: false, rated: false }),
+        ...(old ?? { favorite: false }),
+        watchlist: false,
         rated: { value },
       }));
 
@@ -38,6 +40,7 @@ export const useAddRatingMutation = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["rated-movies"] });
       queryClient.invalidateQueries({ queryKey: ["watch-time"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },
   });
 };

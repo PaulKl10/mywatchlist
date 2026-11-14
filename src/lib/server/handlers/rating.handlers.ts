@@ -4,8 +4,14 @@ import {
   getUserFromSessionId,
   recordWatchTime,
   removeWatchTime,
+  syncWatchlistItem,
+  updateTmdbWatchlist,
 } from "@/lib/server/services";
-import { isTmdbNotFoundError, tmdbClient } from "@/lib/tmdb-client";
+import {
+  isTmdbNotFoundError,
+  tmdbClient,
+  tmdbErrorMessage,
+} from "@/lib/tmdb-client";
 import type { TMediaType } from "@/types/movie.type";
 
 type TRatingRouteContext = { params: Promise<{ id: string }> };
@@ -81,20 +87,50 @@ export function createRatingHandlers({
         { value },
         { session_id: sessionId }
       );
-
-      const user = await getUserFromSessionId(sessionId);
-      if (user) {
-        // Durée toujours récupérée côté serveur : une valeur fournie par le client
-        // permettrait de gonfler le compteur.
-        const runtime = await fetchRuntime(mediaId);
-        await recordWatchTime(user.id, mediaType, mediaId, runtime);
-      }
-
-      return NextResponse.json({ success: true });
     } catch {
       return NextResponse.json(
         { error: "Impossible d'ajouter la note" },
         { status: 500 }
+      );
+    }
+
+    await applyRatingSideEffects(sessionId, mediaId);
+
+    return NextResponse.json({ success: true });
+  }
+
+  /**
+   * Suites d'une notation : le média noté sort de la watchlist (TMDB + copie en BDD)
+   * et entre dans le temps de visionnage. Best effort : la note est déjà enregistrée
+   * sur TMDB, un échec ici est loggé mais ne la fait pas échouer.
+   */
+  async function applyRatingSideEffects(sessionId: string, mediaId: number) {
+    const [watchlistResult, dbResult] = await Promise.allSettled([
+      // TMDB retire en principe un média noté de la watchlist, mais ce comportement
+      // dépend d'un réglage du compte TMDB : on le fait explicitement.
+      updateTmdbWatchlist(sessionId, mediaId, mediaType, false),
+      getUserFromSessionId(sessionId).then(async (user) => {
+        if (!user) return;
+        // Durée toujours récupérée côté serveur : une valeur fournie par le client
+        // permettrait de gonfler le compteur.
+        const runtime = await fetchRuntime(mediaId);
+        await Promise.all([
+          syncWatchlistItem(user.id, mediaId, mediaType, false),
+          recordWatchTime(user.id, mediaType, mediaId, runtime),
+        ]);
+      }),
+    ]);
+
+    if (watchlistResult.status === "rejected") {
+      console.error(
+        `[rating] Retrait de la watchlist TMDB impossible (${mediaType} ${mediaId})`,
+        tmdbErrorMessage(watchlistResult.reason)
+      );
+    }
+    if (dbResult.status === "rejected") {
+      console.error(
+        `[rating] Mise à jour watchlist/temps de visionnage en BDD impossible (${mediaType} ${mediaId})`,
+        tmdbErrorMessage(dbResult.reason)
       );
     }
   }

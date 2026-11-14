@@ -16,6 +16,14 @@ function withApiKey(params: TMDBParams = {}): TMDBParams {
   return { ...params, api_key: getApiKey() };
 }
 
+/**
+ * Message d'erreur loggable. Ne jamais logger l'erreur brute : une AxiosError
+ * embarque la config de la requête (api_key, session_id).
+ */
+export function tmdbErrorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
+}
+
 /** True si TMDB a répondu 404 (ressource inexistante ou déjà supprimée). */
 export function isTmdbNotFoundError(error: unknown): boolean {
   return axios.isAxiosError(error) && error.response?.status === 404;

@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE, getSessionId } from "@/lib/server/services";
-import { tmdbClient } from "@/lib/tmdb-client";
-
-// Message seul : une AxiosError embarque la config (api_key, session_id).
-function errorMessage(reason: unknown): string {
-  return reason instanceof Error ? reason.message : String(reason);
-}
+import { tmdbClient, tmdbErrorMessage } from "@/lib/tmdb-client";
 
 export async function POST() {
   const sessionId = await getSessionId();
@@ -20,10 +15,10 @@ export async function POST() {
     ]);
 
     if (dbResult.status === "rejected") {
-      console.error("[logout] Suppression de la session en BDD impossible", errorMessage(dbResult.reason));
+      console.error("[logout] Suppression de la session en BDD impossible", tmdbErrorMessage(dbResult.reason));
     }
     if (tmdbResult.status === "rejected") {
-      console.error("[logout] Révocation de la session TMDB impossible", errorMessage(tmdbResult.reason));
+      console.error("[logout] Révocation de la session TMDB impossible", tmdbErrorMessage(tmdbResult.reason));
     }
   }
 
