@@ -11,6 +11,9 @@ import {
 } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
+/** TMDB trie les listes du compte du plus ancien au plus récent par défaut. */
+const NEWEST_FIRST = "created_at.desc";
+
 export async function GET(request: Request) {
   const current = await getCurrentSession();
 
@@ -43,6 +46,7 @@ export async function GET(request: Request) {
           session_id: sessionId,
           page,
           language: "fr-FR",
+          sort_by: NEWEST_FIRST,
         }
       );
       return NextResponse.json(data);
@@ -54,6 +58,7 @@ export async function GET(request: Request) {
         session_id: sessionId,
         page,
         language: "fr-FR",
+        sort_by: NEWEST_FIRST,
       }
     );
     return NextResponse.json(data);

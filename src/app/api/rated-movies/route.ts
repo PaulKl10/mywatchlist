@@ -3,6 +3,9 @@ import type { TRatedMovie, TRatedTv } from "@/types/movie.type";
 import { getCurrentSession } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
+/** TMDB trie les listes du compte du plus ancien au plus récent par défaut. */
+const NEWEST_FIRST = "created_at.desc";
+
 type TMDBRatedMoviesResponse = {
   page: number;
   results: (TRatedMovie & { rating?: number })[];
@@ -49,6 +52,7 @@ export async function GET(request: Request) {
           session_id: sessionId,
           page,
           language: "fr-FR",
+          sort_by: NEWEST_FIRST,
         }
       );
 
@@ -71,6 +75,7 @@ export async function GET(request: Request) {
         session_id: sessionId,
         page,
         language: "fr-FR",
+        sort_by: NEWEST_FIRST,
       }
     );
 
