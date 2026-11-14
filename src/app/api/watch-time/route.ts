@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getWatchTimeStats, type TWatchTimeStats } from "@/lib/server/services";
 
-export type TWatchTimeResponse = {
-  totalMinutes: number;
-  totalHours: number;
-  movieCount: number;
-};
+export type TWatchTimeResponse = TWatchTimeStats;
 
 async function getSessionUser() {
   const cookieStore = await cookies();
@@ -28,22 +25,6 @@ export async function GET() {
     );
   }
 
-  const [aggregate, movieCount] = await Promise.all([
-    prisma.watchTimeEntry.aggregate({
-      where: { userId: user.id },
-      _sum: { runtime: true },
-    }),
-    prisma.watchTimeEntry.count({
-      where: { userId: user.id },
-    }),
-  ]);
-
-  const totalMinutes = aggregate._sum.runtime ?? 0;
-  const totalHours = Math.floor(totalMinutes / 60);
-
-  return NextResponse.json({
-    totalMinutes,
-    totalHours,
-    movieCount,
-  } satisfies TWatchTimeResponse);
+  const stats: TWatchTimeResponse = await getWatchTimeStats(user.id);
+  return NextResponse.json(stats);
 }

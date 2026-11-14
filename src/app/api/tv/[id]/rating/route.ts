@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { fetchTvTotalRuntime } from "@/lib/tmdb";
-import { tmdbClient } from "@/lib/tmdb-client";
+import { isTmdbNotFoundError, tmdbClient } from "@/lib/tmdb-client";
 
 export async function POST(
   request: Request,
@@ -128,22 +128,18 @@ export async function DELETE(
     await tmdbClient.delete(`/tv/${id}/rating`, {
       session_id: sessionId,
     });
-  } catch {
-    if (session) {
-      await prisma.watchTimeEntry.deleteMany({
-        where: {
-          userId: session.userId,
-          media_type: "tv",
-          tmdb_movie_id: Number(id),
-        },
-      });
+  } catch (error) {
+    // 404 : la note n'existe déjà plus sur TMDB, on aligne le compteur.
+    // Toute autre erreur : la note est toujours sur TMDB, le compteur doit rester intact.
+    if (!isTmdbNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Impossible de supprimer la note" },
+        { status: 500 }
+      );
     }
-    return NextResponse.json(
-      { error: "Impossible de supprimer la note" },
-      { status: 500 }
-    );
   }
 
+  // Retirer du tracking (le média n'est plus compté)
   if (session) {
     await prisma.watchTimeEntry.deleteMany({
       where: {

@@ -58,30 +58,58 @@ type TMDBSeasonEpisode = {
 };
 
 type TMDBSeasonDetails = {
-  episodes: TMDBSeasonEpisode[];
+  episodes?: TMDBSeasonEpisode[];
 };
 
-/** Somme le runtime de tous les épisodes d'une série (en minutes). */
+type TMDBTvSeasonsSummary = {
+  seasons?: { season_number: number }[];
+};
+
+type TMDBTvWithAppendedSeasons = {
+  [key: `season/${number}`]: TMDBSeasonDetails | undefined;
+};
+
+/** Limite TMDB du nombre de sous-requêtes par append_to_response. */
+const TMDB_MAX_APPENDED_RESPONSES = 20;
+
+/**
+ * Somme le runtime de tous les épisodes d'une série (en minutes), hors épisodes spéciaux (saison 0).
+ * Les saisons sont récupérées par lots de 20 via append_to_response, en parallèle :
+ * 38 saisons = 3 requêtes au lieu de 39 requêtes séquentielles.
+ */
 export async function fetchTvTotalRuntime(tvId: number): Promise<number | null> {
   try {
-    const tvData = await tmdbClient.get<{ number_of_seasons: number }>(
-      `/tv/${tvId}`,
-      { language: "fr-FR" }
+    const tvData = await tmdbClient.get<TMDBTvSeasonsSummary>(`/tv/${tvId}`, {
+      language: "fr-FR",
+    });
+
+    const seasonNumbers = (tvData.seasons ?? [])
+      .map((season) => season.season_number)
+      .filter((seasonNumber) => seasonNumber > 0);
+    if (seasonNumbers.length === 0) return 0;
+
+    const batches: number[][] = [];
+    for (let i = 0; i < seasonNumbers.length; i += TMDB_MAX_APPENDED_RESPONSES) {
+      batches.push(seasonNumbers.slice(i, i + TMDB_MAX_APPENDED_RESPONSES));
+    }
+
+    const responses = await Promise.all(
+      batches.map((batch) =>
+        tmdbClient.get<TMDBTvWithAppendedSeasons>(`/tv/${tvId}`, {
+          language: "fr-FR",
+          append_to_response: batch.map((n) => `season/${n}`).join(","),
+        })
+      )
     );
 
-    const numSeasons = tvData.number_of_seasons ?? 0;
-    if (numSeasons === 0) return 0;
-
     let total = 0;
-    for (let s = 1; s <= numSeasons; s++) {
-      const seasonData = await tmdbClient.get<TMDBSeasonDetails>(
-        `/tv/${tvId}/season/${s}`,
-        { language: "fr-FR" }
-      );
-      for (const ep of seasonData.episodes ?? []) {
-        total += ep.runtime ?? 0;
+    responses.forEach((data, index) => {
+      for (const seasonNumber of batches[index]) {
+        for (const episode of data[`season/${seasonNumber}`]?.episodes ?? []) {
+          total += episode.runtime ?? 0;
+        }
       }
-    }
+    });
     return total > 0 ? total : null;
   } catch {
     return null;

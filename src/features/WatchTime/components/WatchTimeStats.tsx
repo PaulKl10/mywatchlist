@@ -23,6 +23,17 @@ function formatWatchTime(totalMinutes: number): {
   return { days, hours: remainingHours, minutes };
 }
 
+/** Ex. « 3 films et 2 séries notés », « 1 série notée ». */
+function formatRatedCount(movieCount: number, tvCount: number): string {
+  const parts: string[] = [];
+  if (movieCount > 0) parts.push(`${movieCount} film${movieCount > 1 ? "s" : ""}`);
+  if (tvCount > 0) parts.push(`${tvCount} série${tvCount > 1 ? "s" : ""}`);
+
+  const total = movieCount + tvCount;
+  const feminine = movieCount === 0;
+  return `${parts.join(" et ")} noté${feminine ? "e" : ""}${total > 1 ? "s" : ""}`;
+}
+
 export function WatchTimeStats({ tmdbId }: WatchTimeStatsProps = {}) {
   const ownQuery = useWatchTimeQuery();
   const userQuery = useWatchTimeByUserQuery(tmdbId ?? 0);
@@ -53,8 +64,7 @@ export function WatchTimeStats({ tmdbId }: WatchTimeStatsProps = {}) {
           Temps de visionnage
         </span>
         <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          ({data.movieCount} film{data.movieCount > 1 ? "s" : ""} noté
-          {data.movieCount > 1 ? "s" : ""})
+          ({formatRatedCount(data.movieCount, data.tvCount)})
         </span>
       </div>
       <div className="flex items-baseline gap-2 h-16">

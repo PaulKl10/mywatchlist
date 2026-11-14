@@ -1,4 +1,5 @@
 export { getUserFromSessionId } from "./session.service";
+export { getWatchTimeStats, type TWatchTimeStats } from "./watchTime.service";
 export { getFriendsWatchlistMovies } from "./friendsWatchlist.service";
 export {
   syncWatchlistItem,

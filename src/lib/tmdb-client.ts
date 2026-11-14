@@ -16,6 +16,11 @@ function withApiKey(params: TMDBParams = {}): TMDBParams {
   return { ...params, api_key: getApiKey() };
 }
 
+/** True si TMDB a répondu 404 (ressource inexistante ou déjà supprimée). */
+export function isTmdbNotFoundError(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404;
+}
+
 export const tmdbClient = {
   /** GET vers TMDB. Ajoute automatiquement api_key. */
   async get<T>(path: string, params: TMDBParams = {}): Promise<T> {
