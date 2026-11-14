@@ -1,22 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const DARK_SCHEME_QUERY = "(prefers-color-scheme: dark)";
+
+function subscribe(onChange: () => void): () => void {
+  const mediaQuery = window.matchMedia(DARK_SCHEME_QUERY);
+  mediaQuery.addEventListener("change", onChange);
+  return () => mediaQuery.removeEventListener("change", onChange);
+}
+
+function getSnapshot(): boolean {
+  return window.matchMedia(DARK_SCHEME_QUERY).matches;
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
 
 /**
  * Détecte si le thème sombre est actif (préférence système via prefers-color-scheme).
  * Cohérent avec globals.css qui utilise @media (prefers-color-scheme: dark).
  */
 export function useTheme(): boolean {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDarkMode(mediaQuery.matches);
-
-    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
-
-  return isDarkMode;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

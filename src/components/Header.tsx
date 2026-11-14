@@ -57,7 +57,7 @@ export function Header({ showSearch = true }: HeaderProps) {
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user, isLoading, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogoutClick = () => {
     setIsBurgerOpen(false);

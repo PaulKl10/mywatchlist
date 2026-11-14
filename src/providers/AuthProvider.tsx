@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type TAccount = {
   id: number;
@@ -22,7 +17,18 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
+const AUTH_QUERY_KEY = ["auth", "me"] as const;
+
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+async function fetchCurrentUser(): Promise<TAccount | null> {
+  const res = await fetch("/api/auth/me", { credentials: "include" });
+  if (!res.ok) {
+    throw new Error(`GET /api/auth/me failed with status ${res.status}`);
+  }
+  const data: { user: TAccount | null } = await res.json();
+  return data.user ?? null;
+}
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -33,38 +39,33 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<TAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const {
+    data,
+    isPending,
+    refetch: refetchQuery,
+  } = useQuery({
+    queryKey: AUTH_QUERY_KEY,
+    queryFn: fetchCurrentUser,
+    retry: false,
+  });
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      const data = await res.json();
-      setUser(data.user);
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  const refetch = useCallback(async () => {
+    await refetchQuery();
+  }, [refetchQuery]);
 
   const logout = useCallback(async () => {
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
     });
-    setUser(null);
-  }, []);
+    queryClient.setQueryData(AUTH_QUERY_KEY, null);
+  }, [queryClient]);
 
-  return (
-    <AuthContext.Provider
-      value={{ user, isLoading, refetch: fetchUser, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({ user: data ?? null, isLoading: isPending, refetch, logout }),
+    [data, isPending, refetch, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

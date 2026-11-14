@@ -5,11 +5,9 @@ interface TvPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: TvPageProps): Promise<Metadata> {
-  return {
-    title: `Série - My Watchlist`,
-  };
-}
+export const metadata: Metadata = {
+  title: "Série - My Watchlist",
+};
 
 export default async function TvPage({ params }: TvPageProps) {
   const { id } = await params;

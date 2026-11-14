@@ -5,11 +5,9 @@ interface MoviePageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: MoviePageProps): Promise<Metadata> {
-  return {
-    title: `Film - My Watchlist`,
-  };
-}
+export const metadata: Metadata = {
+  title: "Film - My Watchlist",
+};
 
 export default async function MoviePage({ params }: MoviePageProps) {
   const { id } = await params;
