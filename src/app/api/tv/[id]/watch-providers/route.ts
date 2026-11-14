@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CDN_CACHE, publicCachedJson } from "@/lib/server/http";
 import type { TWatchProviders } from "@/types/movie.type";
 import { tmdbClient } from "@/lib/tmdb-client";
 
@@ -74,7 +75,7 @@ export async function GET(
       rent: countryData.rent ?? [],
     };
 
-    return NextResponse.json(response);
+    return publicCachedJson(response, CDN_CACHE.details);
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch watch providers from TMDB" },

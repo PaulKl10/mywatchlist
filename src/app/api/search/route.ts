@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CDN_CACHE, publicCachedJson } from "@/lib/server/http";
 import type { TMultiSearchResponse } from "@/types/search.type";
 import { tmdbClient } from "@/lib/tmdb-client";
 
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
       language: "fr-FR",
       include_adult: false,
     });
-    return NextResponse.json(data);
+    return publicCachedJson(data, CDN_CACHE.lists);
   } catch {
     return NextResponse.json(
       { error: "Failed to search from TMDB" },

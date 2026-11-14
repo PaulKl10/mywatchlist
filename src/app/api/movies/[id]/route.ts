@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CDN_CACHE, publicCachedJson } from "@/lib/server/http";
 import type { TMovieDetails } from "@/types/movie.type";
 import { tmdbClient } from "@/lib/tmdb-client";
 
@@ -26,7 +27,7 @@ export async function GET(
     const data = await tmdbClient.get<TMovieDetails>(`/movie/${id}`, {
       language: "fr-FR",
     });
-    return NextResponse.json(data);
+    return publicCachedJson(data, CDN_CACHE.details);
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch movie details from TMDB" },

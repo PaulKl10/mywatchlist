@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CDN_CACHE, publicCachedJson } from "@/lib/server/http";
 import type { TDiscoverTvResponse } from "@/types/movie.type";
 import { tmdbClient } from "@/lib/tmdb-client";
 
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
       "/discover/tv",
       params
     );
-    return NextResponse.json(data);
+    return publicCachedJson(data, CDN_CACHE.lists);
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch TV series from TMDB" },
