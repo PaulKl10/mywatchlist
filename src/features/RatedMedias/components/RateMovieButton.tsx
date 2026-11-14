@@ -17,7 +17,6 @@ interface RateMovieButtonProps {
   isAuthenticated: boolean;
   isAuthLoading?: boolean;
   accountStates?: TAccountStates | null;
-  runtime?: number | null;
 }
 
 export function RateMovieButton({
@@ -26,7 +25,6 @@ export function RateMovieButton({
   isAuthenticated,
   isAuthLoading,
   accountStates,
-  runtime,
 }: RateMovieButtonProps) {
   const addMutation = useAddRatingMutation();
   const removeMutation = useRemoveRatingMutation();
@@ -51,12 +49,7 @@ export function RateMovieButton({
       removeMutation.mutate({ mediaId, mediaType });
     } else {
       setLocalOverride({ mediaId, rating: value });
-      addMutation.mutate({
-        mediaId,
-        value,
-        mediaType,
-        runtime: mediaType === "movie" ? runtime : undefined,
-      });
+      addMutation.mutate({ mediaId, value, mediaType });
     }
   };
 

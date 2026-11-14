@@ -30,7 +30,7 @@ export async function POST(
     );
   }
 
-  let body: { value: number; runtime?: number };
+  let body: { value?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -40,7 +40,7 @@ export async function POST(
     );
   }
 
-  const { value, runtime: runtimeFromBody } = body;
+  const { value } = body;
   if (
     typeof value !== "number" ||
     value < 0.5 ||
@@ -67,10 +67,8 @@ export async function POST(
     });
 
     if (session?.user) {
-      const runtime =
-        typeof runtimeFromBody === "number" && runtimeFromBody >= 0
-          ? runtimeFromBody
-          : await fetchMovieRuntime(Number(id));
+      // Durée récupérée côté serveur : une valeur fournie par le client permettrait de gonfler le compteur.
+      const runtime = await fetchMovieRuntime(Number(id));
 
       await prisma.watchTimeEntry.upsert({
         where: {

@@ -38,10 +38,18 @@ export const tmdbClient = {
     return data;
   },
 
-  /** DELETE vers TMDB. Ajoute automatiquement api_key. */
-  async delete<T>(path: string, params: TMDBParams = {}): Promise<T> {
+  /** DELETE vers TMDB. Ajoute automatiquement api_key. `body` est envoyé en JSON si fourni. */
+  async delete<T>(
+    path: string,
+    params: TMDBParams = {},
+    body?: unknown
+  ): Promise<T> {
     const { data } = await axios.delete<T>(`${TMDB_BASE_URL}${path}`, {
       params: withApiKey(params),
+      ...(body !== undefined && {
+        data: body,
+        headers: { "Content-Type": "application/json" },
+      }),
     });
     return data;
   },

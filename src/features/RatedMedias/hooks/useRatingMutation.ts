@@ -10,14 +10,11 @@ export const useAddRatingMutation = () => {
       mediaId,
       value,
       mediaType = "movie",
-      runtime,
     }: {
       mediaId: number;
       value: number;
       mediaType?: "movie" | "tv";
-      runtime?: number | null;
-    }) =>
-      RatingService.addRating(mediaId, value, mediaType, runtime),
+    }) => RatingService.addRating(mediaId, value, mediaType),
     onMutate: async ({ mediaId, value, mediaType = "movie" }) => {
       const queryKey = ["account-states", mediaType, mediaId] as const;
       await queryClient.cancelQueries({ queryKey });

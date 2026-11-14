@@ -14,7 +14,6 @@ interface MediaDetailsActionsProps {
   isAuthLoading: boolean;
   accountStates: TAccountStates | null | undefined;
   onWatchlistChange: () => void;
-  runtime?: number | null;
 }
 
 export function MediaDetailsActions({
@@ -26,7 +25,6 @@ export function MediaDetailsActions({
   isAuthLoading,
   accountStates,
   onWatchlistChange,
-  runtime,
 }: MediaDetailsActionsProps) {
   return (
     <>
@@ -45,7 +43,6 @@ export function MediaDetailsActions({
           isAuthenticated={isAuthenticated}
           isAuthLoading={isAuthLoading}
           accountStates={accountStates}
-          runtime={mediaType === "movie" ? runtime : undefined}
         />
       </div>
 

@@ -86,7 +86,6 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
         isAuthLoading={isAuthLoading}
         accountStates={accountStates}
         onWatchlistChange={refetchAccountStates}
-        runtime={data.runtime}
       />
 
       <MediaDetailsSynopsis overview={data.overview} />

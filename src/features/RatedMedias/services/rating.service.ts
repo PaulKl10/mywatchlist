@@ -4,13 +4,12 @@ const RatingService = {
   addRating: async (
     mediaId: number,
     value: number,
-    mediaType: "movie" | "tv" = "movie",
-    runtime?: number | null
+    mediaType: "movie" | "tv" = "movie"
   ): Promise<void> => {
     const base = mediaType === "tv" ? "/api/tv" : "/api/movies";
     await axios.post(
       `${base}/${mediaId}/rating`,
-      { value, runtime: mediaType === "movie" ? (runtime ?? undefined) : undefined },
+      { value },
       { withCredentials: true }
     );
   },

@@ -68,10 +68,8 @@ export async function POST() {
       update: { userId: user.id },
     });
 
-    const response = NextResponse.json({
-      success: true,
-      session_id: sessionId,
-    });
+    // Le session_id reste uniquement dans le cookie httpOnly : ne jamais l'exposer au JS client.
+    const response = NextResponse.json({ success: true });
 
     response.cookies.set("tmdb_session_id", sessionId, {
       httpOnly: true,

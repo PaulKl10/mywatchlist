@@ -82,12 +82,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
-  const { media_id, watchlist, media_type = "movie" } = body as {
-    media_id: number;
-    watchlist: boolean;
-    media_type?: "movie" | "tv";
-  };
+  let body: { media_id?: unknown; watchlist?: unknown; media_type?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
+  }
+  const { media_id, watchlist, media_type = "movie" } = body;
 
   if (typeof media_id !== "number" || typeof watchlist !== "boolean") {
     return NextResponse.json(
