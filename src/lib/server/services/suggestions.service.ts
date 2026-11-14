@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findAcceptedFriendship } from "./friends.service";
 
 export type TSuggestion = {
   id: string;
@@ -64,15 +65,7 @@ export async function createSuggestion(
 
   if (receiver.id === userId) return { error: "cannot_suggest_to_self" };
 
-  const friendship = await prisma.friendship.findFirst({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { senderId: userId, receiverId: receiver.id },
-        { senderId: receiver.id, receiverId: userId },
-      ],
-    },
-  });
+  const friendship = await findAcceptedFriendship(userId, receiver.id);
   if (!friendship) return { error: "not_friends" };
 
   const existing = await prisma.suggestion.findFirst({

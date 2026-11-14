@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/server/services";
 
 export type TAccount = {
   id: number;
@@ -29,21 +28,11 @@ function toAccount(user: {
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const current = await getCurrentSession();
 
-  if (!sessionId) {
+  if (!current) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
 
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
-    return NextResponse.json({ user: null }, { status: 200 });
-  }
-
-  return NextResponse.json({ user: toAccount(session.user) });
+  return NextResponse.json({ user: toAccount(current.user) });
 }

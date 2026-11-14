@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import {
-  getUserFromSessionId,
-  getSuggestions,
   createSuggestion,
+  getCurrentSession,
+  getSuggestions,
   type TSuggestion,
 } from "@/lib/server/services";
 
 export type { TSuggestion };
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-  const user = await getUserFromSessionId(sessionId);
+  const user = (await getCurrentSession())?.user;
 
   if (!user) {
     return NextResponse.json({ suggestions: [] }, { status: 200 });
@@ -23,9 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-  const user = await getUserFromSessionId(sessionId);
+  const user = (await getCurrentSession())?.user;
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

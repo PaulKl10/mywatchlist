@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { getSessionId } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 export type TAccountStates = {
@@ -13,8 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const sessionId = await getSessionId();
 
   if (!sessionId) {
     return NextResponse.json(

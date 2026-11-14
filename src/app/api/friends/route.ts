@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getFriends, addFriend, type TFriend } from "@/lib/server/services";
+import {
+  addFriend,
+  getCurrentSession,
+  getFriends,
+  type TFriend,
+} from "@/lib/server/services";
 
 export type { TFriend };
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  const friends = await getFriends(sessionId);
+  const current = await getCurrentSession();
+  const friends = current ? await getFriends(current.user.id) : [];
   return NextResponse.json({ friends });
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const current = await getCurrentSession();
+  if (!current) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  let body: { receiverTmdbId?: number };
+  let body: { receiverTmdbId?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -31,15 +35,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await addFriend(sessionId, receiverTmdbId);
+  const result = await addFriend(current.user.id, receiverTmdbId);
 
   if ("success" in result) {
     return NextResponse.json({ success: true });
   }
 
   switch (result.error) {
-    case "unauthorized":
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     case "user_not_found":
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     case "cannot_add_self":

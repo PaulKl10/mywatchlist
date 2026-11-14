@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getFriendsWatchlistMovies } from "@/lib/server/services";
+import {
+  getCurrentSession,
+  getFriendsWatchlistMovies,
+} from "@/lib/server/services";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  const movies = await getFriendsWatchlistMovies(sessionId);
+  const current = await getCurrentSession();
+  const movies = current ? await getFriendsWatchlistMovies(current.user.id) : [];
   return NextResponse.json({ movies }, { status: 200 });
 }

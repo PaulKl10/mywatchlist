@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { SESSION_COOKIE } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBAccount = {
@@ -71,7 +72,7 @@ export async function POST() {
     // Le session_id reste uniquement dans le cookie httpOnly : ne jamais l'exposer au JS client.
     const response = NextResponse.json({ success: true });
 
-    response.cookies.set("tmdb_session_id", sessionId, {
+    response.cookies.set(SESSION_COOKIE, sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

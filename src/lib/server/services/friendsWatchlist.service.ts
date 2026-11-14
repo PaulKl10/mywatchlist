@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { TMovie } from "@/types/movie.type";
+import { getFriendIds } from "./friends.service";
 
 function watchlistItemToMovie(item: {
   tmdb_movie_id: number;
@@ -28,31 +29,9 @@ function watchlistItemToMovie(item: {
 }
 
 export async function getFriendsWatchlistMovies(
-  sessionId: string | undefined
+  userId: string
 ): Promise<TMovie[]> {
-  if (!sessionId) return [];
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) return [];
-
-  const friendships = await prisma.friendship.findMany({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { senderId: session.user.id },
-        { receiverId: session.user.id },
-      ],
-    },
-  });
-
-  const friendIds = friendships.map((f) =>
-    f.senderId === session.user!.id ? f.receiverId : f.senderId
-  );
-
+  const friendIds = await getFriendIds(userId);
   if (friendIds.length === 0) return [];
 
   const items = await prisma.watchlistItem.findMany({

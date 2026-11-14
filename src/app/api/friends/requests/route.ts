@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/server/services";
 
 export type TFriendRequest = {
   id: string;
@@ -14,31 +14,20 @@ export type TFriendRequest = {
 };
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  if (!sessionId) {
-    return NextResponse.json({ requests: [] }, { status: 200 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({ requests: [] }, { status: 200 });
   }
 
   const friendships = await prisma.friendship.findMany({
     where: {
-      receiverId: session.user.id,
+      receiverId: current.user.id,
       status: "PENDING",
     },
     include: { sender: true },
   });
 
-  const requests: TFriendRequest[] = friendships.map((f: (typeof friendships)[number]) => ({
+  const requests: TFriendRequest[] = friendships.map((f) => ({
     id: f.id,
     sender: {
       id: f.sender.id,
@@ -53,19 +42,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -92,7 +70,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 
-  if (friendship.receiverId !== session.user.id) {
+  if (friendship.receiverId !== current.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

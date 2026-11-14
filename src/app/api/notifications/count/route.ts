@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/server/services";
 
 export type TNotificationCount = {
   friendRequests: number;
@@ -8,20 +8,9 @@ export type TNotificationCount = {
   total: number;
 };
 
-async function getSessionUser() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-  if (!sessionId) return null;
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-  return session?.user ?? null;
-}
-
 export async function GET() {
-  const user = await getSessionUser();
-  if (!user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({
       friendRequests: 0,
       suggestions: 0,
@@ -32,20 +21,18 @@ export async function GET() {
   const [friendRequestsCount, suggestionsCount] = await Promise.all([
     prisma.friendship.count({
       where: {
-        receiverId: user.id,
+        receiverId: current.user.id,
         status: "PENDING",
       },
     }),
     prisma.suggestion.count({
-      where: { toUserId: user.id },
+      where: { toUserId: current.user.id },
     }),
   ]);
-
-  const total = friendRequestsCount + suggestionsCount;
 
   return NextResponse.json({
     friendRequests: friendRequestsCount,
     suggestions: suggestionsCount,
-    total,
+    total: friendRequestsCount + suggestionsCount,
   } satisfies TNotificationCount);
 }

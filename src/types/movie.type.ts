@@ -154,3 +154,6 @@ export type TTvDetails = {
   genres: TGenre[];
   homepage: string | null;
 };
+
+/** Type de média TMDB géré par l'app. */
+export type TMediaType = "movie" | "tv";

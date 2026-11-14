@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { TMediaType } from "@/types/movie.type";
 
 export type TWatchTimeStats = {
   totalMinutes: number;
@@ -21,7 +22,7 @@ export async function getWatchTimeStats(userId: string): Promise<TWatchTimeStats
     }),
   ]);
 
-  const countFor = (mediaType: "movie" | "tv") =>
+  const countFor = (mediaType: TMediaType) =>
     countsByMediaType.find((row) => row.media_type === mediaType)?._count._all ?? 0;
 
   const totalMinutes = aggregate._sum.runtime ?? 0;
@@ -32,4 +33,40 @@ export async function getWatchTimeStats(userId: string): Promise<TWatchTimeStats
     movieCount: countFor("movie"),
     tvCount: countFor("tv"),
   };
+}
+
+/** Compte (ou met à jour) un média noté dans le temps de visionnage. */
+export async function recordWatchTime(
+  userId: string,
+  mediaType: TMediaType,
+  mediaId: number,
+  runtime: number | null
+): Promise<void> {
+  await prisma.watchTimeEntry.upsert({
+    where: {
+      userId_media_type_tmdb_movie_id: {
+        userId,
+        media_type: mediaType,
+        tmdb_movie_id: mediaId,
+      },
+    },
+    create: {
+      userId,
+      tmdb_movie_id: mediaId,
+      media_type: mediaType,
+      runtime,
+    },
+    update: { runtime },
+  });
+}
+
+/** Retire un média du temps de visionnage (note supprimée). */
+export async function removeWatchTime(
+  userId: string,
+  mediaType: TMediaType,
+  mediaId: number
+): Promise<void> {
+  await prisma.watchTimeEntry.deleteMany({
+    where: { userId, media_type: mediaType, tmdb_movie_id: mediaId },
+  });
 }

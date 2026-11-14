@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  findAcceptedFriendship,
+  getCurrentSession,
+} from "@/lib/server/services";
 
 export type TPublicWatchlistItem = {
   id: number;
@@ -21,47 +24,31 @@ export async function GET(
     return NextResponse.json({ error: "Invalid user" }, { status: 400 });
   }
 
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-  if (!sessionId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-  if (!session?.user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const profileUser = await prisma.user.findUnique({
     where: { tmdb_id: tmdbIdNum },
-    include: { watchlistItems: { orderBy: { added_at: "desc" } } },
   });
 
   if (!profileUser) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Vérifier si l'utilisateur connecté est ami avec le profil
-  const friendship = await prisma.friendship.findFirst({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { senderId: session.user.id, receiverId: profileUser.id },
-        { senderId: profileUser.id, receiverId: session.user.id },
-      ],
-    },
-  });
-
+  // Visible uniquement par les amis
+  const friendship = await findAcceptedFriendship(current.user.id, profileUser.id);
   if (!friendship) {
     return NextResponse.json({ error: "Watchlist not available" }, { status: 404 });
   }
 
-  const user = profileUser;
+  const watchlistItems = await prisma.watchlistItem.findMany({
+    where: { userId: profileUser.id },
+    orderBy: { added_at: "desc" },
+  });
 
-  const items: TPublicWatchlistItem[] = user.watchlistItems.map((item: (typeof user.watchlistItems)[number]) => ({
+  const items: TPublicWatchlistItem[] = watchlistItems.map((item) => ({
     id: item.tmdb_movie_id,
     title: item.title,
     poster_path: item.poster_path,

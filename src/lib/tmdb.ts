@@ -1,5 +1,13 @@
 import { tmdbClient } from "./tmdb-client";
 
+/** ID du compte TMDB associé à une session. */
+export async function getTmdbAccountId(sessionId: string): Promise<number> {
+  const account = await tmdbClient.get<{ id: number }>("/account", {
+    session_id: sessionId,
+  });
+  return account.id;
+}
+
 export type TMDBMovieMinimal = {
   id: number;
   title: string;

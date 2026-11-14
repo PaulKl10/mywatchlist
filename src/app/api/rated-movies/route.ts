@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import type { TRatedMovie, TRatedTv } from "@/types/movie.type";
+import { getSessionId } from "@/lib/server/services";
+import { getTmdbAccountId } from "@/lib/tmdb";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 type TMDBRatedMoviesResponse = {
@@ -18,8 +19,7 @@ type TMDBRatedTvResponse = {
 };
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const sessionId = await getSessionId();
 
   if (!sessionId) {
     return NextResponse.json(
@@ -40,10 +40,7 @@ export async function GET(request: Request) {
   const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const account = await tmdbClient.get<{ id: number }>("/account", {
-      session_id: sessionId,
-    });
-    const accountId = account.id;
+    const accountId = await getTmdbAccountId(sessionId);
 
     if (mediaType === "tv") {
       const data = await tmdbClient.get<TMDBRatedTvResponse>(

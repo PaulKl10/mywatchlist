@@ -1,3 +1,4 @@
+import type { Friendship } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type TFriend = {
@@ -8,26 +9,44 @@ export type TFriend = {
   tmdb_avatar_path: string | null;
 };
 
-export async function getFriends(
-  sessionId: string | undefined
-): Promise<TFriend[]> {
-  if (!sessionId) return [];
+function acceptedFriendshipsOf(userId: string) {
+  return {
+    status: "ACCEPTED",
+    OR: [{ senderId: userId }, { receiverId: userId }],
+  };
+}
 
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) return [];
-
-  const friendships = await prisma.friendship.findMany({
+/** Amitié acceptée entre deux utilisateurs, quel que soit celui qui a envoyé la demande. */
+export async function findAcceptedFriendship(
+  userId: string,
+  otherUserId: string
+): Promise<Friendship | null> {
+  return prisma.friendship.findFirst({
     where: {
       status: "ACCEPTED",
       OR: [
-        { senderId: session.user.id },
-        { receiverId: session.user.id },
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId },
       ],
     },
+  });
+}
+
+/** IDs internes des amis (amitiés acceptées) d'un utilisateur. */
+export async function getFriendIds(userId: string): Promise<string[]> {
+  const friendships = await prisma.friendship.findMany({
+    where: acceptedFriendshipsOf(userId),
+    select: { senderId: true, receiverId: true },
+  });
+
+  return friendships.map((f) =>
+    f.senderId === userId ? f.receiverId : f.senderId
+  );
+}
+
+export async function getFriends(userId: string): Promise<TFriend[]> {
+  const friendships = await prisma.friendship.findMany({
+    where: acceptedFriendshipsOf(userId),
     include: {
       sender: true,
       receiver: true,
@@ -35,7 +54,7 @@ export async function getFriends(
   });
 
   return friendships.map((f) => {
-    const friend = f.senderId === session.user!.id ? f.receiver : f.sender;
+    const friend = f.senderId === userId ? f.receiver : f.sender;
     return {
       id: friend.id,
       tmdb_id: friend.tmdb_id,
@@ -46,38 +65,29 @@ export async function getFriends(
   });
 }
 
-export async function addFriend(
-  sessionId: string | undefined,
-  receiverTmdbId: number
-): Promise<
+export type TAddFriendResult =
   | { success: true }
-  | { error: "unauthorized" }
   | { error: "user_not_found" }
   | { error: "cannot_add_self" }
   | { error: "request_already_sent" }
   | { error: "they_sent_you_request" }
-  | { error: "already_friends" }
-> {
-  if (!sessionId) return { error: "unauthorized" };
+  | { error: "already_friends" };
 
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) return { error: "unauthorized" };
-
+export async function addFriend(
+  userId: string,
+  receiverTmdbId: number
+): Promise<TAddFriendResult> {
   const receiver = await prisma.user.findUnique({
     where: { tmdb_id: receiverTmdbId },
   });
 
   if (!receiver) return { error: "user_not_found" };
-  if (receiver.id === session.user.id) return { error: "cannot_add_self" };
+  if (receiver.id === userId) return { error: "cannot_add_self" };
 
   const existing = await prisma.friendship.findUnique({
     where: {
       senderId_receiverId: {
-        senderId: session.user.id,
+        senderId: userId,
         receiverId: receiver.id,
       },
     },
@@ -94,7 +104,7 @@ export async function addFriend(
     where: {
       senderId_receiverId: {
         senderId: receiver.id,
-        receiverId: session.user.id,
+        receiverId: userId,
       },
     },
   });
@@ -110,7 +120,7 @@ export async function addFriend(
 
   await prisma.friendship.create({
     data: {
-      senderId: session.user.id,
+      senderId: userId,
       receiverId: receiver.id,
       status: "PENDING",
     },

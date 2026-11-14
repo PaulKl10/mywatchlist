@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { SESSION_COOKIE, getSessionId } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 // Message seul : une AxiosError embarque la config (api_key, session_id).
@@ -9,8 +9,7 @@ function errorMessage(reason: unknown): string {
 }
 
 export async function POST() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const sessionId = await getSessionId();
 
   if (sessionId) {
     // Révoque la session côté TMDB (sinon le session_id reste utilisable indéfiniment)
@@ -29,6 +28,6 @@ export async function POST() {
   }
 
   const response = NextResponse.json({ success: true });
-  response.cookies.delete("tmdb_session_id");
+  response.cookies.delete(SESSION_COOKIE);
   return response;
 }

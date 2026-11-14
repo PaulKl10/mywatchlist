@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/server/services";
 
 export type TSearchUser = {
   tmdb_id: number;
@@ -17,17 +17,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ users: [] }, { status: 200 });
   }
 
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-  if (!sessionId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-  if (!session?.user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -35,7 +26,7 @@ export async function GET(request: Request) {
   const isNumeric = /^\d+$/.test(q) && !Number.isNaN(tmdbIdNum);
   const users = await prisma.user.findMany({
     where: {
-      id: { not: session.user.id },
+      id: { not: current.user.id },
       ...(isNumeric
         ? { tmdb_id: tmdbIdNum }
         : {
@@ -49,7 +40,7 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    users: users.map((u: (typeof users)[number]) => ({
+    users: users.map((u) => ({
       tmdb_id: u.tmdb_id,
       username: u.username,
       gravatar_hash: u.gravatar_hash,

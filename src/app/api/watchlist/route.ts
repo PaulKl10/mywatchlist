@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import type {
   TDiscoverMoviesResponse,
+  TMediaType,
   TWatchlistTvResponse,
 } from "@/types/movie.type";
-import { getUserFromSessionId, syncWatchlistItem } from "@/lib/server/services";
+import {
+  getSessionId,
+  getUserFromSessionId,
+  syncWatchlistItem,
+  updateTmdbWatchlist,
+} from "@/lib/server/services";
+import { getTmdbAccountId } from "@/lib/tmdb";
 import { tmdbClient } from "@/lib/tmdb-client";
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const sessionId = await getSessionId();
 
   if (!sessionId) {
     return NextResponse.json(
@@ -30,10 +35,7 @@ export async function GET(request: Request) {
   const mediaType = searchParams.get("media_type") ?? "movie";
 
   try {
-    const account = await tmdbClient.get<{ id: number }>("/account", {
-      session_id: sessionId,
-    });
-    const accountId = account.id;
+    const accountId = await getTmdbAccountId(sessionId);
 
     if (mediaType === "tv") {
       const data = await tmdbClient.get<TWatchlistTvResponse>(
@@ -65,8 +67,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
+  const sessionId = await getSessionId();
 
   if (!sessionId) {
     return NextResponse.json(
@@ -97,24 +98,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const validMediaType =
-    media_type === "tv" ? "tv" : "movie";
+  const validMediaType: TMediaType = media_type === "tv" ? "tv" : "movie";
 
   try {
-    const account = await tmdbClient.get<{ id: number }>("/account", {
-      session_id: sessionId,
-    });
-    const accountId = account.id;
-
-    await tmdbClient.post(
-      `/account/${accountId}/watchlist`,
-      {
-        media_type: validMediaType,
-        media_id,
-        watchlist,
-      },
-      { session_id: sessionId }
-    );
+    await updateTmdbWatchlist(sessionId, media_id, validMediaType, watchlist);
 
     const user = await getUserFromSessionId(sessionId);
     if (user) {

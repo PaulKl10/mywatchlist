@@ -1,24 +1,16 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  findAcceptedFriendship,
+  getCurrentSession,
+} from "@/lib/server/services";
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ friendTmdbId: string }> }
 ) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("tmdb_session_id")?.value;
-
-  if (!sessionId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const session = await prisma.session.findUnique({
-    where: { tmdb_session_id: sessionId },
-    include: { user: true },
-  });
-
-  if (!session?.user) {
+  const current = await getCurrentSession();
+  if (!current) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -35,20 +27,11 @@ export async function DELETE(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  if (friend.id === session.user.id) {
+  if (friend.id === current.user.id) {
     return NextResponse.json({ error: "Cannot remove yourself" }, { status: 400 });
   }
 
-  const friendship = await prisma.friendship.findFirst({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { senderId: session.user.id, receiverId: friend.id },
-        { senderId: friend.id, receiverId: session.user.id },
-      ],
-    },
-  });
-
+  const friendship = await findAcceptedFriendship(current.user.id, friend.id);
   if (!friendship) {
     return NextResponse.json({ error: "Not friends" }, { status: 400 });
   }
