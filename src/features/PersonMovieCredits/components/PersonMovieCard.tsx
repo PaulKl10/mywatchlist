@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { TPersonMovieCredit } from "@/types/movie.type";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
@@ -8,7 +9,7 @@ interface PersonMovieCardProps {
 
 export function PersonMovieCard({ credit }: PersonMovieCardProps) {
   return (
-    <a
+    <Link
       href={`/movies/${credit.id}`}
       className="group flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all hover:scale-105 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
     >
@@ -45,6 +46,6 @@ export function PersonMovieCard({ credit }: PersonMovieCardProps) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

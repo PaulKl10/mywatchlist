@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { TMovie } from "@/types/movie.type";
 import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
 
@@ -32,7 +33,7 @@ export function MovieCard({
   sizes?: string;
 }) {
   return (
-    <a
+    <Link
       href={`/movies/${movie.id}`}
       className="hover:scale-105 transition-all duration-300"
     >
@@ -52,6 +53,6 @@ export function MovieCard({
         </div>
         <MovieCardDetails movie={movie} />
       </article>
-    </a>
+    </Link>
   );
 }
