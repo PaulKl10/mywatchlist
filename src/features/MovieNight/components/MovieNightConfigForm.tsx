@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { TMovieNightSettings } from "@/lib/movie-night/types";
 import {
   useCreateMovieNightMutation,
+  useSoloDeckMutation,
 } from "../hooks/useMovieNightMutations";
 import {
   useMyStreamingProviderIdsQuery,
   useStreamingProvidersQuery,
 } from "../hooks/useStreamingProvidersQuery";
+import { saveSoloGame, startSoloGame } from "../utils/soloGame";
 import { GenrePicker } from "./GenrePicker";
 import { ProviderPicker } from "./ProviderPicker";
 
@@ -19,6 +22,7 @@ export function MovieNightConfigForm() {
   const providersQuery = useStreamingProvidersQuery();
   const myProvidersQuery = useMyStreamingProviderIdsQuery(true);
   const create = useCreateMovieNightMutation();
+  const soloDeck = useSoloDeckMutation();
 
   // null = pas encore modifié par l'utilisateur : on suit la dernière sélection mémorisée.
   const [pickedProviders, setPickedProviders] = useState<number[] | null>(null);
@@ -29,10 +33,25 @@ export function MovieNightConfigForm() {
   const availableIds = new Set(providers.map((p) => p.id));
   const providerIds =
     pickedProviders ?? (myProvidersQuery.data ?? []).filter((id) => availableIds.has(id));
-  const canCreate = providerIds.length > 0 && !create.isPending;
+  const canCreate = providerIds.length > 0 && !create.isPending && !soloDeck.isPending;
+  const error = soloDeck.error ?? create.error;
 
-  const submit = (solo: boolean) => {
+  // Solo : une requête construit la pile, puis la partie se joue dans le navigateur.
+  const playSolo = () => {
     if (!canCreate) return;
+    const settings: TMovieNightSettings = { providerIds, genreIds, includeSeen };
+    create.reset();
+    soloDeck.mutate(settings, {
+      onSuccess: ({ deck }) => {
+        saveSoloGame(startSoloGame(settings, deck));
+        router.push("/ce-soir/solo");
+      },
+    });
+  };
+
+  const playTogether = () => {
+    if (!canCreate) return;
+    soloDeck.reset();
     create.mutate(
       { providerIds, genreIds, includeSeen },
       { onSuccess: ({ id }) => router.push(`/ce-soir/${id}`) },
@@ -91,9 +110,9 @@ export function MovieNightConfigForm() {
         </button>
       </div>
 
-      {create.error && (
+      {error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {create.error.message}
+          {error.message}
         </p>
       )}
 
@@ -101,15 +120,15 @@ export function MovieNightConfigForm() {
         <button
           type="button"
           disabled={!canCreate}
-          onClick={() => submit(true)}
+          onClick={playSolo}
           className="rounded-lg bg-amber-500 px-4 py-2.5 text-base font-semibold text-zinc-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Jouer seul
+          {soloDeck.isPending ? "Préparation…" : "Jouer seul"}
         </button>
         <button
           type="button"
           disabled={!canCreate}
-          onClick={() => submit(false)}
+          onClick={playTogether}
           className="rounded-lg border border-amber-500 px-4 py-2.5 text-base font-semibold text-amber-600 transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-amber-500"
         >
           Jouer à plusieurs

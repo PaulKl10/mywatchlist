@@ -105,15 +105,22 @@ export function readSoloGame(raw: string | null): TSoloGame | null {
   return { v: 1, settings: data.settings, deck, index: index as number, shownMovieIds, chosenMovieId };
 }
 
+/**
+ * Dernière partie enregistrée par cet onglet : sans sessionStorage (navigation privée, quota),
+ * elle suit quand même la navigation client du formulaire vers /ce-soir/solo.
+ */
+let lastSavedGame: TSoloGame | null = null;
+
 export function loadSoloGame(): TSoloGame | null {
   try {
-    return readSoloGame(sessionStorage.getItem(SOLO_STORAGE_KEY));
+    return readSoloGame(sessionStorage.getItem(SOLO_STORAGE_KEY)) ?? lastSavedGame;
   } catch {
-    return null; // stockage bloqué, ou rendu serveur
+    return lastSavedGame; // stockage bloqué, ou rendu serveur
   }
 }
 
 export function saveSoloGame(game: TSoloGame): void {
+  lastSavedGame = game;
   try {
     sessionStorage.setItem(SOLO_STORAGE_KEY, JSON.stringify(game));
   } catch {

@@ -2,11 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TDeckMovie, TMovieNightSettings } from "@/lib/movie-night/types";
 import {
   SOLO_STORAGE_KEY,
-  loadSoloGame,
   nextSoloDeck,
   readSoloGame,
   resumeSolo,
-  saveSoloGame,
   soloExcludedIds,
   soloStatus,
   startSoloGame,
@@ -115,19 +113,36 @@ describe("readSoloGame", () => {
 });
 
 describe("sauvegarde dans l'onglet", () => {
-  it("enregistre puis relit la partie", () => {
+  // Module rechargé à chaque test : la copie en mémoire ne fuit pas d'un test à l'autre.
+  const freshModule = async () => {
+    vi.resetModules();
+    return import("./soloGame");
+  };
+
+  it("enregistre puis relit la partie", async () => {
     const store = new Map<string, string>();
     vi.stubGlobal("sessionStorage", {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, value: string) => void store.set(key, value),
     });
-    const game = start();
-    saveSoloGame(game);
-    expect(store.has(SOLO_STORAGE_KEY)).toBe(true);
-    expect(loadSoloGame()).toEqual(game);
+    const solo = await freshModule();
+    const game = solo.startSoloGame(settings, [a, b, c]);
+    solo.saveSoloGame(game);
+    expect(store.has(solo.SOLO_STORAGE_KEY)).toBe(true);
+    expect(solo.loadSoloGame()).toEqual(game);
   });
 
-  it("stockage indisponible : aucune exception, aucune partie", () => {
+  it("rechargement de l'onglet : relit la partie enregistrée", async () => {
+    const game = swipeSolo(start(), false);
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => (key === SOLO_STORAGE_KEY ? JSON.stringify(game) : null),
+      setItem: () => {},
+    });
+    const solo = await freshModule();
+    expect(solo.loadSoloGame()).toEqual(game);
+  });
+
+  it("stockage indisponible : aucune exception, la partie suit la navigation en mémoire", async () => {
     vi.stubGlobal("sessionStorage", {
       getItem: () => {
         throw new Error("SecurityError");
@@ -136,11 +151,15 @@ describe("sauvegarde dans l'onglet", () => {
         throw new Error("QuotaExceededError");
       },
     });
-    expect(() => saveSoloGame(start())).not.toThrow();
-    expect(loadSoloGame()).toBeNull();
+    const solo = await freshModule();
+    expect(solo.loadSoloGame()).toBeNull();
+    const game = solo.startSoloGame(settings, [a, b, c]);
+    expect(() => solo.saveSoloGame(game)).not.toThrow();
+    expect(solo.loadSoloGame()).toEqual(game);
   });
 
-  it("pas de sessionStorage (rendu serveur) : aucune partie", () => {
-    expect(loadSoloGame()).toBeNull();
+  it("pas de sessionStorage (rendu serveur) : aucune partie", async () => {
+    const solo = await freshModule();
+    expect(solo.loadSoloGame()).toBeNull();
   });
 });

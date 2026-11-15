@@ -1,11 +1,16 @@
 import type {
+  TDeckMovie,
   TMovieNightDecision,
   TMovieNightErrorCode,
   TMovieNightInvite,
+  TMovieNightSettings,
   TMovieNightState,
   TStreamingProvider,
 } from "@/lib/movie-night/types";
 import type { TCreateMovieNightInput } from "@/lib/movie-night/validation";
+
+/** Corps de `POST /api/movie-night/solo` ; `excludedMovieIds` pour une « Nouvelle pile ». */
+export type TSoloDeckRequest = TMovieNightSettings & { excludedMovieIds?: number[] };
 
 export type TMovieNightApiErrorCode = TMovieNightErrorCode | "tmdb_error" | "network";
 
@@ -54,6 +59,11 @@ const base = "/api/movie-night";
 
 export function createMovieNight(input: TCreateMovieNightInput): Promise<{ id: string }> {
   return request(base, "POST", input);
+}
+
+/** Pile d'une partie solo : aucune session créée, la partie se joue dans le navigateur. */
+export function fetchSoloDeck(input: TSoloDeckRequest): Promise<{ deck: TDeckMovie[] }> {
+  return request(`${base}/solo`, "POST", input);
 }
 
 export function joinMovieNight(code: string, guestName?: string): Promise<{ id: string }> {

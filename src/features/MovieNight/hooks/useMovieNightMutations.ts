@@ -5,6 +5,7 @@ import {
   castVote,
   createMovieNight,
   decide,
+  fetchSoloDeck,
   inviteFriend,
   joinMovieNight,
   leaveMovieNight,
@@ -13,6 +14,7 @@ import {
   respondToInvite,
   startMovieNight,
   startNewRound,
+  type TSoloDeckRequest,
 } from "../services/movie-night.service";
 import { isStaleDecisionError } from "../utils/errors";
 
@@ -91,6 +93,10 @@ export function useMovieNightMutations(id: string) {
 
 export function useCreateMovieNightMutation() {
   return useMutation({ mutationFn: (input: TCreateMovieNightInput) => createMovieNight(input) });
+}
+
+export function useSoloDeckMutation() {
+  return useMutation({ mutationFn: (input: TSoloDeckRequest) => fetchSoloDeck(input) });
 }
 
 export function useJoinMovieNightMutation() {
