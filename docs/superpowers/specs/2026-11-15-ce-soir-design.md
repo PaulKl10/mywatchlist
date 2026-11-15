@@ -1,5 +1,7 @@
 # « Ce soir ? » — choisir un film en swipant, seul ou à plusieurs
 
+> **Ajustements (2026-11-15)** : pile fixe de 15, choix « Héberger / Rejoindre » avant les formulaires, solo joué dans le navigateur. Voir `2026-11-15-ce-soir-ajustements-design.md`, qui l'emporte en cas de conflit.
+
 Date : 2026-11-15
 Statut : approuvé (2026-11-15)
 
