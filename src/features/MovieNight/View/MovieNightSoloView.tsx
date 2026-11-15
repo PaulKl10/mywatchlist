@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -18,6 +18,7 @@ import {
   soloStatus,
   swipeSolo,
   type TSoloGame,
+  type TSoloStatus,
 } from "../utils/soloGame";
 
 const linkClass =
@@ -50,6 +51,19 @@ export function MovieNightSoloView() {
     if (missing) router.replace("/ce-soir");
   }, [missing, router]);
 
+  // Changement d'écran pendant la partie (pas au chargement) : le focus va à l'élément
+  // `data-screen-focus` du nouvel écran, annoncé par les lecteurs d'écran.
+  const status = game ? soloStatus(game) : null;
+  const screenRef = useRef<HTMLDivElement>(null);
+  const previousStatus = useRef<TSoloStatus | null>(null);
+  useEffect(() => {
+    const previous = previousStatus.current;
+    previousStatus.current = status;
+    if (previous !== null && status !== null && previous !== status) {
+      screenRef.current?.querySelector<HTMLElement>("[data-screen-focus]")?.focus();
+    }
+  }, [status]);
+
   const update = (next: TSoloGame) => {
     setPlayed(next);
     saveSoloGame(next);
@@ -59,27 +73,35 @@ export function MovieNightSoloView() {
     return <p className="py-16 text-center text-zinc-600 dark:text-zinc-400">Chargement…</p>;
   }
 
+  return (
+    <div ref={screenRef}>
+      <SoloScreen game={game} onChange={update} onQuit={() => router.push("/ce-soir")} />
+    </div>
+  );
+}
+
+interface SoloScreenProps {
+  game: TSoloGame;
+  onChange: (game: TSoloGame) => void;
+  onQuit: () => void;
+}
+
+function SoloScreen({ game, onChange, onQuit }: SoloScreenProps) {
   switch (soloStatus(game)) {
     case "swiping":
-      return (
-        <SoloSwipe
-          game={game}
-          onSwipe={(liked) => update(swipeSolo(game, liked))}
-          onQuit={() => router.push("/ce-soir")}
-        />
-      );
+      return <SoloSwipe game={game} onSwipe={(liked) => onChange(swipeSolo(game, liked))} onQuit={onQuit} />;
     case "chosen":
       return (
         <MovieNightEnded movie={game.deck.find((m) => m.id === game.chosenMovieId) ?? null}>
           {game.index < game.deck.length && (
-            <button type="button" onClick={() => update(resumeSolo(game))} className={linkClass}>
+            <button type="button" onClick={() => onChange(resumeSolo(game))} className={linkClass}>
               Reprendre la pile
             </button>
           )}
         </MovieNightEnded>
       );
     case "exhausted":
-      return <SoloExhausted game={game} onNextDeck={update} />;
+      return <SoloExhausted game={game} onNextDeck={onChange} />;
   }
 }
 
@@ -106,7 +128,11 @@ function SoloSwipe({ game, onSwipe, onQuit }: SoloSwipeProps) {
           <X className="h-4 w-4" aria-hidden="true" />
           Quitter
         </button>
-        <p className="text-sm font-medium tabular-nums text-zinc-700 dark:text-zinc-300">
+        <p
+          data-screen-focus
+          tabIndex={-1}
+          className="text-sm font-medium tabular-nums text-zinc-700 focus:outline-none dark:text-zinc-300"
+        >
           <span className="sr-only">Film </span>
           {game.index + 1} / {game.deck.length}
         </p>
@@ -135,7 +161,9 @@ function SoloExhausted({ game, onNextDeck }: SoloExhaustedProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 py-16 text-center">
-      <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Aucun film retenu</h2>
+      <h2 data-screen-focus tabIndex={-1} className="text-xl font-bold text-zinc-900 focus:outline-none dark:text-zinc-100">
+        Aucun film retenu
+      </h2>
       <button
         type="button"
         disabled={soloDeck.isPending}

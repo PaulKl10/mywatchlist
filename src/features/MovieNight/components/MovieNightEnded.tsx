@@ -27,7 +27,7 @@ export function MovieNightEnded({ movie, children }: MovieNightEndedProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 py-6 text-center">
-      <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h2 data-screen-focus tabIndex={-1} className="text-2xl font-bold text-zinc-900 focus:outline-none dark:text-zinc-100">
         Ce soir : <span className="text-amber-600 dark:text-amber-500">{movie.title}</span>
       </h2>
       <Link href={`/movies/${movie.id}`} aria-label={`Voir la fiche de ${movie.title}`}>
