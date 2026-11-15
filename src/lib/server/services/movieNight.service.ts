@@ -202,16 +202,19 @@ export async function createMovieNight(
  * Exécute `admit` dans une transaction, après avoir verrouillé la session par un UPDATE
  * sans effet conditionné à « LOBBY et non expirée » : deux arrivées simultanées passent
  * l'une après l'autre (la limite de participants tient) et un lancement concurrent attend.
+ * Avec `code`, la session doit encore avoir ce code : un code changé entre-temps (invité
+ * retiré, voir `markParticipantRemoved`) ne fait plus entrer personne.
  */
 async function withOpenLobby<T>(
   movieNightId: string,
   now: Date,
   closedError: TMovieNightErrorCode,
-  admit: (tx: Prisma.TransactionClient) => Promise<TResult<T>>
+  admit: (tx: Prisma.TransactionClient) => Promise<TResult<T>>,
+  code?: string
 ): Promise<TResult<T>> {
   return prisma.$transaction(async (tx) => {
     const { count } = await tx.movieNight.updateMany({
-      where: { id: movieNightId, status: "LOBBY", expiresAt: { gte: now } },
+      where: { id: movieNightId, status: "LOBBY", expiresAt: { gte: now }, ...(code && { code }) },
       data: { status: "LOBBY" },
     });
     return count === 0 ? fail(closedError) : admit(tx);
@@ -252,25 +255,65 @@ async function admitUser(
   });
 }
 
-/** Invité : pseudo unique (casse ignorée) parmi les `JOINED`, 4 participants maximum. */
+/** Invité arrivé par `code` : pseudo unique (casse ignorée) parmi les `JOINED`, 4 participants maximum. */
 async function admitGuest(
   movieNightId: string,
+  code: string,
   guestName: string,
   guestTokenHash: string,
   now: Date
 ): Promise<TResult<null>> {
-  return withOpenLobby(movieNightId, now, "invalid_code", async (tx) => {
-    const members = await tx.movieNightParticipant.findMany({
-      where: { movieNightId, status: "JOINED" },
-      select: { guestName: true, user: { select: { tmdb_id: true, username: true } } },
-    });
-    if (members.length >= MAX_PARTICIPANTS) return fail("session_full");
-    if (isNameTaken(guestName, members.map(participantDisplayName))) return fail("name_taken");
-    await tx.movieNightParticipant.create({
-      data: { movieNightId, guestName, guestTokenHash, status: "JOINED", lastSeenAt: now },
-    });
-    return ok(null);
-  });
+  return withOpenLobby(
+    movieNightId,
+    now,
+    "invalid_code",
+    async (tx) => {
+      const members = await tx.movieNightParticipant.findMany({
+        where: { movieNightId, status: "JOINED" },
+        select: { guestName: true, user: { select: { tmdb_id: true, username: true } } },
+      });
+      if (members.length >= MAX_PARTICIPANTS) return fail("session_full");
+      if (isNameTaken(guestName, members.map(participantDisplayName))) return fail("name_taken");
+      await tx.movieNightParticipant.create({
+        data: { movieNightId, guestName, guestTokenHash, status: "JOINED", lastSeenAt: now },
+      });
+      return ok(null);
+    },
+    code
+  );
+}
+
+/**
+ * Passe un participant `JOINED` en `REMOVED` ; true s'il était encore `JOINED`. Un invité
+ * n'est reconnu que par son cookie : retiré en salle d'attente, il pourrait revenir par
+ * l'ancien code depuis une fenêtre privée. Le code change donc dans la même transaction,
+ * session verrouillée avant le participant comme pour les arrivées (`withOpenLobby`).
+ */
+export async function markParticipantRemoved(
+  movieNightId: string,
+  participantId: string,
+  isGuest: boolean
+): Promise<boolean> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        if (isGuest) {
+          await tx.movieNight.updateMany({
+            where: { id: movieNightId, status: "LOBBY" },
+            data: { code: generateMovieNightCode() },
+          });
+        }
+        const { count } = await tx.movieNightParticipant.updateMany({
+          where: { id: participantId, movieNightId, status: "JOINED" },
+          data: { status: "REMOVED" },
+        });
+        return count > 0;
+      });
+    } catch (error) {
+      // Collision de code : la transaction est annulée en entier, on retente avec un autre.
+      if (!isUniqueViolation(error) || attempt >= MAX_CODE_ATTEMPTS) throw error;
+    }
+  }
 }
 
 /**
@@ -309,7 +352,7 @@ export async function joinMovieNightByCode(
     return fail("invalid_input", `Choisissez un pseudo de 1 à ${GUEST_NAME_MAX_LENGTH} caractères.`);
   }
   const { token, hash } = createGuestToken();
-  const admitted = await admitGuest(night.id, guestName, hash, now);
+  const admitted = await admitGuest(night.id, code, guestName, hash, now);
   return admitted.ok ? ok({ ...joined, guestToken: token }) : admitted;
 }
 

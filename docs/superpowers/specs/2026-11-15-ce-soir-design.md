@@ -190,6 +190,10 @@ propose :
   quelqu'un rejoint (par code ou en acceptant une invitation). Une invitation
   en attente ne réserve pas de place.
 - L'hôte peut retirer un participant *(choix Claude)*.
+- Retirer un invité en salle d'attente change le code : seul son cookie le
+  désigne, l'ancien code lui permettrait de revenir depuis une fenêtre
+  privée. Le nouveau code s'affiche dans la salle d'attente ; un lien déjà
+  partagé est à renvoyer *(revue de sécurité)*.
 - **Lancer** (hôte) construit la pile et fait passer la session en swipe.
   Après ça, le code ne permet plus de rejoindre et les invitations en
   attente deviennent caduques *(choix Claude)*.

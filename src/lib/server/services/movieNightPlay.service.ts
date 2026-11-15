@@ -31,6 +31,7 @@ import {
   isExpired,
   isUniqueViolation,
   lockMovieNight,
+  markParticipantRemoved,
   ok,
   prepareRoundDeck,
   reconcileMovieNight,
@@ -403,7 +404,7 @@ export async function leaveMovieNight(
   return ok(null);
 }
 
-/** Hôte : retire un participant `JOINED` (`REMOVED`, ne peut plus revenir), puis réconcilie. */
+/** Hôte : retire un participant `JOINED` (`REMOVED`, ne peut plus revenir ; invité : nouveau code), puis réconcilie. */
 export async function removeParticipant(
   movieNightId: string,
   actor: MovieNightParticipant,
@@ -424,12 +425,19 @@ export async function removeParticipant(
   });
   if (!night || isExpired(night.expiresAt, now)) return fail("not_found");
 
-  // REMOVED → REMOVED rend le retrait idempotent (double toucher).
-  const { count } = await prisma.movieNightParticipant.updateMany({
+  const notMember = fail("invalid_input", "Ce participant ne fait pas partie de la session.");
+  const target = await prisma.movieNightParticipant.findFirst({
     where: { id: participantId, movieNightId, status: { in: ["JOINED", "REMOVED"] } },
-    data: { status: "REMOVED" },
+    select: { userId: true, status: true },
   });
-  if (count === 0) return fail("invalid_input", "Ce participant ne fait pas partie de la session.");
+  if (!target) return notMember;
+  // Déjà REMOVED : retrait idempotent (double toucher), sans changer le code une 2e fois.
+  if (
+    target.status === "JOINED" &&
+    !(await markParticipantRemoved(movieNightId, participantId, target.userId === null))
+  ) {
+    return notMember;
+  }
 
   await reconcileMovieNight(movieNightId, now);
   return getMovieNightState(movieNightId, actor, now);
