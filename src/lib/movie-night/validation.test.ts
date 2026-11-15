@@ -13,12 +13,16 @@ describe("parseCreateMovieNightInput", () => {
       value: { providerIds: [8, 337], genreIds: [35], deckSize: 15, includeSeen: false, solo: false },
     });
   });
+  it("accepte un id de plateforme jusqu'à 2³¹−1 (colonne Int)", () => {
+    expect(parseCreateMovieNightInput({ providerIds: [2_147_483_647], genreIds: [], deckSize: 10 }).ok).toBe(true);
+  });
   it.each([
     [{ providerIds: [], genreIds: [], deckSize: 15 }],
     [{ providerIds: [8], genreIds: [], deckSize: 12 }],
     [{ providerIds: [8], genreIds: [999], deckSize: 15 }],
     [{ providerIds: "8", genreIds: [], deckSize: 15 }],
     [{ providerIds: [8.5], genreIds: [], deckSize: 15 }],
+    [{ providerIds: [2_147_483_648], genreIds: [], deckSize: 15 }],
     [{ providerIds: Array.from({ length: 51 }, (_, i) => i + 1), genreIds: [], deckSize: 15 }],
     [null],
   ])("refuse %j", (body) => {

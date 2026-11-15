@@ -9,12 +9,23 @@ type TParseResult = { ok: true; value: TCreateMovieNightInput } | { ok: false; m
 const INVALID = (message: string): TParseResult => ({ ok: false, message });
 const GENRE_IDS: ReadonlySet<number> = new Set(TMDB_MOVIE_GENRES.map((g) => g.id));
 
+/**
+ * Plus grand id accepté : `tmdb_movie_id` et `provider_ids` sont des entiers Postgres 32 bits.
+ * Au-delà, l'écriture échouerait (500) au lieu d'un 400.
+ */
+const MAX_MOVIE_ID = 2_147_483_647;
+
+/** Id TMDB (film ou plateforme) stockable dans une colonne `Int`. */
+function isMovieId(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0 && (value as number) <= MAX_MOVIE_ID;
+}
+
 export function parseCreateMovieNightInput(body: unknown): TParseResult {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return INVALID("Requête invalide.");
   const { providerIds, genreIds, deckSize, includeSeen, solo } = body as Record<string, unknown>;
 
   if (!Array.isArray(providerIds) || providerIds.length === 0) return INVALID("Choisissez au moins une plateforme.");
-  if (!providerIds.every((id) => Number.isInteger(id) && id > 0)) return INVALID("Requête invalide.");
+  if (!providerIds.every(isMovieId)) return INVALID("Requête invalide.");
   const providers = [...new Set(providerIds as number[])];
   if (providers.length > MAX_PROVIDER_IDS) return INVALID("Requête invalide.");
 
@@ -45,13 +56,6 @@ export function parseGuestName(input: unknown): string | null {
   if (length < 1 || length > GUEST_NAME_MAX_LENGTH) return null;
   if (/[\u0000-\u001f\u007f-\u009f]/.test(name)) return null;
   return name;
-}
-
-/** Plus grand id accepté : la colonne `tmdb_movie_id` est un entier Postgres 32 bits. */
-const MAX_MOVIE_ID = 2_147_483_647;
-
-function isMovieId(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) > 0 && (value as number) <= MAX_MOVIE_ID;
 }
 
 function asObject(body: unknown): Record<string, unknown> | null {
