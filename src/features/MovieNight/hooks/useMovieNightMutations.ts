@@ -14,12 +14,22 @@ import {
   startMovieNight,
   startNewRound,
 } from "../services/movie-night.service";
+import { isStaleDecisionError } from "../utils/errors";
 
 export function useMovieNightMutations(id: string) {
   const queryClient = useQueryClient();
   const key = ["movie-night", id];
-  const setState = (state: TMovieNightState) => queryClient.setQueryData(key, state);
+  const setState = async (state: TMovieNightState) => {
+    // Un rafraîchissement du polling parti avant l'écriture répondrait après elle et écraserait
+    // cet état (le « Match ! » du dernier votant disparaîtrait jusqu'au rafraîchissement suivant).
+    await queryClient.cancelQueries({ queryKey: key });
+    queryClient.setQueryData(key, state);
+  };
   const invalidate = () => queryClient.invalidateQueries({ queryKey: key });
+  // Décision périmée (un autre a tranché, l'hôte est revenu) : on resynchronise.
+  const resyncIfStale = (error: Error) => {
+    if (isStaleDecisionError(error)) void invalidate();
+  };
 
   const start = useMutation({ mutationFn: () => startMovieNight(id), onSuccess: setState });
 
@@ -40,17 +50,22 @@ export function useMovieNightMutations(id: string) {
         throw error;
       }
     },
-    onSuccess: (state) => {
-      if (state) setState(state);
+    onSuccess: async (state) => {
+      if (state) await setState(state);
     },
   });
 
   const decideMutation = useMutation({
     mutationFn: (decision: TMovieNightDecision) => decide(id, decision),
     onSuccess: setState,
+    onError: resyncIfStale,
   });
 
-  const newRound = useMutation({ mutationFn: () => startNewRound(id), onSuccess: setState });
+  const newRound = useMutation({
+    mutationFn: () => startNewRound(id),
+    onSuccess: setState,
+    onError: resyncIfStale,
+  });
 
   const leave = useMutation({
     mutationFn: () => leaveMovieNight(id),
@@ -88,7 +103,9 @@ export function useRespondToInviteMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (v: { id: string; accept: boolean }) => respondToInvite(v.id, v.accept),
-    onSuccess: () => {
+    // Après un refus aussi (session déjà lancée, pleine, expirée) : l'invitation n'est plus
+    // valable, la liste et le compteur sont relus. Le message d'erreur reste affiché.
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ["movie-night", "invites"] });
       void queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
     },

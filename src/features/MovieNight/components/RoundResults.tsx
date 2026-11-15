@@ -1,9 +1,8 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import type { TDeckMovie, TMovieNightState } from "@/lib/movie-night/types";
 import { useMovieNightMutations } from "../hooks/useMovieNightMutations";
-import { MovieNightApiError } from "../services/movie-night.service";
+import { decisionErrorMessage } from "../utils/errors";
 import { activeHostName, joinNames, waitingNames } from "../utils/participants";
 import { MoviePoster } from "./MoviePoster";
 
@@ -42,7 +41,6 @@ function ResultRow({ movie, note, onWatch, disabled }: ResultRowProps) {
 }
 
 export function RoundResults({ state }: { state: TMovieNightState }) {
-  const queryClient = useQueryClient();
   const { decide, newRound } = useMovieNightMutations(state.id);
   const busy = decide.isPending || newRound.isPending;
 
@@ -58,24 +56,15 @@ export function RoundResults({ state }: { state: TMovieNightState }) {
     );
   }
 
-  const watch = (movie: TDeckMovie) => {
-    decide.mutate(
-      { action: "watch", movieId: movie.id },
-      {
-        onError: (error) => {
-          if (error instanceof MovieNightApiError && error.code === "wrong_status") {
-            void queryClient.invalidateQueries({ queryKey: ["movie-night", state.id] });
-          }
-        },
-      },
-    );
-  };
-  const onWatch = (movie: TDeckMovie) => (state.canDecide ? () => watch(movie) : undefined);
+  const onWatch = (movie: TDeckMovie) =>
+    state.canDecide ? () => decide.mutate({ action: "watch", movieId: movie.id }) : undefined;
 
   const hasMatches = state.matches.length > 0;
   const podium = state.podium ?? [];
   const hostName = activeHostName(state);
-  const error = decide.error?.message ?? newRound.error?.message;
+  // Course perdue (« Nouvelle pile » déjà lancée, film déjà choisi, hôte revenu) : resynchronisée
+  // par la mutation, sans message.
+  const error = decisionErrorMessage(decide.error) ?? decisionErrorMessage(newRound.error);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">

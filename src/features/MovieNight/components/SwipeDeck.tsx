@@ -15,7 +15,7 @@ interface SwipeDeckProps {
   state: TMovieNightState;
   /** Appelé une fois le départ confirmé (navigation vers /ce-soir). */
   onLeft: () => void;
-  /** Pile en pause (écran « Match ! ») : les touches fléchées ne votent plus. */
+  /** Pile en pause (écran « Match ! ») : les touches fléchées ne votent plus, le geste en cours est annulé. */
   paused?: boolean;
 }
 
@@ -76,6 +76,14 @@ export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
   useLayoutEffect(() => {
     resetGesture.current = reset;
   }, [reset]);
+
+  // Pause arrivée en plein glissement : la carte revient en place et le pointeur est oublié.
+  // Sinon elle resterait décalée sous la pile inerte, qui ne reçoit plus le relâchement, et les
+  // glissements suivants seraient ignorés. Une carte lancée pendant la pause revient aussi :
+  // le serveur refuserait son vote (match_pending).
+  useEffect(() => {
+    if (paused) reset();
+  }, [paused, reset]);
 
   const hasCard = current !== undefined && !paused;
   useEffect(() => {

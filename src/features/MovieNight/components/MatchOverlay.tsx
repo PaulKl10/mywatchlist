@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { TMovieNightState } from "@/lib/movie-night/types";
 import { useMovieNightMutations } from "../hooks/useMovieNightMutations";
-import { MovieNightApiError } from "../services/movie-night.service";
+import { decisionErrorMessage } from "../utils/errors";
 import { activeHostName } from "../utils/participants";
 import { MoviePoster } from "./MoviePoster";
 import { ParticipantAvatars } from "./ParticipantAvatars";
 
 export function MatchOverlay({ state }: { state: TMovieNightState }) {
-  const queryClient = useQueryClient();
   const { decide } = useMovieNightMutations(state.id);
   const movie = state.pendingMatch;
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -23,20 +21,9 @@ export function MatchOverlay({ state }: { state: TMovieNightState }) {
   if (!movie) return null;
 
   const hostName = activeHostName(state);
-  const send = (decision: Parameters<typeof decide.mutate>[0]) => {
-    decide.mutate(decision, {
-      onError: (error) => {
-        // Décision périmée (un autre a déjà tranché) : on resynchronise, le prochain état fait foi.
-        if (error instanceof MovieNightApiError && error.code === "wrong_status") {
-          void queryClient.invalidateQueries({ queryKey: ["movie-night", state.id] });
-        }
-      },
-    });
-  };
-  const error =
-    decide.error instanceof MovieNightApiError && decide.error.code === "wrong_status"
-      ? null
-      : decide.error?.message;
+  // Décision périmée (un autre a tranché, l'hôte est revenu) : resynchronisée par la mutation,
+  // sans message.
+  const error = decisionErrorMessage(decide.error);
 
   return (
     <div
@@ -62,7 +49,7 @@ export function MatchOverlay({ state }: { state: TMovieNightState }) {
             <button
               type="button"
               disabled={decide.isPending}
-              onClick={() => send({ action: "watch", movieId: movie.id })}
+              onClick={() => decide.mutate({ action: "watch", movieId: movie.id })}
               className="rounded-lg bg-amber-500 px-4 py-3 text-base font-semibold text-zinc-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               On regarde ça
@@ -70,7 +57,7 @@ export function MatchOverlay({ state }: { state: TMovieNightState }) {
             <button
               type="button"
               disabled={decide.isPending}
-              onClick={() => send({ action: "continue", movieId: movie.id })}
+              onClick={() => decide.mutate({ action: "continue", movieId: movie.id })}
               className="rounded-lg border border-zinc-600 px-4 py-3 text-base font-medium text-zinc-100 transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Continuer
