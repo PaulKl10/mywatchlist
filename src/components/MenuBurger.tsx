@@ -3,7 +3,7 @@
 import { useLayoutEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bookmark, Compass, Home, LogOut, Star, User, X } from "lucide-react";
+import { Bookmark, Clapperboard, Compass, Home, LogOut, Star, User, X } from "lucide-react";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import type { TNotificationCount } from "@/app/api/notifications/count/route";
 
@@ -129,6 +129,10 @@ export function MenuBurger({
                 <Compass className="h-5 w-5 shrink-0" />
                 Explorer
               </Link>
+              <Link href="/ce-soir" onClick={onClose} className={navLinkClass}>
+                <Clapperboard className="h-5 w-5 shrink-0" />
+                Ce soir ?
+              </Link>
               <div className="my-2 border-t border-zinc-200 dark:border-zinc-700" />
               <button
                 type="button"
@@ -142,10 +146,16 @@ export function MenuBurger({
               </button>
             </>
           ) : (
-            <Link href="/login" onClick={onClose} className={navLinkClass}>
-              <User className="h-5 w-5 shrink-0" />
-              Connexion
-            </Link>
+            <>
+              <Link href="/ce-soir" onClick={onClose} className={navLinkClass}>
+                <Clapperboard className="h-5 w-5 shrink-0" />
+                Ce soir ?
+              </Link>
+              <Link href="/login" onClick={onClose} className={navLinkClass}>
+                <User className="h-5 w-5 shrink-0" />
+                Connexion
+              </Link>
+            </>
           )}
         </nav>
       </div>

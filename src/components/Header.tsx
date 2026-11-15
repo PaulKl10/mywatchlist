@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bookmark,
+  Clapperboard,
   Compass,
   Home,
   LogOut,
@@ -30,12 +31,14 @@ const PATH_TITLES: Record<string, string> = {
   "/watchlist": "Ma watchlist",
   "/rated-movies": "Mes notes",
   "/profile": "Mon profil",
+  "/ce-soir": "Ce soir ?",
   "/login": "Connexion",
   "/login/callback": "Connexion",
 };
 
 function getTitleFromPathname(pathname: string): string {
   if (PATH_TITLES[pathname]) return PATH_TITLES[pathname];
+  if (pathname.startsWith("/ce-soir/")) return "Ce soir ?";
   if (pathname.startsWith("/movies/")) return "Film";
   if (pathname.startsWith("/profile/")) return "Profil";
   if (pathname.startsWith("/person/")) return "Filmographie";
@@ -143,6 +146,17 @@ export function Header({ showSearch = true }: HeaderProps) {
               }`}
             >
               <Home className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/ce-soir"
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === "/ce-soir" || pathname?.startsWith("/ce-soir/")
+                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              }`}
+              title="Ce soir ?"
+            >
+              <Clapperboard className="h-4 w-4" />
             </Link>
             {user && (
               <>
