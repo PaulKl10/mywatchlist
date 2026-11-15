@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
-import { useMovieNightInvitesQuery } from "../hooks/useMovieNightInvitesQuery";
 import { JoinMovieNightForm } from "../components/JoinMovieNightForm";
 import { MovieNightConfigForm } from "../components/MovieNightConfigForm";
 import { MovieNightInvitesList } from "../components/MovieNightInvitesList";
@@ -17,8 +16,6 @@ export function MovieNightHomeView() {
   const searchParams = useSearchParams();
   const initialCode = (searchParams.get("code") ?? "").toUpperCase();
   const isLoggedIn = !!user;
-  const invitesQuery = useMovieNightInvitesQuery(isLoggedIn);
-  const hasInvites = (invitesQuery.data?.length ?? 0) > 0;
 
   if (isLoading) {
     return (
@@ -28,16 +25,26 @@ export function MovieNightHomeView() {
     );
   }
 
+  const joinSection = (
+    <section className={sectionClass} aria-labelledby="join-title">
+      <h2 id="join-title" className={titleClass}>
+        Rejoindre avec un code
+      </h2>
+      <JoinMovieNightForm initialCode={initialCode} askName={!isLoggedIn} />
+    </section>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      {isLoggedIn && hasInvites && (
-        <section className={sectionClass} aria-labelledby="invites-title">
-          <h2 id="invites-title" className={titleClass}>
-            Invitations reçues
-          </h2>
-          <MovieNightInvitesList invites={invitesQuery.data ?? []} />
-        </section>
-      )}
+      {/* Lien partagé (?code=…) : le bloc pré-rempli passe avant la création de session. */}
+      {initialCode && joinSection}
+
+      <MovieNightInvitesList
+        enabled={isLoggedIn}
+        title="Invitations reçues"
+        className={sectionClass}
+        titleClassName={titleClass}
+      />
 
       {isLoggedIn ? (
         <section className={sectionClass} aria-labelledby="create-title">
@@ -57,12 +64,7 @@ export function MovieNightHomeView() {
         </p>
       )}
 
-      <section className={sectionClass} aria-labelledby="join-title">
-        <h2 id="join-title" className={titleClass}>
-          Rejoindre avec un code
-        </h2>
-        <JoinMovieNightForm initialCode={initialCode} askName={!isLoggedIn} />
-      </section>
+      {!initialCode && joinSection}
     </div>
   );
 }

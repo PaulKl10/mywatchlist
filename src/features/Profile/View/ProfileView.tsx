@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Bookmark, User } from "lucide-react";
+import { Bookmark, Clapperboard, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { ProfileWatchlistCard } from "@/features/Watchlist/components/ProfileWatchlistCard";
 import { useGetMyWatchlistFromDbQuery } from "@/features/Watchlist/hooks/useGetWatchlistQuery";
@@ -11,6 +11,8 @@ import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
 import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
+import { MovieNightInvitesList } from "@/features/MovieNight/components/MovieNightInvitesList";
+import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 const WATCHLIST_PREVIEW_COUNT = 6;
@@ -19,6 +21,7 @@ export function ProfileView() {
   const { user } = useAuth();
   const { data: watchlistData, isLoading: watchlistLoading } =
     useGetMyWatchlistFromDbQuery();
+  const { data: notificationCounts } = useNotificationCountsQuery(!!user);
 
   if (!user) {
     return (
@@ -91,6 +94,17 @@ export function ProfileView() {
         </div>
       </section>
       <WatchTimeStats />
+      {/* Invitations comptées dans le badge de notifications, qui mène ici. */}
+      <MovieNightInvitesList
+        enabled={(notificationCounts?.movieNightInvites ?? 0) > 0}
+        title={
+          <>
+            <Clapperboard className="h-5 w-5" />
+            Invitations « Ce soir ? »
+          </>
+        }
+        titleClassName="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200"
+      />
       <SuggestionsList />
       <FriendsList />
       <FriendRequestsList />

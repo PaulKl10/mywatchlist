@@ -99,6 +99,7 @@ export function Header({ showSearch = true }: HeaderProps) {
 
   const { data: notificationCounts } = useNotificationCountsQuery(!!user);
   const totalNotifications = notificationCounts?.total ?? 0;
+  const movieNightInvites = notificationCounts?.movieNightInvites ?? 0;
 
   useAppBadge(totalNotifications);
 
@@ -156,7 +157,14 @@ export function Header({ showSearch = true }: HeaderProps) {
               }`}
               title="Ce soir ?"
             >
-              <Clapperboard className="h-4 w-4" />
+              <span className="relative">
+                <Clapperboard className="h-4 w-4" />
+                {movieNightInvites > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5">
+                    <NotificationBadge count={movieNightInvites} />
+                  </span>
+                )}
+              </span>
             </Link>
             {user && (
               <>

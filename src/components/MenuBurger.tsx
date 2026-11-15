@@ -132,6 +132,10 @@ export function MenuBurger({
               <Link href="/ce-soir" onClick={onClose} className={navLinkClass}>
                 <Clapperboard className="h-5 w-5 shrink-0" />
                 Ce soir ?
+                <NotificationBadge
+                  count={notificationCounts?.movieNightInvites ?? 0}
+                  className="ml-auto"
+                />
               </Link>
               <div className="my-2 border-t border-zinc-200 dark:border-zinc-700" />
               <button
