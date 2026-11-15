@@ -73,7 +73,6 @@ async function loadPlayNight(movieNightId: string, now: Date) {
       pending_match_movie_id: true,
       provider_ids: true,
       genre_ids: true,
-      deck_size: true,
       include_seen: true,
       participants: {
         select: { id: true, userId: true, status: true, isHost: true, lastSeenAt: true },

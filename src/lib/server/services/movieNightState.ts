@@ -4,7 +4,6 @@
  */
 import type { MovieNight, MovieNightParticipant, Prisma, User } from "@prisma/client";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
-import { DECK_SIZES, DEFAULT_DECK_SIZE, type TDeckSize } from "@/lib/movie-night/constants";
 import {
   canParticipantDecide,
   computePodium,
@@ -59,18 +58,13 @@ export function toParticipantStatus(value: string): TParticipantStatus {
   return status;
 }
 
-function toDeckSize(value: number): TDeckSize {
-  return DECK_SIZES.find((size) => size === value) ?? DEFAULT_DECK_SIZE;
-}
-
 /** Réglages d'une session, depuis ses colonnes. */
 export function toMovieNightSettings(
-  night: Pick<MovieNight, "provider_ids" | "genre_ids" | "deck_size" | "include_seen">
+  night: Pick<MovieNight, "provider_ids" | "genre_ids" | "include_seen">
 ): TMovieNightSettings {
   return {
     providerIds: night.provider_ids,
     genreIds: night.genre_ids,
-    deckSize: toDeckSize(night.deck_size),
     includeSeen: night.include_seen,
   };
 }
@@ -129,7 +123,6 @@ export type TMovieNightStateInput = {
     | "status"
     | "provider_ids"
     | "genre_ids"
-    | "deck_size"
     | "include_seen"
     | "pending_match_movie_id"
     | "chosen_movie_id"

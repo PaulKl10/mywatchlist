@@ -1,5 +1,3 @@
-import type { TDeckSize } from "./constants";
-
 export type TMovieNightStatus = "LOBBY" | "SWIPING" | "MATCH" | "ENDED";
 export type TParticipantStatus = "INVITED" | "JOINED" | "DECLINED" | "LEFT" | "REMOVED";
 export type TDeckMovie = {
@@ -35,7 +33,6 @@ export type TParticipantView = {
 export type TMovieNightSettings = {
   providerIds: number[];
   genreIds: number[];
-  deckSize: TDeckSize;
   includeSeen: boolean;
 };
 export type TMovieNightState = {

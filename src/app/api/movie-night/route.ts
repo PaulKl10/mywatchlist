@@ -7,7 +7,7 @@ import {
 } from "@/lib/server/movieNightHttp";
 import { createMovieNight, getCurrentSession } from "@/lib/server/services";
 
-/** Créer une session (connecté) : `{ providerIds, genreIds, deckSize, includeSeen?, solo? }` → `{ id }`. */
+/** Créer une session en salle d'attente (connecté) : `{ providerIds, genreIds, includeSeen? }` → `{ id }`. */
 export async function POST(request: Request) {
   const current = await getCurrentSession();
   if (!current) return movieNightErrorResponse("unauthorized");

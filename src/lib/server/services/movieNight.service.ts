@@ -2,6 +2,7 @@ import { Prisma, type MovieNightParticipant, type User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { tmdbErrorMessage } from "@/lib/tmdb-client";
 import {
+  DECK_SIZE,
   GUEST_NAME_MAX_LENGTH,
   MAX_PARTICIPANTS,
   SESSION_TTL_MS,
@@ -16,7 +17,7 @@ import type {
   TMovieNightState,
   TMovieNightStatus,
 } from "@/lib/movie-night/types";
-import { parseGuestName, type TCreateMovieNightInput } from "@/lib/movie-night/validation";
+import { parseGuestName } from "@/lib/movie-night/validation";
 import { findAcceptedFriendship } from "./friends.service";
 import { createGuestToken, findGuestParticipant } from "./movieNightAccess.service";
 import { buildDeck, getSeenMovieIds } from "./movieNightDeck.service";
@@ -82,7 +83,7 @@ export async function prepareRoundDeck(args: {
     deck = await buildDeck({
       providerIds: settings.providerIds,
       genreIds: settings.genreIds,
-      deckSize: settings.deckSize,
+      deckSize: DECK_SIZE,
       excludedMovieIds: [...seen, ...previousMovieIds],
     });
   } catch (error) {
@@ -141,52 +142,36 @@ export async function saveNextRound(args: {
   }
 }
 
-/**
- * Crée une session dont `host` est l'hôte. En solo, la pile est construite avant toute
- * écriture : `no_movies` ne crée rien ; sinon la session part directement en `SWIPING`.
- */
+/** Mémorise les plateformes choisies comme hôte (pré-remplies au prochain formulaire). */
+async function rememberProviders(userId: string, providerIds: number[]): Promise<void> {
+  await prisma.user.update({ where: { id: userId }, data: { streaming_provider_ids: providerIds } });
+}
+
+/** Crée une session en salle d'attente dont `host` est l'hôte (le solo ne crée pas de session). */
 export async function createMovieNight(
   host: User,
-  input: TCreateMovieNightInput,
+  settings: TMovieNightSettings,
   now: Date = new Date()
 ): Promise<TResult<{ id: string }>> {
-  const { solo, ...settings } = input;
-  let firstDeck: TDeckMovie[] | null = null;
-  if (solo) {
-    const deck = await prepareRoundDeck({
-      settings,
-      participantUserIds: [host.id],
-      previousMovieIds: [],
-    });
-    if (!deck.ok) return deck;
-    firstDeck = deck.value;
-  }
-
   await prisma.movieNight.deleteMany({ where: { expiresAt: { lt: now } } });
-  await prisma.user.update({
-    where: { id: host.id },
-    data: { streaming_provider_ids: settings.providerIds },
-  });
+  await rememberProviders(host.id, settings.providerIds);
 
   for (let attempt = 1; ; attempt++) {
     try {
-      // Une création avec écritures imbriquées est atomique : session, hôte et round 1 ensemble.
+      // Une création avec écriture imbriquée est atomique : session et hôte ensemble.
       const night = await prisma.movieNight.create({
         data: {
           code: generateMovieNightCode(),
           hostId: host.id,
-          status: firstDeck ? "SWIPING" : "LOBBY",
+          status: "LOBBY",
           provider_ids: settings.providerIds,
           genre_ids: settings.genreIds,
-          deck_size: settings.deckSize,
+          deck_size: DECK_SIZE,
           include_seen: settings.includeSeen,
           expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
           participants: {
             create: { userId: host.id, status: "JOINED", isHost: true, lastSeenAt: now },
           },
-          ...(firstDeck && {
-            rounds: { create: { index: 1, movies: firstDeck } },
-          }),
         },
         select: { id: true },
       });
@@ -196,6 +181,24 @@ export async function createMovieNight(
       if (!isUniqueViolation(error) || attempt >= MAX_CODE_ATTEMPTS) throw error;
     }
   }
+}
+
+/**
+ * Pile d'une partie solo, jouée dans le navigateur : aucune session en base. Mémorise les
+ * plateformes, exclut les déjà-vus de `user` (sauf `includeSeen`) et `excludedMovieIds`
+ * (films déjà proposés, pour « Nouvelle pile »). `MovieNightTmdbError` si TMDB échoue.
+ */
+export async function buildSoloDeck(
+  user: User,
+  settings: TMovieNightSettings,
+  excludedMovieIds: number[]
+): Promise<TResult<TDeckMovie[]>> {
+  await rememberProviders(user.id, settings.providerIds);
+  return prepareRoundDeck({
+    settings,
+    participantUserIds: [user.id],
+    previousMovieIds: excludedMovieIds,
+  });
 }
 
 /**

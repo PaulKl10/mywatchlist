@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DECK_SIZES, DEFAULT_DECK_SIZE, type TDeckSize } from "@/lib/movie-night/constants";
 import {
   useCreateMovieNightMutation,
 } from "../hooks/useMovieNightMutations";
@@ -24,7 +23,6 @@ export function MovieNightConfigForm() {
   // null = pas encore modifié par l'utilisateur : on suit la dernière sélection mémorisée.
   const [pickedProviders, setPickedProviders] = useState<number[] | null>(null);
   const [genreIds, setGenreIds] = useState<number[]>([]);
-  const [deckSize, setDeckSize] = useState<TDeckSize>(DEFAULT_DECK_SIZE);
   const [includeSeen, setIncludeSeen] = useState(false);
 
   const providers = providersQuery.data ?? [];
@@ -36,7 +34,7 @@ export function MovieNightConfigForm() {
   const submit = (solo: boolean) => {
     if (!canCreate) return;
     create.mutate(
-      { providerIds, genreIds, deckSize, includeSeen, solo },
+      { providerIds, genreIds, includeSeen },
       { onSuccess: ({ id }) => router.push(`/ce-soir/${id}`) },
     );
   };
@@ -69,27 +67,6 @@ export function MovieNightConfigForm() {
       <fieldset>
         <legend className={labelClass}>Genres</legend>
         <GenrePicker selected={genreIds} onChange={setGenreIds} />
-      </fieldset>
-
-      <fieldset>
-        <legend className={labelClass}>Taille de la pile</legend>
-        <div className="grid grid-cols-3 gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-          {DECK_SIZES.map((size) => (
-            <button
-              key={size}
-              type="button"
-              aria-pressed={deckSize === size}
-              onClick={() => setDeckSize(size)}
-              className={`rounded-md py-1.5 text-sm font-medium transition-colors ${
-                deckSize === size
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-600 dark:text-zinc-100"
-                  : "text-zinc-600 dark:text-zinc-400"
-              }`}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
       </fieldset>
 
       <div className="flex items-center justify-between gap-3">
