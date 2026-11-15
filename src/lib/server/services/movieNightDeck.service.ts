@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { tmdbClient } from "@/lib/tmdb-client";
-import { WATCH_REGION } from "@/lib/movie-night/constants";
+import { DECK_EXTRA_DETAILS, WATCH_REGION } from "@/lib/movie-night/constants";
 import {
   buildDiscoverParams,
+  keepAvailableMovies,
   pickProviderBadge,
   selectDeckMovieIds,
   shufflePageOrder,
@@ -85,7 +86,9 @@ async function fetchMovieSnapshot(
 /**
  * Construit une pile de films : discover TMDB sur des pages tirées au hasard,
  * exclusions, mélange, puis instantané détaillé de chaque film retenu.
- * Les erreurs TMDB de discover remontent ; un film dont la fiche échoue est retiré.
+ * Les erreurs TMDB de discover remontent ; un film dont la fiche échoue est retiré, comme
+ * un film que sa fiche ne montre inclus dans aucun abonnement choisi (location ou achat
+ * seulement). `DECK_EXTRA_DETAILS` fiches de plus compensent ces retraits.
  */
 export async function buildDeck(args: {
   providerIds: number[];
@@ -124,9 +127,10 @@ export async function buildDeck(args: {
     if (countUsable() >= wanted) break;
   }
 
-  const ids = selectDeckMovieIds([...candidates], excluded, deckSize);
+  const ids = selectDeckMovieIds([...candidates], excluded, deckSize + DECK_EXTRA_DETAILS);
   const settled = await Promise.allSettled(
     ids.map((id) => fetchMovieSnapshot(id, providerIds))
   );
-  return settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  const snapshots = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  return keepAvailableMovies(snapshots, deckSize);
 }

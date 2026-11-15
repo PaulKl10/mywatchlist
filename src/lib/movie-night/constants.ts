@@ -13,5 +13,7 @@ export const GUEST_COOKIE = "movie_night_guest";
 export const WATCH_REGION = "FR";
 export const MIN_VOTE_COUNT = 100;
 export const DISCOVER_MAX_PAGE = 10;
+/** Fiches TMDB lues en plus de `deckSize`, pour remplacer les films sans abonnement choisi. */
+export const DECK_EXTRA_DETAILS = 5;
 export const PODIUM_SIZE = 3;
 export const MAX_PROVIDER_IDS = 50;

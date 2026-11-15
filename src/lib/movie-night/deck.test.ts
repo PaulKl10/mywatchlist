@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildDiscoverParams, pickProviderBadge, selectDeckMovieIds, shufflePageOrder } from "./deck";
+import {
+  buildDiscoverParams,
+  keepAvailableMovies,
+  pickProviderBadge,
+  selectDeckMovieIds,
+  shufflePageOrder,
+} from "./deck";
+import type { TDeckMovie } from "./types";
 
 const identity = <T,>(items: T[]) => items;
 
@@ -45,5 +52,21 @@ describe("pickProviderBadge", () => {
   });
   it("null si aucune plateforme choisie ne propose le film", () => {
     expect(pickProviderBadge(flatrate, [381])).toBeNull();
+  });
+});
+
+describe("keepAvailableMovies", () => {
+  const netflix = { id: 8, name: "Netflix", logoPath: null };
+  const movie = (id: number, provider: TDeckMovie["provider"]): TDeckMovie => ({
+    id, title: `Film ${id}`, posterPath: null, releaseDate: null, voteAverage: 7,
+    runtime: 100, genreIds: [], overview: "", provider,
+  });
+  it("retire les films sans abonnement choisi, garde l'ordre, tronque", () => {
+    const movies = [movie(1, netflix), movie(2, null), movie(3, netflix), movie(4, netflix)];
+    expect(keepAvailableMovies(movies, 2).map((m) => m.id)).toEqual([1, 3]);
+  });
+  it("pile plus courte s'il n'y a pas assez de films disponibles", () => {
+    expect(keepAvailableMovies([movie(1, null), movie(2, netflix)], 15).map((m) => m.id)).toEqual([2]);
+    expect(keepAvailableMovies([movie(1, null)], 15)).toEqual([]);
   });
 });

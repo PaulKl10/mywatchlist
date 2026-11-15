@@ -65,3 +65,11 @@ export function pickProviderBadge(
   }
   return best ? { id: best.provider_id, name: best.provider_name, logoPath: best.logo_path } : null;
 }
+
+/**
+ * Pile finale : les `deckSize` premiers films, dans l'ordre de la sélection, inclus dans un
+ * abonnement choisi. Un film sans badge (location ou achat seulement selon sa fiche) est retiré.
+ */
+export function keepAvailableMovies(movies: TDeckMovie[], deckSize: number): TDeckMovie[] {
+  return movies.filter((movie) => movie.provider !== null).slice(0, deckSize);
+}
