@@ -8,6 +8,7 @@ import { useSwipeGesture, type TSwipeDirection } from "../hooks/useSwipeGesture"
 import { MovieNightApiError } from "../services/movie-night.service";
 import { firstUnvotedIndex } from "../utils/swipe";
 import { ParticipantAvatars } from "./ParticipantAvatars";
+import { RoundResults } from "./RoundResults";
 import { SwipeCard } from "./SwipeCard";
 
 interface SwipeDeckProps {
@@ -171,10 +172,7 @@ export function SwipeDeck({ state, onLeft }: SwipeDeckProps) {
           </div>
         </>
       ) : (
-        // Slot rempli en tâche 11 (attente des autres, récap ou podium).
-        <p className="flex flex-1 items-center justify-center text-center text-zinc-600 dark:text-zinc-400">
-          Vous avez fini la pile.
-        </p>
+        <RoundResults state={state} />
       )}
 
       <p role="alert" className="min-h-4 text-center text-xs text-red-600 dark:text-red-400">

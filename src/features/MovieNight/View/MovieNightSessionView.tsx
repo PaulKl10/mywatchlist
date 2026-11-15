@@ -6,20 +6,12 @@ import type { TMovieNightState } from "@/lib/movie-night/types";
 import { isGone, useMovieNight } from "../hooks/useMovieNight";
 import { MovieNightLobby } from "../components/MovieNightLobby";
 import { MovieNightMessage } from "../components/MovieNightMessage";
+import { MatchOverlay } from "../components/MatchOverlay";
+import { MovieNightEnded } from "../components/MovieNightEnded";
 import { SwipeDeck } from "../components/SwipeDeck";
 
 function Placeholder({ text }: { text: string }) {
   return <p className="py-16 text-center text-zinc-600 dark:text-zinc-400">{text}</p>;
-}
-
-// Slot rempli en tâche 11 (MATCH).
-function MovieNightMatch() {
-  return <Placeholder text="Match !" />;
-}
-
-// Slot rempli en tâche 11.
-function MovieNightEnded({ state }: { id: string; state: TMovieNightState }) {
-  return <Placeholder text={state.chosenMovie ? `Ce soir : ${state.chosenMovie.title}` : "Session terminée"} />;
 }
 
 export function MovieNightSessionView({ id }: { id: string }) {
@@ -74,8 +66,14 @@ function renderStatus(id: string, state: TMovieNightState, onLeft: () => void) {
       // Remonté à chaque nouvelle pile : les votes locaux ne passent pas d'une pile à l'autre.
       return <SwipeDeck key={state.round?.index ?? 0} state={state} onLeft={onLeft} />;
     case "MATCH":
-      return <MovieNightMatch />;
+      // Même clé que SWIPING : la pile reste montée sous l'écran « Match ! ».
+      return (
+        <>
+          <SwipeDeck key={state.round?.index ?? 0} state={state} onLeft={onLeft} />
+          <MatchOverlay state={state} />
+        </>
+      );
     case "ENDED":
-      return <MovieNightEnded id={id} state={state} />;
+      return <MovieNightEnded state={state} />;
   }
 }
