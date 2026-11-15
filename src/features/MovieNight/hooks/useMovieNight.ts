@@ -3,7 +3,7 @@ import { POLL_INTERVAL_MS } from "@/lib/movie-night/constants";
 import type { TMovieNightState } from "@/lib/movie-night/types";
 import { fetchMovieNightState, MovieNightApiError } from "../services/movie-night.service";
 
-function isGone(error: unknown): boolean {
+export function isGone(error: unknown): boolean {
   return error instanceof MovieNightApiError && (error.status === 403 || error.status === 404);
 }
 
