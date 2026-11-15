@@ -56,9 +56,16 @@ export function SuggestToFriendForm({
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+      <div
+        aria-hidden
+        className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50"
+      >
         <div className="h-5 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
-        <div className="mt-3 h-10 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+        {/* Select (38px) + bouton (36px) : empilés en mobile, côte à côte dès sm */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+          <div className="h-9.5 animate-pulse rounded-lg bg-zinc-200 sm:flex-1 dark:bg-zinc-700" />
+          <div className="h-9 animate-pulse rounded-lg bg-zinc-200 sm:w-28 dark:bg-zinc-700" />
+        </div>
       </div>
     );
   }

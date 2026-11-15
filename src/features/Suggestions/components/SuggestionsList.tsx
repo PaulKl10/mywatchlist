@@ -16,23 +16,9 @@ export function SuggestionsList() {
   const acceptMutation = useAcceptSuggestionMutation();
   const declineMutation = useDeclineSuggestionMutation();
 
-  if (!user) return null;
-
-  if (isLoading) {
-    return (
-      <section>
-        <div className="mb-4 h-6 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
+  // Pas de skeleton : la section est absente la plupart du temps (aucune
+  // suggestion en attente), un placeholder s'effondrerait au chargement.
+  if (!user || isLoading) return null;
 
   if (!suggestions || suggestions.length === 0) return null;
 

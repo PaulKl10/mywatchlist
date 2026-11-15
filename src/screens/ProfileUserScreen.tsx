@@ -99,9 +99,23 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center gap-4 py-12">
-        <div className="h-24 w-24 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-6 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="flex flex-col gap-10 px-4 md:px-32 py-12" aria-busy="true">
+        <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+          <div className="h-24 w-24 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+          <div
+            aria-hidden
+            className="flex flex-col items-center sm:items-start"
+          >
+            <div className="h-8 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="mt-1 h-5 w-56 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          {/* Bouton « Supprimer des amis » : on arrive ici surtout depuis la liste d'amis */}
+          <div
+            aria-hidden
+            className="h-9.5 w-44 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
+          />
+        </section>
+        <WatchTimeStats tmdbId={tmdbIdNum} />
       </div>
     );
   }

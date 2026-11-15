@@ -61,8 +61,12 @@ export function SearchMoviesView({ onClose }: SearchMoviesViewProps) {
           </p>
         ) : isLoading ? (
           <>
-            <div className="mb-6 flex flex-col gap-4">
-              <div className="h-10 w-full animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+            <div className="mb-6">
+              <PageFilter
+                currentPage={page}
+                onPageChange={handlePageChange}
+                isLoading
+              />
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {Array.from({ length: 10 }).map((_, i) => (
