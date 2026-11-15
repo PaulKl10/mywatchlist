@@ -65,25 +65,30 @@ export function MovieNightInvitesList({
                     <User className="h-5 w-5 text-zinc-500" />
                   </span>
                 )}
-                <span className="min-w-0 flex-1 truncate text-sm text-zinc-900 dark:text-zinc-100">
-                  <span className="font-medium">{invite.hostName}</span> vous invite
-                </span>
-                <button
-                  type="button"
-                  disabled={respond.isPending}
-                  onClick={() => handleRespond(invite.movieNightId, true)}
-                  className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-semibold text-zinc-900 hover:bg-amber-400 disabled:opacity-50"
-                >
-                  Rejoindre
-                </button>
-                <button
-                  type="button"
-                  disabled={respond.isPending}
-                  onClick={() => handleRespond(invite.movieNightId, false)}
-                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Refuser
-                </button>
+                {/* Texte entier, boutons repliés en dessous quand la ligne est trop étroite. */}
+                <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <p className="min-w-0 text-sm text-zinc-900 wrap-anywhere dark:text-zinc-100">
+                    <span className="font-medium">{invite.hostName}</span> vous invite
+                  </p>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      disabled={respond.isPending}
+                      onClick={() => handleRespond(invite.movieNightId, true)}
+                      className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-semibold text-zinc-900 hover:bg-amber-400 disabled:opacity-50"
+                    >
+                      Rejoindre
+                    </button>
+                    <button
+                      type="button"
+                      disabled={respond.isPending}
+                      onClick={() => handleRespond(invite.movieNightId, false)}
+                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    >
+                      Refuser
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
