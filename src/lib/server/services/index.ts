@@ -54,3 +54,11 @@ export {
   getMovieNightState,
   type TResult,
 } from "./movieNight.service";
+export {
+  startMovieNight,
+  castVote,
+  decide,
+  startNewRound,
+  leaveMovieNight,
+  removeParticipant,
+} from "./movieNightPlay.service";

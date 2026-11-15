@@ -36,10 +36,10 @@ import {
 export type TResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: TMovieNightErrorCode; message?: string };
-type TFailure = Extract<TResult<never>, { ok: false }>;
+export type TFailure = Extract<TResult<never>, { ok: false }>;
 
-const ok = <T>(value: T): TResult<T> => ({ ok: true, value });
-const fail = (error: TMovieNightErrorCode, message?: string): TFailure => ({
+export const ok = <T>(value: T): TResult<T> => ({ ok: true, value });
+export const fail = (error: TMovieNightErrorCode, message?: string): TFailure => ({
   ok: false,
   error,
   message,
@@ -61,7 +61,7 @@ export function isUniqueViolation(error: unknown): boolean {
 }
 
 /** Expirée = `expiresAt < now` (même règle que la suppression paresseuse). */
-function isExpired(expiresAt: Date, now: Date): boolean {
+export function isExpired(expiresAt: Date, now: Date): boolean {
   return expiresAt.getTime() < now.getTime();
 }
 
@@ -90,6 +90,24 @@ export async function prepareRoundDeck(args: {
     throw new MovieNightTmdbError();
   }
   return deck.length === 0 ? fail("no_movies") : ok(deck);
+}
+
+/**
+ * Verrouille la ligne de session jusqu'à la fin de la transaction `tx` (UPDATE sans effet),
+ * si elle a encore le statut `status` ; false sinon. `saveNextRound` prend le même verrou
+ * (son UPDATE de statut) avant de créer une pile : une fois le verrou obtenu, la pile
+ * courante lue dans `tx` ne change plus avant la fin de la transaction.
+ */
+export async function lockMovieNight(
+  tx: Prisma.TransactionClient,
+  movieNightId: string,
+  status: TMovieNightStatus
+): Promise<boolean> {
+  const { count } = await tx.movieNight.updateMany({
+    where: { id: movieNightId, status },
+    data: { status },
+  });
+  return count > 0;
 }
 
 /**
@@ -407,7 +425,13 @@ export async function respondToInvite(
 /**
  * Réconciliation (spec) : en `SWIPING`, si un match de la pile courante n'a pas été
  * « continué », la session passe en `MATCH` sur le premier dans l'ordre de la pile.
- * Mise à jour conditionnée à `status = SWIPING` : deux appels simultanés ne posent qu'un match.
+ * L'écriture se fait sous `lockMovieNight(SWIPING)` : deux appels simultanés ne posent qu'un
+ * match. Sous ce verrou, on revérifie que la pile lue est toujours la courante (une nouvelle
+ * pile enregistrée entre la lecture et l'écriture ne doit pas être mise en pause sur un match
+ * de la précédente) et que ce match n'a pas été continué entre-temps. Une simple condition
+ * « aucun round plus récent » dans l'UPDATE ne suffirait pas : en READ COMMITTED, un UPDATE
+ * qui attend le verrou d'un `saveNextRound` en cours revérifie la ligne de session mais pas
+ * les rounds insérés par cette transaction.
  */
 export async function reconcileMovieNight(movieNightId: string, now: Date): Promise<void> {
   const night = await prisma.movieNight.findUnique({
@@ -418,7 +442,12 @@ export async function reconcileMovieNight(movieNightId: string, now: Date): Prom
       rounds: {
         orderBy: { index: "desc" },
         take: 1,
-        select: { movies: true, continued_match_movie_ids: true, votes: { select: VOTE_SELECT } },
+        select: {
+          index: true,
+          movies: true,
+          continued_match_movie_ids: true,
+          votes: { select: VOTE_SELECT },
+        },
       },
     },
   });
@@ -429,9 +458,18 @@ export async function reconcileMovieNight(movieNightId: string, now: Date): Prom
   const matches = computeMatches(parseDeck(round.movies), round.votes.map(toVote), activeIds);
   const movieId = findMatchToPause(matches, round.continued_match_movie_ids);
   if (movieId === null) return;
-  await prisma.movieNight.updateMany({
-    where: { id: movieNightId, status: "SWIPING" },
-    data: { status: "MATCH", pending_match_movie_id: movieId },
+  await prisma.$transaction(async (tx) => {
+    if (!(await lockMovieNight(tx, movieNightId, "SWIPING"))) return;
+    const current = await tx.movieNightRound.findFirst({
+      where: { movieNightId },
+      orderBy: { index: "desc" },
+      select: { index: true, continued_match_movie_ids: true },
+    });
+    if (current?.index !== round.index || current.continued_match_movie_ids.includes(movieId)) return;
+    await tx.movieNight.update({
+      where: { id: movieNightId },
+      data: { status: "MATCH", pending_match_movie_id: movieId },
+    });
   });
 }
 

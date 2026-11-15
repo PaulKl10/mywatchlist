@@ -14,6 +14,7 @@ import {
 } from "@/lib/movie-night/rules";
 import type {
   TDeckMovie,
+  TMovieNightSettings,
   TMovieNightState,
   TMovieNightStatus,
   TParticipantLike,
@@ -60,6 +61,18 @@ export function toParticipantStatus(value: string): TParticipantStatus {
 
 function toDeckSize(value: number): TDeckSize {
   return DECK_SIZES.find((size) => size === value) ?? DEFAULT_DECK_SIZE;
+}
+
+/** Réglages d'une session, depuis ses colonnes. */
+export function toMovieNightSettings(
+  night: Pick<MovieNight, "provider_ids" | "genre_ids" | "deck_size" | "include_seen">
+): TMovieNightSettings {
+  return {
+    providerIds: night.provider_ids,
+    genreIds: night.genre_ids,
+    deckSize: toDeckSize(night.deck_size),
+    includeSeen: night.include_seen,
+  };
 }
 
 /** Instantanés d'une pile, tels qu'enregistrés par le service (colonne JSON). */
@@ -191,12 +204,7 @@ export function buildMovieNightState(input: TMovieNightStateInput): TMovieNightS
     id: night.id,
     status,
     code: status === "LOBBY" ? night.code : null,
-    settings: {
-      providerIds: night.provider_ids,
-      genreIds: night.genre_ids,
-      deckSize: toDeckSize(night.deck_size),
-      includeSeen: night.include_seen,
-    },
+    settings: toMovieNightSettings(night),
     me: { participantId: meId, isHost: me?.isHost ?? false },
     canDecide: canParticipantDecide(meId, likes, now),
     participants: views,

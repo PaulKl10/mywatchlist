@@ -1,6 +1,6 @@
 import { TMDB_MOVIE_GENRES } from "@/features/DiscoverMovies/constants/genres";
 import { DECK_SIZES, GUEST_NAME_MAX_LENGTH, MAX_PROVIDER_IDS, type TDeckSize } from "./constants";
-import type { TMovieNightSettings } from "./types";
+import type { TMovieNightDecision, TMovieNightSettings } from "./types";
 
 export type TCreateMovieNightInput = TMovieNightSettings & { solo: boolean };
 
@@ -45,4 +45,34 @@ export function parseGuestName(input: unknown): string | null {
   if (length < 1 || length > GUEST_NAME_MAX_LENGTH) return null;
   if (/[\u0000-\u001f\u007f-\u009f]/.test(name)) return null;
   return name;
+}
+
+/** Plus grand id accepté : la colonne `tmdb_movie_id` est un entier Postgres 32 bits. */
+const MAX_MOVIE_ID = 2_147_483_647;
+
+function isMovieId(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0 && (value as number) <= MAX_MOVIE_ID;
+}
+
+function asObject(body: unknown): Record<string, unknown> | null {
+  return typeof body === "object" && body !== null && !Array.isArray(body)
+    ? (body as Record<string, unknown>)
+    : null;
+}
+
+/** Corps de `POST /votes` : `{ movieId, liked }`. */
+export function parseVoteInput(body: unknown): { movieId: number; liked: boolean } | null {
+  const input = asObject(body);
+  if (!input || !isMovieId(input.movieId) || typeof input.liked !== "boolean") return null;
+  return { movieId: input.movieId, liked: input.liked };
+}
+
+/** Corps de `POST /decision` : `{ action: "watch", movieId }` ou `{ action: "continue" }`. */
+export function parseMovieNightDecision(body: unknown): TMovieNightDecision | null {
+  const input = asObject(body);
+  if (input?.action === "continue") return { action: "continue" };
+  if (input?.action === "watch" && isMovieId(input.movieId)) {
+    return { action: "watch", movieId: input.movieId };
+  }
+  return null;
 }

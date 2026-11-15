@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseCreateMovieNightInput, parseGuestName } from "./validation";
+import {
+  parseCreateMovieNightInput,
+  parseGuestName,
+  parseMovieNightDecision,
+  parseVoteInput,
+} from "./validation";
 
 describe("parseCreateMovieNightInput", () => {
   it("normalise une entrée valide", () => {
@@ -32,5 +37,43 @@ describe("parseGuestName", () => {
     expect(parseGuestName("a".repeat(21))).toBeNull();
     expect(parseGuestName(42)).toBeNull();
     expect(parseGuestName("a\u0000b")).toBeNull();
+  });
+});
+
+describe("parseVoteInput", () => {
+  it("accepte { movieId, liked } et ignore le reste", () => {
+    expect(parseVoteInput({ movieId: 550, liked: true, extra: 1 })).toEqual({ movieId: 550, liked: true });
+    expect(parseVoteInput({ movieId: 550, liked: false })).toEqual({ movieId: 550, liked: false });
+  });
+  it.each([
+    [{ movieId: "550", liked: true }],
+    [{ movieId: 0, liked: true }],
+    [{ movieId: -3, liked: true }],
+    [{ movieId: 1.5, liked: true }],
+    [{ movieId: 2_147_483_648, liked: true }],
+    [{ movieId: 550, liked: "true" }],
+    [{ movieId: 550 }],
+    [[550, true]],
+    [null],
+    [undefined],
+  ])("refuse %j", (body) => {
+    expect(parseVoteInput(body)).toBeNull();
+  });
+});
+
+describe("parseMovieNightDecision", () => {
+  it("accepte watch avec un film et continue", () => {
+    expect(parseMovieNightDecision({ action: "watch", movieId: 550 })).toEqual({ action: "watch", movieId: 550 });
+    expect(parseMovieNightDecision({ action: "continue", movieId: 550 })).toEqual({ action: "continue" });
+  });
+  it.each([
+    [{ action: "watch" }],
+    [{ action: "watch", movieId: "550" }],
+    [{ action: "watch", movieId: 0 }],
+    [{ action: "stop" }],
+    [{}],
+    [null],
+  ])("refuse %j", (body) => {
+    expect(parseMovieNightDecision(body)).toBeNull();
   });
 });
