@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Heart, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { TDeckMovie, TMovieNightState } from "@/lib/movie-night/types";
 import { useMovieNightMutations } from "../hooks/useMovieNightMutations";
 import { useSwipeGesture, type TSwipeDirection } from "../hooks/useSwipeGesture";
+import { useSwipeKeys } from "../hooks/useSwipeKeys";
 import { MovieNightApiError } from "../services/movie-night.service";
 import { firstUnvotedIndex } from "../utils/swipe";
 import { ParticipantAvatars } from "./ParticipantAvatars";
 import { RoundResults } from "./RoundResults";
-import { SwipeCard } from "./SwipeCard";
+import { SwipeStack } from "./SwipeStack";
 
 interface SwipeDeckProps {
   state: TMovieNightState;
@@ -17,13 +18,6 @@ interface SwipeDeckProps {
   onLeft: () => void;
   /** Pile en pause (écran « Match ! ») : les touches fléchées ne votent plus, le geste en cours est annulé. */
   paused?: boolean;
-}
-
-function isEditable(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
 }
 
 function withoutVote(votes: Record<number, boolean>, movieId: number): Record<number, boolean> {
@@ -69,9 +63,10 @@ export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
     });
   }
 
-  const { offsetX, isDragging, bind, fling, reset } = useSwipeGesture((direction) => {
+  const gesture = useSwipeGesture((direction) => {
     if (current) castVote(current, direction);
   });
+  const { reset } = gesture;
 
   useLayoutEffect(() => {
     resetGesture.current = reset;
@@ -85,19 +80,7 @@ export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
     if (paused) reset();
   }, [paused, reset]);
 
-  const hasCard = current !== undefined && !paused;
-  useEffect(() => {
-    if (!hasCard) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-      if (isEditable(event.target) || isEditable(document.activeElement)) return;
-      event.preventDefault();
-      fling(event.key === "ArrowRight" ? "right" : "left");
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [hasCard, fling]);
+  useSwipeKeys(current !== undefined && !paused, gesture.fling);
 
   // Promesse plutôt qu'un callback de mutate : elle aboutit même si ce composant est démonté
   // entre-temps (ex. passage en MATCH), et onLeft vit dans la vue, toujours montée.
@@ -111,8 +94,6 @@ export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
   };
 
   const message = leave.error?.message ?? voteError;
-  // Carte courante, carte suivante (visible dessous) et la suivante (affiche préchargée).
-  const stack = deck.slice(index, index + 3);
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-7.75rem)] min-h-[30rem] w-full max-w-sm flex-col gap-3">
@@ -139,48 +120,7 @@ export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
       </div>
 
       {current ? (
-        <>
-          <div className="relative min-h-0 flex-1">
-            <div className="absolute inset-x-0 bottom-3 top-0">
-              {stack.map((movie, i) => {
-                const depth = i === 0 ? 0 : i === 1 ? 1 : 2;
-                return depth === 0 ? (
-                  <SwipeCard
-                    key={movie.id}
-                    movie={movie}
-                    depth={0}
-                    offsetX={offsetX}
-                    isDragging={isDragging}
-                    bind={bind}
-                  />
-                ) : (
-                  <SwipeCard key={movie.id} movie={movie} depth={depth} />
-                );
-              })}
-            </div>
-          </div>
-          <p className="sr-only" aria-live="polite">
-            {`${current.title}, film ${position} sur ${total}`}
-          </p>
-          <div className="flex items-center justify-center gap-8">
-            <button
-              type="button"
-              aria-label="Non"
-              onClick={() => fling("left")}
-              className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white text-zinc-500 shadow-sm transition-colors hover:border-zinc-400 hover:text-zinc-700 active:scale-95 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200"
-            >
-              <X className="h-7 w-7" strokeWidth={2.5} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              aria-label="Oui"
-              onClick={() => fling("right")}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-zinc-950 shadow-sm transition-colors hover:bg-amber-400 active:scale-95"
-            >
-              <Heart className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-            </button>
-          </div>
-        </>
+        <SwipeStack deck={deck} index={index} gesture={gesture} />
       ) : (
         <RoundResults state={state} />
       )}

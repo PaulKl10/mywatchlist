@@ -1,13 +1,19 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import type { TMovieNightState } from "@/lib/movie-night/types";
+import type { TDeckMovie } from "@/lib/movie-night/types";
 import { MoviePoster } from "./MoviePoster";
 
 const linkClass =
   "font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-500";
 
-export function MovieNightEnded({ state }: { state: TMovieNightState }) {
-  const movie = state.chosenMovie;
+interface MovieNightEndedProps {
+  /** Film retenu ; null : session terminée sans film. */
+  movie: TDeckMovie | null;
+  /** Action en plus, entre la fiche du film et le retour (ex. « Reprendre la pile » en solo). */
+  children?: ReactNode;
+}
 
+export function MovieNightEnded({ movie, children }: MovieNightEndedProps) {
   if (!movie) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
@@ -30,6 +36,7 @@ export function MovieNightEnded({ state }: { state: TMovieNightState }) {
       <Link href={`/movies/${movie.id}`} className={linkClass}>
         Voir la fiche du film
       </Link>
+      {children}
       <Link href="/ce-soir" className="text-sm text-zinc-600 hover:underline dark:text-zinc-400">
         Retour à Ce soir ?
       </Link>

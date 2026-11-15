@@ -81,6 +81,6 @@ function renderStatus(id: string, state: TMovieNightState, onLeft: () => void) {
         </>
       );
     case "ENDED":
-      return <MovieNightEnded state={state} />;
+      return <MovieNightEnded movie={state.chosenMovie} />;
   }
 }
