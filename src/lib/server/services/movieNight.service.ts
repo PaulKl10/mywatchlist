@@ -509,7 +509,10 @@ export async function getMovieNightState(
           user: { select: USER_DISPLAY_SELECT },
         },
       },
-      rounds: { orderBy: { index: "asc" }, select: { id: true, index: true, movies: true } },
+      rounds: {
+        orderBy: { index: "asc" },
+        select: { id: true, index: true, movies: true, continued_match_movie_ids: true },
+      },
     },
   });
   if (!night) return fail("not_found");
@@ -524,6 +527,7 @@ export async function getMovieNightState(
       participants: night.participants,
       rounds: night.rounds.map((r) => ({ index: r.index, movies: parseDeck(r.movies) })),
       currentVotes: votes.map(toVote),
+      currentContinuedMatchIds: current?.continued_match_movie_ids ?? [],
       meId: actor.id,
       now,
     })

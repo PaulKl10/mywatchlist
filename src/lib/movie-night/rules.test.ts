@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { TDeckMovie, TParticipantLike, TVote } from "./types";
 import {
-  canParticipantDecide, computeMatches, computePodium, findMatchToPause,
+  canParticipantDecide, computeMatches, computePodium, computeRoundMatches, findMatchToPause,
   getActiveParticipantIds, hasEveryoneFinished, isParticipantActive,
 } from "./rules";
 
@@ -30,6 +30,20 @@ describe("isParticipantActive", () => {
   });
   it("getActiveParticipantIds filtre", () => {
     expect(getActiveParticipantIds([p("a"), p("b", { lastSeenAt: ago(90_000) })], NOW)).toEqual(["a"]);
+  });
+});
+
+describe("computeRoundMatches", () => {
+  it("un match continué reste un match quand l'unanimité change, ordre de la pile", () => {
+    // 30 a été continué quand b était inactif ; b revient et dit non à 30.
+    const votes = [yes("a", 30), no("b", 30), yes("a", 10), yes("b", 10)];
+    expect(computeMatches(deck, votes, ["a", "b"])).toEqual([10]);
+    expect(computeRoundMatches(deck, votes, ["a", "b"], [30])).toEqual([10, 30]);
+  });
+  it("sans doublon, et seulement des films de la pile", () => {
+    const votes = [yes("a", 20), yes("b", 20)];
+    expect(computeRoundMatches(deck, votes, ["a", "b"], [20, 99])).toEqual([20]);
+    expect(computeRoundMatches(deck, [], [], [10])).toEqual([10]);
   });
 });
 

@@ -49,6 +49,7 @@ function input(over: Partial<TMovieNightStateInput> = {}, night: Partial<TMovieN
     participants: [host, guest, invited],
     rounds: [{ index: 1, movies: deck }],
     currentVotes: [],
+    currentContinuedMatchIds: [],
     meId: host.id,
     now: NOW,
     ...over,
@@ -127,6 +128,24 @@ describe("buildMovieNightState", () => {
     const state = buildMovieNightState(input({ participants: [host, sleepy], currentVotes: votes }));
     expect(state.matches.map((m) => m.id)).toEqual([20]);
     expect(state.participants.map((p) => p.isActive)).toEqual([true, false]);
+  });
+
+  it("un match continué reste dans les matchs quand ceux qui l'aiment changent", () => {
+    // 20 a été continué quand Léa était inactive ; elle revient et dit non à 20.
+    const votes = [vote("p-host", 20, true), vote("p-guest", 20, false)];
+    const state = buildMovieNightState(input({ currentVotes: votes, currentContinuedMatchIds: [20] }));
+    expect(state.matches.map((m) => m.id)).toEqual([20]);
+  });
+
+  it("tout le monde a fini avec seulement un match continué → pas de podium", () => {
+    const votes = [
+      vote("p-host", 10, true), vote("p-host", 20, true), vote("p-host", 30, false),
+      vote("p-guest", 10, false), vote("p-guest", 20, false), vote("p-guest", 30, false),
+    ];
+    const state = buildMovieNightState(input({ currentVotes: votes, currentContinuedMatchIds: [20] }));
+    expect(state.everyoneFinished).toBe(true);
+    expect(state.matches.map((m) => m.id)).toEqual([20]);
+    expect(state.podium).toBeNull();
   });
 
   it("match en attente", () => {

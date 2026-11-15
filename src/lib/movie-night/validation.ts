@@ -67,10 +67,13 @@ export function parseVoteInput(body: unknown): { movieId: number; liked: boolean
   return { movieId: input.movieId, liked: input.liked };
 }
 
-/** Corps de `POST /decision` : `{ action: "watch", movieId }` ou `{ action: "continue" }`. */
+/** Corps de `POST /decision` : `{ action: "watch", movieId }` ou `{ action: "continue", movieId? }`. */
 export function parseMovieNightDecision(body: unknown): TMovieNightDecision | null {
   const input = asObject(body);
-  if (input?.action === "continue") return { action: "continue" };
+  if (input?.action === "continue") {
+    if (input.movieId === undefined) return { action: "continue" };
+    return isMovieId(input.movieId) ? { action: "continue", movieId: input.movieId } : null;
+  }
   if (input?.action === "watch" && isMovieId(input.movieId)) {
     return { action: "watch", movieId: input.movieId };
   }

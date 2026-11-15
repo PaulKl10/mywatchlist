@@ -24,6 +24,20 @@ export function computeMatches(deck: TDeckMovie[], votes: TVote[], activeIds: st
   return deck.filter((m) => likers.get(m.id)?.size === active.size).map((m) => m.id);
 }
 
+/**
+ * Matchs de la pile : l'unanimité des actifs, plus les matchs déjà continués, qui restent
+ * des matchs même si l'unanimité change ensuite (retour d'un inactif). Ordre de la pile.
+ */
+export function computeRoundMatches(
+  deck: TDeckMovie[],
+  votes: TVote[],
+  activeIds: string[],
+  continuedIds: number[]
+): number[] {
+  const matched = new Set([...computeMatches(deck, votes, activeIds), ...continuedIds]);
+  return deck.filter((m) => matched.has(m.id)).map((m) => m.id);
+}
+
 /** Premier match que personne n'a encore choisi de continuer. */
 export function findMatchToPause(matches: number[], continuedIds: number[]): number | null {
   const continued = new Set(continuedIds);

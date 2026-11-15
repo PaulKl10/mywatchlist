@@ -7,8 +7,8 @@ import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import { DECK_SIZES, DEFAULT_DECK_SIZE, type TDeckSize } from "@/lib/movie-night/constants";
 import {
   canParticipantDecide,
-  computeMatches,
   computePodium,
+  computeRoundMatches,
   getActiveParticipantIds,
   hasEveryoneFinished,
 } from "@/lib/movie-night/rules";
@@ -140,6 +140,8 @@ export type TMovieNightStateInput = {
   rounds: { index: number; movies: TDeckMovie[] }[];
   /** Votes de la pile courante. */
   currentVotes: TVote[];
+  /** Matchs continués de la pile courante (`continued_match_movie_ids`). */
+  currentContinuedMatchIds: number[];
   meId: string;
   now: Date;
 };
@@ -158,7 +160,8 @@ function findDeckMovie(
 
 /** État vu par le participant `meId`. Ne contient jamais les votes individuels des autres. */
 export function buildMovieNightState(input: TMovieNightStateInput): TMovieNightState {
-  const { night, participants, rounds, currentVotes: votes, meId, now } = input;
+  const { night, participants, rounds, currentVotes: votes, currentContinuedMatchIds, meId, now } =
+    input;
   const status = toMovieNightStatus(night.status);
   const likes = participants.map(toParticipantLike);
   const activeIds = getActiveParticipantIds(likes, now);
@@ -166,7 +169,7 @@ export function buildMovieNightState(input: TMovieNightStateInput): TMovieNightS
   const current = rounds.at(-1) ?? null;
   const deck = current?.movies ?? [];
 
-  const matchIds = new Set(computeMatches(deck, votes, activeIds));
+  const matchIds = new Set(computeRoundMatches(deck, votes, activeIds, currentContinuedMatchIds));
   const matches = deck.filter((m) => matchIds.has(m.id));
   const everyoneFinished = hasEveryoneFinished(deck, votes, activeIds);
 

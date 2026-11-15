@@ -61,7 +61,9 @@ export type TMovieNightInvite = {
   hostAvatarUrl: string | null;
   createdAt: string;
 };
-export type TMovieNightDecision = { action: "watch"; movieId: number } | { action: "continue" };
+export type TMovieNightDecision =
+  | { action: "watch"; movieId: number }
+  | { action: "continue"; movieId?: number }; // movieId : le match affiché, vérifié côté serveur
 export type TStreamingProvider = { id: number; name: string; logoPath: string | null };
 export type TMovieNightErrorCode =
   | "unauthorized"

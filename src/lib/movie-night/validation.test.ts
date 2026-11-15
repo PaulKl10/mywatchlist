@@ -62,14 +62,21 @@ describe("parseVoteInput", () => {
 });
 
 describe("parseMovieNightDecision", () => {
-  it("accepte watch avec un film et continue", () => {
+  it("accepte watch avec un film, et continue avec ou sans film", () => {
     expect(parseMovieNightDecision({ action: "watch", movieId: 550 })).toEqual({ action: "watch", movieId: 550 });
-    expect(parseMovieNightDecision({ action: "continue", movieId: 550 })).toEqual({ action: "continue" });
+    expect(parseMovieNightDecision({ action: "continue" })).toEqual({ action: "continue" });
+    expect(parseMovieNightDecision({ action: "continue", movieId: 550 })).toEqual({
+      action: "continue",
+      movieId: 550,
+    });
   });
   it.each([
     [{ action: "watch" }],
     [{ action: "watch", movieId: "550" }],
     [{ action: "watch", movieId: 0 }],
+    [{ action: "continue", movieId: "550" }],
+    [{ action: "continue", movieId: 0 }],
+    [{ action: "continue", movieId: null }],
     [{ action: "stop" }],
     [{}],
     [null],

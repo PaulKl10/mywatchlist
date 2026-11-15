@@ -79,7 +79,7 @@ async function loadPlayNight(movieNightId: string, now: Date) {
       },
       rounds: {
         orderBy: { index: "desc" },
-        select: { id: true, index: true, movies: true },
+        select: { id: true, index: true, movies: true, continued_match_movie_ids: true },
       },
     },
   });
@@ -245,6 +245,7 @@ async function chooseMovie(
       pendingMatchMovieId: night.pending_match_movie_id,
       deck: round ? parseDeck(round.movies) : [],
       votes,
+      continuedMatchMovieIds: round?.continued_match_movie_ids ?? [],
       activeIds,
     },
     movieId
@@ -269,8 +270,9 @@ async function chooseMovie(
 
 /**
  * « Continuer » : le match en attente rejoint les matchs continués de la pile courante et la
- * session reprend en `SWIPING`. La mise à jour est conditionnée au match lu : deux décisions
- * simultanées n'en continuent pas un second qui n'a pas encore été montré.
+ * session reprend en `SWIPING`. La mise à jour est conditionnée au match lu (égal au `movieId`
+ * envoyé, s'il y en a un) : deux décisions simultanées n'en continuent pas un second qui n'a
+ * pas encore été montré.
  */
 async function continueAfterMatch(
   movieNightId: string,
@@ -324,7 +326,7 @@ export async function decide(
     const chosen = await chooseMovie(movieNightId, night, status, activeIds, decision.movieId);
     if (!chosen.ok) return chosen;
   } else {
-    const refusal = checkContinueDecision(status);
+    const refusal = checkContinueDecision(status, night.pending_match_movie_id, decision.movieId);
     if (refusal) return fail(refusal);
     const resumed = await continueAfterMatch(movieNightId, night.pending_match_movie_id);
     if (!resumed.ok) return resumed;

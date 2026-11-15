@@ -33,18 +33,24 @@ describe("checkVote", () => {
 describe("finishedRoundChoices", () => {
   it("les matchs s'il y en a", () => {
     const votes = allVotes({ a: [10, 30], b: [30] });
-    expect(finishedRoundChoices(deck, votes, ["a", "b"])).toEqual([30]);
+    expect(finishedRoundChoices(deck, votes, ["a", "b"], [])).toEqual([30]);
+  });
+  it("les matchs continués comptent comme des matchs", () => {
+    // 10 continué quand b était inactif ; b a dit non à 10 depuis. 30 est un match.
+    const votes = allVotes({ a: [10, 30], b: [30] });
+    expect(finishedRoundChoices(deck, votes, ["a", "b"], [10])).toEqual([10, 30]);
   });
   it("sinon le podium (au moins un oui), par oui décroissants", () => {
     const votes = allVotes({ a: [10, 20], b: [20], c: [] });
-    expect(finishedRoundChoices(deck, votes, ["a", "b", "c"])).toEqual([20, 10]);
-    expect(finishedRoundChoices(deck, allVotes({ a: [], b: [] }), ["a", "b"])).toEqual([]);
+    expect(finishedRoundChoices(deck, votes, ["a", "b", "c"], [])).toEqual([20, 10]);
+    expect(finishedRoundChoices(deck, allVotes({ a: [], b: [] }), ["a", "b"], [])).toEqual([]);
   });
 });
 
 describe("checkWatchDecision", () => {
   const ctx = (over: Partial<TWatchContext>): TWatchContext => ({
-    status: "SWIPING", pendingMatchMovieId: null, deck, votes: [], activeIds: ["a", "b"], ...over,
+    status: "SWIPING", pendingMatchMovieId: null, deck, votes: [], continuedMatchMovieIds: [],
+    activeIds: ["a", "b"], ...over,
   });
 
   it("en MATCH : seulement le film en attente", () => {
@@ -70,6 +76,14 @@ describe("checkWatchDecision", () => {
     expect(checkWatchDecision(ctx({ votes }), 30)).toBe("invalid_input");
     expect(checkWatchDecision(ctx({ votes }), 99)).toBe("invalid_input");
   });
+  it("pile finie : un match continué reste choisissable, même à côté d'un autre match", () => {
+    // 10 continué quand b était inactif ; b revenu a dit non à 10. 30 est un match.
+    const votes = allVotes({ a: [10, 30], b: [30] });
+    expect(checkWatchDecision(ctx({ votes }), 10)).toBe("invalid_input");
+    expect(checkWatchDecision(ctx({ votes, continuedMatchMovieIds: [10] }), 10)).toBeNull();
+    expect(checkWatchDecision(ctx({ votes, continuedMatchMovieIds: [10] }), 30)).toBeNull();
+    expect(checkWatchDecision(ctx({ votes, continuedMatchMovieIds: [10] }), 20)).toBe("invalid_input");
+  });
   it("les votes d'un inactif ne comptent pas", () => {
     // b inactif : a seul a fini la pile, et ses oui sont des matchs.
     const votes = [...allVotes({ a: [30] }), vote("b", 10, true)];
@@ -80,9 +94,17 @@ describe("checkWatchDecision", () => {
 
 describe("checkContinueDecision", () => {
   it("seulement en MATCH", () => {
-    expect(checkContinueDecision("MATCH")).toBeNull();
-    expect(checkContinueDecision("SWIPING")).toBe("wrong_status");
-    expect(checkContinueDecision("ENDED")).toBe("wrong_status");
+    expect(checkContinueDecision("MATCH", 20)).toBeNull();
+    expect(checkContinueDecision("SWIPING", null)).toBe("wrong_status");
+    expect(checkContinueDecision("ENDED", null)).toBe("wrong_status");
+  });
+  it("sans movieId : accepté en MATCH", () => {
+    expect(checkContinueDecision("MATCH", 20, undefined)).toBeNull();
+  });
+  it("avec movieId : seulement le match en attente", () => {
+    expect(checkContinueDecision("MATCH", 20, 20)).toBeNull();
+    expect(checkContinueDecision("MATCH", 20, 10)).toBe("wrong_status");
+    expect(checkContinueDecision("SWIPING", null, 20)).toBe("wrong_status");
   });
 });
 
