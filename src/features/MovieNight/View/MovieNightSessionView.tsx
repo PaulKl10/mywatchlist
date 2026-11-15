@@ -63,14 +63,21 @@ function renderStatus(id: string, state: TMovieNightState, onLeft: () => void) {
     case "LOBBY":
       return <MovieNightLobby id={id} state={state} onLeft={onLeft} />;
     case "SWIPING":
-      // Remonté à chaque nouvelle pile : les votes locaux ne passent pas d'une pile à l'autre.
-      return <SwipeDeck key={state.round?.index ?? 0} state={state} onLeft={onLeft} />;
     case "MATCH":
-      // Même clé que SWIPING : la pile reste montée sous l'écran « Match ! ».
+      // Même arbre pour les deux statuts : la pile reste montée (votes locaux, geste) sous l'écran
+      // « Match ! ». Remontée seulement à chaque nouvelle pile (clé). Pendant MATCH, la pile est
+      // inerte : ni clavier, ni pointeur, ni tabulation.
       return (
         <>
-          <SwipeDeck key={state.round?.index ?? 0} state={state} onLeft={onLeft} />
-          <MatchOverlay state={state} />
+          <div inert={state.status === "MATCH"}>
+            <SwipeDeck
+              key={state.round?.index ?? 0}
+              state={state}
+              onLeft={onLeft}
+              paused={state.status === "MATCH"}
+            />
+          </div>
+          {state.status === "MATCH" && <MatchOverlay state={state} />}
         </>
       );
     case "ENDED":

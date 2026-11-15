@@ -15,6 +15,8 @@ interface SwipeDeckProps {
   state: TMovieNightState;
   /** Appelé une fois le départ confirmé (navigation vers /ce-soir). */
   onLeft: () => void;
+  /** Pile en pause (écran « Match ! ») : les touches fléchées ne votent plus. */
+  paused?: boolean;
 }
 
 function isEditable(target: EventTarget | null): boolean {
@@ -30,7 +32,7 @@ function withoutVote(votes: Record<number, boolean>, movieId: number): Record<nu
   return next;
 }
 
-export function SwipeDeck({ state, onLeft }: SwipeDeckProps) {
+export function SwipeDeck({ state, onLeft, paused = false }: SwipeDeckProps) {
   const { vote, leave } = useMovieNightMutations(state.id);
   // Votes envoyés depuis ce client (en cours ou acceptés). Ajoutés aux votes du serveur, ils
   // donnent la carte courante : un rafraîchissement du polling, même en retard sur un vote, ne
@@ -75,7 +77,7 @@ export function SwipeDeck({ state, onLeft }: SwipeDeckProps) {
     resetGesture.current = reset;
   }, [reset]);
 
-  const hasCard = current !== undefined;
+  const hasCard = current !== undefined && !paused;
   useEffect(() => {
     if (!hasCard) return;
     const onKeyDown = (event: KeyboardEvent) => {
