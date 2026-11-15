@@ -7,6 +7,7 @@ async function fetchNotificationCounts(): Promise<TNotificationCount> {
   return {
     friendRequests: data.friendRequests ?? 0,
     suggestions: data.suggestions ?? 0,
+    movieNightInvites: data.movieNightInvites ?? 0,
     total: data.total ?? 0,
   };
 }

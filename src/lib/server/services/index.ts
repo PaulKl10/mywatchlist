@@ -32,3 +32,25 @@ export {
   getSeenMovieIds,
   buildDeck,
 } from "./movieNightDeck.service";
+export {
+  createGuestToken,
+  hashGuestToken,
+  setGuestCookie,
+  findGuestParticipant,
+  resolveMovieNightParticipant,
+} from "./movieNightAccess.service";
+export {
+  MovieNightTmdbError,
+  isUniqueViolation,
+  prepareRoundDeck,
+  saveNextRound,
+  createMovieNight,
+  joinMovieNightByCode,
+  inviteFriend,
+  listPendingInvites,
+  countPendingInvites,
+  respondToInvite,
+  reconcileMovieNight,
+  getMovieNightState,
+  type TResult,
+} from "./movieNight.service";
