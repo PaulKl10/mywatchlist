@@ -77,7 +77,7 @@ function renderStatus(id: string, state: TMovieNightState, onLeft: () => void) {
               paused={state.status === "MATCH"}
             />
           </div>
-          {state.status === "MATCH" && <MatchOverlay state={state} />}
+          {state.status === "MATCH" && <MatchOverlay state={state} onLeft={onLeft} />}
         </>
       );
     case "ENDED":
