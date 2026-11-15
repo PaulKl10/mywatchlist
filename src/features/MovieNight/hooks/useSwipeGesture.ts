@@ -19,6 +19,12 @@ export const TAP_SLOP_PX = 10;
 export const SWIPE_EXIT_OFFSET = 600;
 /** Durée de la transition CSS de sortie et de retour en place. */
 export const SWIPE_EXIT_MS = 250;
+/**
+ * Après un lancement, boutons, flèches et glissements sont ignorés le temps de la sortie puis de
+ * la montée de la carte suivante (même durée de transition) : un double toucher, même à 300 ms,
+ * ne vote pas la carte qui arrive.
+ */
+const SWIPE_LOCK_MS = SWIPE_EXIT_MS * 2;
 /** Seuls les mouvements de cette fenêtre comptent pour la vitesse. */
 const VELOCITY_WINDOW_MS = 100;
 /** Fenêtre trop courte : vitesse non significative (gigue au relâché). */
@@ -51,6 +57,8 @@ export function useSwipeGesture(onSwipe: (direction: TSwipeDirection) => void): 
   const onSwipeRef = useRef(onSwipe);
   const pointer = useRef<TActivePointer | null>(null);
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Seule source de vérité du verrou (horodatage performance.now()), remis à zéro par reset().
+  const lockedUntil = useRef(0);
 
   useLayoutEffect(() => {
     onSwipeRef.current = onSwipe;
@@ -63,8 +71,9 @@ export function useSwipeGesture(onSwipe: (direction: TSwipeDirection) => void): 
   }, []);
 
   const fling = useCallback((direction: TSwipeDirection) => {
-    // Sortie déjà en cours : un double toucher ne lance (et ne vote) qu'une fois.
-    if (exitTimer.current !== null) return;
+    // Sortie ou montée de la carte suivante en cours : un double toucher ne vote qu'une fois.
+    if (performance.now() < lockedUntil.current) return;
+    lockedUntil.current = performance.now() + SWIPE_LOCK_MS;
     pointer.current = null;
     setIsDragging(false);
     setOffsetX(direction === "right" ? SWIPE_EXIT_OFFSET : -SWIPE_EXIT_OFFSET);
@@ -82,13 +91,14 @@ export function useSwipeGesture(onSwipe: (direction: TSwipeDirection) => void): 
       clearTimeout(exitTimer.current);
       exitTimer.current = null;
     }
+    lockedUntil.current = 0;
     pointer.current = null;
     setIsDragging(false);
     setOffsetX(0);
   }, []);
 
   const onPointerDown = useCallback((event: ReactPointerEvent<HTMLElement>) => {
-    if (exitTimer.current !== null || pointer.current !== null) return;
+    if (performance.now() < lockedUntil.current || pointer.current !== null) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     try {
       event.currentTarget.setPointerCapture(event.pointerId);

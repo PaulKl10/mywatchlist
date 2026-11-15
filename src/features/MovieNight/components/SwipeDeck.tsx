@@ -88,8 +88,15 @@ export function SwipeDeck({ state, onLeft }: SwipeDeckProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [hasCard, fling]);
 
+  // Promesse plutôt qu'un callback de mutate : elle aboutit même si ce composant est démonté
+  // entre-temps (ex. passage en MATCH), et onLeft vit dans la vue, toujours montée.
   const handleLeave = () => {
-    leave.mutate(undefined, { onSuccess: onLeft });
+    leave
+      .mutateAsync()
+      .then(onLeft)
+      .catch(() => {
+        // Erreur affichée via leave.error.
+      });
   };
 
   const message = leave.error?.message ?? voteError;

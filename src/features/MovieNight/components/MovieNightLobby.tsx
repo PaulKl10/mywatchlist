@@ -55,8 +55,15 @@ export function MovieNightLobby({ id, state, onLeft }: MovieNightLobbyProps) {
     }
   };
 
+  // Promesse plutôt qu'un callback de mutate : elle aboutit même si ce composant est démonté
+  // entre-temps (ex. lancement de la pile), et onLeft vit dans la vue, toujours montée.
   const handleLeave = () => {
-    leave.mutate(undefined, { onSuccess: onLeft });
+    leave
+      .mutateAsync()
+      .then(onLeft)
+      .catch(() => {
+        // Erreur affichée via leave.error.
+      });
   };
 
   return (
