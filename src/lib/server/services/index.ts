@@ -27,3 +27,8 @@ export {
   type TFriend,
   type TAddFriendResult,
 } from "./friends.service";
+export {
+  fetchFrenchStreamingProviders,
+  getSeenMovieIds,
+  buildDeck,
+} from "./movieNightDeck.service";

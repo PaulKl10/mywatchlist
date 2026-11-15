@@ -30,6 +30,11 @@ model User {
 
   // Films comptés pour le temps de visionnage (tracking interne uniquement)
   watchTimeEntries WatchTimeEntry[]
+
+  // « Ce soir ? »
+  streaming_provider_ids   Int[]                    @default([]) // dernières plateformes choisies comme hôte
+  hostedMovieNights        MovieNight[]
+  movieNightParticipations MovieNightParticipant[]
 }
 
 model WatchTimeEntry {
@@ -101,4 +106,72 @@ model Suggestion {
   receiver User @relation("suggestedTo", fields: [toUserId], references: [id])
 
   @@unique([fromUserId, toUserId, media_type, tmdb_movie_id])
+}
+
+model MovieNight {
+  id                     String   @id @default(cuid())
+  code                   String   @unique // 6 caractères
+  hostId                 String
+  status                 String   @default("LOBBY") // LOBBY | SWIPING | MATCH | ENDED
+  provider_ids           Int[]
+  genre_ids              Int[]
+  deck_size              Int
+  include_seen           Boolean  @default(false)
+  pending_match_movie_id Int? // film du match en attente de décision (statut MATCH)
+  chosen_movie_id        Int? // film retenu (statut ENDED via « On regarde ça »)
+  createdAt              DateTime @default(now())
+  expiresAt              DateTime
+
+  host         User                    @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  participants MovieNightParticipant[]
+  rounds       MovieNightRound[]
+
+  @@index([expiresAt])
+}
+
+model MovieNightParticipant {
+  id             String   @id @default(cuid())
+  movieNightId   String
+  userId         String? // null pour un invité
+  guestName      String? // pseudo d'invité
+  guestTokenHash String?  @unique // sha256 du jeton du cookie invité
+  status         String // INVITED | JOINED | DECLINED | LEFT | REMOVED
+  isHost         Boolean  @default(false)
+  lastSeenAt     DateTime @default(now()) // inactif au-delà de 60 s
+  createdAt      DateTime @default(now())
+
+  movieNight MovieNight       @relation(fields: [movieNightId], references: [id], onDelete: Cascade)
+  user       User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes      MovieNightVote[]
+
+  @@unique([movieNightId, userId])
+  @@index([userId, status])
+}
+
+model MovieNightRound {
+  id                        String   @id @default(cuid())
+  movieNightId              String
+  index                     Int // 1, 2, … (« Nouvelle pile »)
+  movies                    Json // instantanés ordonnés (voir Construction de la pile)
+  continued_match_movie_ids Int[]    @default([]) // matchs sur lesquels on a choisi « Continuer »
+  createdAt                 DateTime @default(now())
+
+  movieNight MovieNight       @relation(fields: [movieNightId], references: [id], onDelete: Cascade)
+  votes      MovieNightVote[]
+
+  @@unique([movieNightId, index])
+}
+
+model MovieNightVote {
+  id            String   @id @default(cuid())
+  roundId       String
+  participantId String
+  tmdb_movie_id Int
+  liked         Boolean
+  createdAt     DateTime @default(now())
+
+  round       MovieNightRound       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  participant MovieNightParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, participantId, tmdb_movie_id])
 }
