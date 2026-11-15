@@ -19,6 +19,17 @@ interface RateMovieButtonProps {
   accountStates?: TAccountStates | null;
 }
 
+/** Calqué sur la version connectée : libellé, 10 étoiles (28px, 32px en md), aide. */
+export function RateMovieButtonSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col gap-2">
+      <div className="h-5 w-28 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-7 w-70 animate-pulse rounded bg-zinc-200 md:h-8 md:w-80 dark:bg-zinc-800" />
+      <div className="h-4 w-72 max-w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+    </div>
+  );
+}
+
 export function RateMovieButton({
   mediaId,
   mediaType = "movie",
@@ -54,9 +65,7 @@ export function RateMovieButton({
   };
 
   if (isAuthLoading) {
-    return (
-      <div className="inline-flex h-10 w-44 animate-pulse items-center rounded-lg border border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800" />
-    );
+    return <RateMovieButtonSkeleton />;
   }
 
   if (!isAuthenticated) {

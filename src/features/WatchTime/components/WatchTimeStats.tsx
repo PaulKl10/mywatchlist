@@ -42,7 +42,14 @@ export function WatchTimeStats({ tmdbId }: WatchTimeStatsProps = {}) {
 
   if (isLoading) {
     return (
-      <div className="h-20 w-64 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+      <div
+        aria-hidden
+        className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-900"
+      >
+        {/* L'en-tête passe sur 2 lignes en mobile (libellé + décompte) */}
+        <div className="h-10 w-56 max-w-full animate-pulse rounded bg-zinc-200 sm:h-5 dark:bg-zinc-800" />
+        <div className="h-16 w-full animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800" />
+      </div>
     );
   }
 
@@ -58,12 +65,13 @@ export function WatchTimeStats({ tmdbId }: WatchTimeStatsProps = {}) {
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex items-center gap-2">
+      {/* Décompte toujours sur sa propre ligne en mobile : hauteur fixe, quel que soit le texte */}
+      <div className="flex flex-wrap items-center gap-x-2">
         <Clock className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
         <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Temps de visionnage
         </span>
-        <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+        <span className="w-full pl-7 text-sm font-medium text-zinc-500 sm:w-auto sm:pl-0 dark:text-zinc-400">
           ({formatRatedCount(data.movieCount, data.tvCount)})
         </span>
       </div>

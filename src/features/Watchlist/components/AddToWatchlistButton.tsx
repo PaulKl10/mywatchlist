@@ -17,6 +17,16 @@ interface AddToWatchlistButtonProps {
   onWatchlistChange?: () => void;
 }
 
+/** Mêmes dimensions que le bouton (py-2 + text-sm + bordure = 38px). */
+export function AddToWatchlistButtonSkeleton() {
+  return (
+    <div
+      aria-hidden
+      className="inline-flex h-9.5 w-52 animate-pulse items-center rounded-lg border border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800"
+    />
+  );
+}
+
 export function AddToWatchlistButton({
   mediaId,
   mediaType = "movie",
@@ -30,9 +40,7 @@ export function AddToWatchlistButton({
   const removeMutation = useRemoveFromWatchlistMutation();
 
   if (isAuthLoading) {
-    return (
-      <div className="inline-flex h-10 w-40 animate-pulse items-center rounded-lg border border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800" />
-    );
+    return <AddToWatchlistButtonSkeleton />;
   }
 
   if (!isAuthenticated) {

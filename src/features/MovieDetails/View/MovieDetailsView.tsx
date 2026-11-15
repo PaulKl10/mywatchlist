@@ -32,7 +32,7 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
     useAccountStatesQuery(movieId, !!user, "movie");
 
   if (isLoading) {
-    return <MediaDetailsLoadingSkeleton />;
+    return <MediaDetailsLoadingSkeleton onBack={() => router.back()} />;
   }
 
   if (isError) {

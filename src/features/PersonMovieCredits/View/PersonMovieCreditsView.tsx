@@ -8,6 +8,19 @@ import { useGetPersonDetailsQuery } from "@/features/PersonMovieCredits/hooks/us
 import { useGetPersonMovieCreditsQuery } from "@/features/PersonMovieCredits/hooks/useGetPersonMovieCreditsQuery";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
+function BackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      className="mb-6 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Retour
+    </button>
+  );
+}
+
 interface PersonMovieCreditsViewProps {
   personId: number;
 }
@@ -22,13 +35,19 @@ export function PersonMovieCreditsView({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950" aria-busy="true">
         <div className="mx-auto max-w-7xl px-4 py-8 md:px-32">
-          <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+          <BackButton onBack={() => router.back()} />
+
+          <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:gap-8">
             <div className="aspect-square w-48 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex flex-1 flex-col gap-4">
-              <div className="h-10 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-              <div className="h-32 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div aria-hidden className="flex w-full flex-1 flex-col">
+              <div className="mx-auto h-9 w-2/3 animate-pulse rounded bg-zinc-200 md:mx-0 md:h-10 md:w-1/3 dark:bg-zinc-800" />
+              <div className="mt-4">
+                <div className="h-7 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                {/* line-clamp-6 × 24px */}
+                <div className="mt-2 h-36 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+              </div>
             </div>
           </div>
         </div>
@@ -64,14 +83,7 @@ export function PersonMovieCreditsView({
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-32">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mb-6 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour
-        </button>
+        <BackButton onBack={() => router.back()} />
 
         <div className="flex flex-col justify-center items-center gap-6 md:flex-row md:gap-8">
           <div className="relative aspect-square w-48 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { MediaDetailsBackButton } from "./MediaDetailsBackButton";
 
 interface MediaDetailsLayoutProps {
   backdropPath: string | null;
@@ -39,14 +39,7 @@ export function MediaDetailsLayout({
       </div>
 
       <div className="relative z-50 -mt-64 mx-auto max-w-[80%] py-8 md:pr-6 md:py-0">
-        <button
-          type="button"
-          onClick={onBack}
-          className="mb-6 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-100 backdrop-blur-xl transition-colors hover:text-zinc-100 dark:border-zinc-600 dark:hover:text-zinc-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour
-        </button>
+        <MediaDetailsBackButton onBack={onBack} />
 
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">
           <div className="relative aspect-2/3 w-full shrink-0 overflow-hidden rounded-lg md:w-1/3">

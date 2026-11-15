@@ -21,12 +21,14 @@ export function FriendsList() {
         <AddFriendButton />
       </div>
       {isLoading ? (
-        <div className="flex gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-16 w-16 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800"
-            />
+        <div aria-hidden className="flex flex-wrap gap-4">
+          {/* 3 éléments : tiennent sur une ligne même sur un écran de 320px */}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2 p-3">
+              <div className="h-14 w-14 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-5 w-16 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-4 w-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            </div>
           ))}
         </div>
       ) : !friends || friends.length === 0 ? (

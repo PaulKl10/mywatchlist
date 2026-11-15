@@ -32,7 +32,7 @@ export function TvDetailsView({ tvId }: TvDetailsViewProps) {
     useAccountStatesQuery(tvId, !!user, "tv");
 
   if (isLoading) {
-    return <MediaDetailsLoadingSkeleton />;
+    return <MediaDetailsLoadingSkeleton onBack={() => router.back()} />;
   }
 
   if (isError) {

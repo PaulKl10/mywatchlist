@@ -13,6 +13,9 @@ import {
 
 type MediaFilter = "movie" | "tv";
 
+const GRID_CLASSES =
+  "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32";
+
 export function WatchlistView() {
   const [page, setPage] = useState(1);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("movie");
@@ -35,22 +38,6 @@ export function WatchlistView() {
     setPage(1);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="h-10 w-48 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-4 py-12">
@@ -69,8 +56,6 @@ export function WatchlistView() {
     );
   }
 
-  if (!data) return null;
-
   const emptyMessage =
     mediaFilter === "movie"
       ? "Votre watchlist films est vide. Ajoutez des films depuis la page de détails !"
@@ -79,17 +64,79 @@ export function WatchlistView() {
   const emptyCta =
     mediaFilter === "movie" ? "Découvrir des films" : "Découvrir des séries";
 
-  const countLabel =
-    mediaFilter === "movie"
+  const countLabel = !data
+    ? null
+    : mediaFilter === "movie"
       ? `${data.total_results} film${data.total_results > 1 ? "s" : ""}`
       : `${data.total_results} série${data.total_results > 1 ? "s" : ""}`;
+
+  const renderResults = () => {
+    if (isLoading) {
+      return (
+        <div className={GRID_CLASSES} aria-busy="true">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (!data) return null;
+
+    if (data.results.length === 0) {
+      return (
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <p className="text-zinc-600 dark:text-zinc-400">{emptyMessage}</p>
+          <Link
+            href="/"
+            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+          >
+            {emptyCta}
+          </Link>
+        </div>
+      );
+    }
+
+    if (mediaFilter === "movie" && moviesData) {
+      return (
+        <div className={GRID_CLASSES}>
+          {moviesData.results.map((movie) => (
+            <MovieCard key={movie.id} movie={movie} />
+          ))}
+        </div>
+      );
+    }
+
+    if (tvData) {
+      return (
+        <div className={GRID_CLASSES}>
+          {tvData.results.map((tv) => (
+            <WatchlistTvCard key={tv.id} tv={tv} />
+          ))}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="flex flex-col gap-5">
       <div className="sticky top-16 z-10 flex flex-col gap-4 bg-zinc-50 pt-5 pb-3 dark:bg-zinc-950 px-4 md:px-32">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-medium text-zinc-700 dark:text-zinc-300">
-            Ma watchlist ({countLabel})
+            Ma watchlist{" "}
+            {countLabel ? (
+              `(${countLabel})`
+            ) : (
+              <span
+                aria-hidden
+                className="inline-block h-4 w-20 animate-pulse rounded bg-zinc-200 align-middle dark:bg-zinc-800"
+              />
+            )}
           </h2>
           <div className="flex items-center justify-between gap-4">
             <div className="flex rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
@@ -120,8 +167,8 @@ export function WatchlistView() {
             </div>
             <div className="flex justify-end">
               <PageFilter
-                currentPage={data.page}
-                totalPages={data.total_pages}
+                currentPage={data?.page ?? page}
+                totalPages={data?.total_pages}
                 onPageChange={handlePageChange}
                 isLoading={isLoading}
               />
@@ -129,29 +176,7 @@ export function WatchlistView() {
           </div>
         </div>
       </div>
-      {data.results.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="text-zinc-600 dark:text-zinc-400">{emptyMessage}</p>
-          <Link
-            href="/"
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
-          >
-            {emptyCta}
-          </Link>
-        </div>
-      ) : mediaFilter === "movie" && moviesData ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
-          {moviesData.results.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
-      ) : tvData ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-4 md:px-32">
-          {tvData.results.map((tv) => (
-            <WatchlistTvCard key={tv.id} tv={tv} />
-          ))}
-        </div>
-      ) : null}
+      {renderResults()}
     </div>
   );
 }
