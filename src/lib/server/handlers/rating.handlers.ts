@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   getCurrentSession,
+  recordRating,
   recordWatchTime,
+  removeRating,
   removeWatchTime,
   syncWatchlistItem,
   updateTmdbWatchlist,
@@ -94,19 +96,21 @@ export function createRatingHandlers({
       );
     }
 
-    await applyRatingSideEffects(current, mediaId);
+    await applyRatingSideEffects(current, mediaId, value);
 
     return NextResponse.json({ success: true });
   }
 
   /**
-   * Suites d'une notation : le média noté sort de la watchlist (TMDB + copie en BDD)
-   * et entre dans le temps de visionnage. Best effort : la note est déjà enregistrée
-   * sur TMDB, un échec ici est loggé mais ne la fait pas échouer.
+   * Suites d'une notation : le média noté sort de la watchlist (TMDB + copie en BDD),
+   * entre dans le temps de visionnage, la copie des notes et le fil d'activité des amis.
+   * Best effort : la note est déjà enregistrée sur TMDB, un échec ici est loggé mais ne la
+   * fait pas échouer.
    */
   async function applyRatingSideEffects(
     current: TCurrentSession,
-    mediaId: number
+    mediaId: number,
+    rating: number
   ) {
     const userId = current.user.id;
     const [watchlistResult, dbResult] = await Promise.allSettled([
@@ -120,6 +124,7 @@ export function createRatingHandlers({
         fetchRuntime(mediaId).then((runtime) =>
           recordWatchTime(userId, mediaType, mediaId, runtime)
         ),
+        recordRating(userId, mediaType, mediaId, rating),
       ]),
     ]);
 
@@ -131,7 +136,7 @@ export function createRatingHandlers({
     }
     if (dbResult.status === "rejected") {
       console.error(
-        `[rating] Mise à jour watchlist/temps de visionnage en BDD impossible (${mediaType} ${mediaId})`,
+        `[rating] Mise à jour watchlist/temps de visionnage/notes en BDD impossible (${mediaType} ${mediaId})`,
         tmdbErrorMessage(dbResult.reason)
       );
     }
@@ -172,7 +177,10 @@ export function createRatingHandlers({
       }
     }
 
-    await removeWatchTime(current.user.id, mediaType, mediaId);
+    await Promise.all([
+      removeWatchTime(current.user.id, mediaType, mediaId),
+      removeRating(current.user.id, mediaType, mediaId),
+    ]);
 
     return NextResponse.json({ success: true });
   }

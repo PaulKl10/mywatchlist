@@ -18,9 +18,15 @@ import type {
   TMovieNightStatus,
 } from "@/lib/movie-night/types";
 import { parseGuestName } from "@/lib/movie-night/validation";
-import { findAcceptedFriendship } from "./friends.service";
+import { presentDeckMovie, hasWatchlistOwners } from "@/lib/movie-night/watchlistMention";
+import { findAcceptedFriendship, getFriendIds } from "./friends.service";
 import { createGuestToken, findGuestParticipant } from "./movieNightAccess.service";
-import { buildDeck, getSeenMovieIds } from "./movieNightDeck.service";
+import {
+  buildDeck,
+  buildWatchlistDeck,
+  getSeenMovieIds,
+  getWatchlistCandidates,
+} from "./movieNightDeck.service";
 import {
   USER_DISPLAY_SELECT,
   VOTE_SELECT,
@@ -68,8 +74,10 @@ export function isExpired(expiresAt: Date, now: Date): boolean {
 
 /**
  * Pile d'un round : exclut les films déjà vus des participants connectés (sauf
- * `includeSeen`) et ceux des piles précédentes. Appelle TMDB : aucune écriture ici, et
- * jamais à l'intérieur d'une transaction Prisma. `MovieNightTmdbError` si TMDB échoue.
+ * `includeSeen`) et ceux des piles précédentes. Avec `fromWatchlists`, les films des
+ * watchlists des participants connectés viennent d'abord, la découverte complète la pile.
+ * Appelle TMDB : aucune écriture ici, et jamais à l'intérieur d'une transaction Prisma.
+ * `MovieNightTmdbError` si TMDB échoue.
  */
 export async function prepareRoundDeck(args: {
   settings: TMovieNightSettings;
@@ -78,14 +86,30 @@ export async function prepareRoundDeck(args: {
 }): Promise<TResult<TDeckMovie[]>> {
   const { settings, participantUserIds, previousMovieIds } = args;
   const seen = settings.includeSeen ? [] : await getSeenMovieIds(participantUserIds);
+  const excluded = [...seen, ...previousMovieIds];
+  const candidates = settings.fromWatchlists
+    ? await getWatchlistCandidates(participantUserIds, excluded)
+    : [];
+
   let deck: TDeckMovie[];
   try {
-    deck = await buildDeck({
+    const fromWatchlists = await buildWatchlistDeck({
+      candidates,
       providerIds: settings.providerIds,
       genreIds: settings.genreIds,
       deckSize: DECK_SIZE,
-      excludedMovieIds: [...seen, ...previousMovieIds],
     });
+    const fromDiscover =
+      fromWatchlists.length < DECK_SIZE
+        ? await buildDeck({
+            providerIds: settings.providerIds,
+            genreIds: settings.genreIds,
+            deckSize: DECK_SIZE - fromWatchlists.length,
+            // Un film de watchlist ne revient pas par la découverte, sans sa mention.
+            excludedMovieIds: [...excluded, ...candidates.map((c) => c.movieId)],
+          })
+        : [];
+    deck = [...fromWatchlists, ...fromDiscover];
   } catch (error) {
     console.error("movie-night: échec TMDB pendant la construction de la pile", tmdbErrorMessage(error));
     throw new MovieNightTmdbError();
@@ -142,8 +166,11 @@ export async function saveNextRound(args: {
   }
 }
 
-/** Mémorise les plateformes choisies comme hôte (pré-remplies au prochain formulaire). */
-async function rememberProviders(userId: string, providerIds: number[]): Promise<void> {
+/**
+ * Enregistre « mes plateformes » : choisies comme hôte de « Ce soir ? » (pré-remplies au
+ * prochain formulaire) ou depuis le filtre de la watchlist.
+ */
+export async function rememberProviders(userId: string, providerIds: number[]): Promise<void> {
   await prisma.user.update({ where: { id: userId }, data: { streaming_provider_ids: providerIds } });
 }
 
@@ -174,6 +201,7 @@ async function insertMovieNight(
           genre_ids: settings.genreIds,
           deck_size: DECK_SIZE,
           include_seen: settings.includeSeen,
+          from_watchlists: settings.fromWatchlists,
           expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
           participants: { create: hostParticipant },
         },
@@ -251,11 +279,15 @@ export async function buildSoloDeck(
   excludedMovieIds: number[]
 ): Promise<TResult<TDeckMovie[]>> {
   if (user) await rememberProviders(user.id, settings.providerIds);
-  return prepareRoundDeck({
+  const deck = await prepareRoundDeck({
     settings,
     participantUserIds: user ? [user.id] : [],
     previousMovieIds: excludedMovieIds,
   });
+  // En solo, seule la watchlist du joueur est utilisée.
+  return deck.ok
+    ? ok(deck.value.map((m) => presentDeckMovie(m, user?.id ?? null, new Set())))
+    : deck;
 }
 
 /**
@@ -629,11 +661,21 @@ export async function getMovieNightState(
     ? await prisma.movieNightVote.findMany({ where: { roundId: current.id }, select: VOTE_SELECT })
     : [];
 
+  // Qui a quel film dans sa watchlist : nommé seulement pour le participant et ses amis.
+  const rounds = night.rounds.map((r) => ({ index: r.index, movies: parseDeck(r.movies) }));
+  const friendIds =
+    actor.userId && rounds.some((r) => hasWatchlistOwners(r.movies))
+      ? new Set(await getFriendIds(actor.userId))
+      : new Set<string>();
+
   return ok(
     buildMovieNightState({
       night,
       participants: night.participants,
-      rounds: night.rounds.map((r) => ({ index: r.index, movies: parseDeck(r.movies) })),
+      rounds: rounds.map((r) => ({
+        index: r.index,
+        movies: r.movies.map((m) => presentDeckMovie(m, actor.userId, friendIds)),
+      })),
       currentVotes: votes.map(toVote),
       currentContinuedMatchIds: current?.continued_match_movie_ids ?? [],
       meId: actor.id,

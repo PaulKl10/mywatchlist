@@ -83,7 +83,8 @@ function isSettings(value: unknown): value is TMovieNightSettings {
     isIdList(value.providerIds) &&
     value.providerIds.length > 0 &&
     isIdList(value.genreIds) &&
-    typeof value.includeSeen === "boolean"
+    typeof value.includeSeen === "boolean" &&
+    (value.fromWatchlists === undefined || typeof value.fromWatchlists === "boolean")
   );
 }
 
@@ -102,7 +103,9 @@ export function readSoloGame(raw: string | null): TSoloGame | null {
   if (!Number.isInteger(index) || (index as number) < 0 || (index as number) > deck.length) return null;
   if (!isIdList(shownMovieIds)) return null;
   if (chosenMovieId !== null && !isId(chosenMovieId)) return null;
-  return { v: 1, settings: data.settings, deck, index: index as number, shownMovieIds, chosenMovieId };
+  // Une partie enregistrée avant l'option « Piocher dans nos watchlists » ne l'a pas.
+  const settings = { ...data.settings, fromWatchlists: data.settings.fromWatchlists ?? false };
+  return { v: 1, settings, deck, index: index as number, shownMovieIds, chosenMovieId };
 }
 
 /**

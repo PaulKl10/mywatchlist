@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TAccountStates } from "@/hooks/useAccountStatesQuery";
 import RatingService from "@/features/RatedMedias/services/rating.service";
+import { removeFromAvailableWatchlist } from "@/features/Watchlist/hooks/useGetWatchlistQuery";
 
 export const useAddRatingMutation = () => {
   const queryClient = useQueryClient();
@@ -36,6 +37,9 @@ export const useAddRatingMutation = () => {
           context.previous
         );
       }
+    },
+    onSuccess: (_data, { mediaId, mediaType = "movie" }) => {
+      removeFromAvailableWatchlist(queryClient, mediaType, mediaId);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["rated-movies"] });

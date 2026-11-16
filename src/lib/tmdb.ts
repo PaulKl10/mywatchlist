@@ -7,6 +7,7 @@ export type TMDBMovieMinimal = {
   release_date: string;
   vote_average: number;
   overview: string;
+  genre_ids: number[];
 };
 
 export type TMDBTvMinimal = {
@@ -16,13 +17,16 @@ export type TMDBTvMinimal = {
   first_air_date: string;
   vote_average: number;
   overview: string;
+  genre_ids: number[];
 };
+
+type TTmdbGenres = { genres?: { id: number }[] };
 
 export async function fetchMovieDetails(
   movieId: number
 ): Promise<TMDBMovieMinimal | null> {
   try {
-    const data = await tmdbClient.get<TMDBMovieMinimal>(`/movie/${movieId}`, {
+    const data = await tmdbClient.get<TMDBMovieMinimal & TTmdbGenres>(`/movie/${movieId}`, {
       language: "fr-FR",
     });
     return {
@@ -32,6 +36,7 @@ export async function fetchMovieDetails(
       release_date: data.release_date ?? "",
       vote_average: data.vote_average ?? 0,
       overview: data.overview ?? "",
+      genre_ids: (data.genres ?? []).map((g) => g.id),
     };
   } catch {
     return null;
@@ -120,7 +125,7 @@ export async function fetchTvDetails(
   tvId: number
 ): Promise<TMDBTvMinimal | null> {
   try {
-    const data = await tmdbClient.get<TMDBTvMinimal>(`/tv/${tvId}`, {
+    const data = await tmdbClient.get<TMDBTvMinimal & TTmdbGenres>(`/tv/${tvId}`, {
       language: "fr-FR",
     });
     return {
@@ -130,6 +135,7 @@ export async function fetchTvDetails(
       first_air_date: data.first_air_date ?? "",
       vote_average: data.vote_average ?? 0,
       overview: data.overview ?? "",
+      genre_ids: (data.genres ?? []).map((g) => g.id),
     };
   } catch {
     return null;

@@ -43,7 +43,7 @@ function input(over: Partial<TMovieNightStateInput> = {}, night: Partial<TMovieN
   return {
     night: {
       id: "mn1", code: "K7P2QX", status: "SWIPING", provider_ids: [8], genre_ids: [35],
-      include_seen: false, pending_match_movie_id: null, chosen_movie_id: null,
+      include_seen: false, from_watchlists: false, pending_match_movie_id: null, chosen_movie_id: null,
       ...night,
     },
     participants: [host, guest, invited],
@@ -104,7 +104,7 @@ describe("buildMovieNightState", () => {
     expect(state.participants[1]).toMatchObject({ isGuest: true, isHost: false, avatarUrl: null });
     expect(state.invitedFriendIds).toEqual(["u-friend"]);
     expect(state.me).toEqual({ participantId: "p-host", isHost: true, isGuest: false });
-    expect(state.settings).toEqual({ providerIds: [8], genreIds: [35], includeSeen: false });
+    expect(state.settings).toEqual({ providerIds: [8], genreIds: [35], includeSeen: false, fromWatchlists: false });
 
     const asGuest = buildMovieNightState(input({ rounds: [], meId: guest.id }, { status: "LOBBY" }));
     expect(asGuest.invitedFriendIds).toEqual([]);

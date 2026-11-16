@@ -22,7 +22,7 @@ const COLLECTED_DATA: TItem[] = [
   {
     label: "Watchlist et notes",
     detail:
-      "elles restent sur votre compte TMDB, que l'app lit et modifie pour vous. Une copie de votre watchlist (titre, affiche, date de sortie, note, résumé) est gardée pour l'afficher à vos amis. Elle est remise à jour depuis TMDB quand vous ouvrez l'app, au plus une fois par heure.",
+      "elles restent sur votre compte TMDB, que l'app lit et modifie pour vous. Une copie de votre watchlist (titre, affiche, date de sortie, note, résumé) et de vos notes (note, titre, affiche, genres, date à laquelle l'app a vu la note) est gardée pour vos amis, le fil d'activité, les recommandations et votre bilan. Elle est remise à jour depuis TMDB quand vous ouvrez l'app, au plus une fois par heure.",
   },
   {
     label: "Amis et suggestions",
@@ -31,12 +31,17 @@ const COLLECTED_DATA: TItem[] = [
   },
   {
     label: "Temps de visionnage",
-    detail: "films et séries que vous comptez comme vus, avec leur durée.",
+    detail: "films et séries que vous comptez comme vus, avec leur durée et la date.",
+  },
+  {
+    label: "Fil d'activité",
+    detail:
+      "les films et séries que vous notez ou ajoutez à votre watchlist, montrés à vos amis.",
   },
   {
     label: "« Ce soir ? »",
     detail:
-      "participation aux soirées, votes, plateformes et genres choisis, pseudo des invités sans compte. Les dernières plateformes choisies sont gardées sur votre compte.",
+      "participation aux soirées, votes, plateformes et genres choisis, pseudo des invités sans compte. Vos plateformes (« mes plateformes », choisies dans « Ce soir ? » ou dans la watchlist) sont gardées sur votre compte.",
   },
   {
     label: "Notifications push (si vous les activez)",
@@ -57,7 +62,8 @@ const COLLECTED_DATA: TItem[] = [
 const LEGAL_BASES: TItem[] = [
   {
     label: "Exécution du service que vous demandez",
-    detail: "compte, watchlist, notes, amis, suggestions, temps de visionnage, « Ce soir ? ».",
+    detail:
+      "compte, watchlist, notes, amis, suggestions, temps de visionnage, « Ce soir ? », recommandations, fil d'activité et bilan.",
   },
   {
     label: "Consentement",
@@ -73,10 +79,11 @@ const LEGAL_BASES: TItem[] = [
 const RETENTION: TItem[] = [
   { label: "Données du compte", detail: "jusqu'à la suppression du compte." },
   {
-    label: "Copie de la watchlist",
+    label: "Copies de la watchlist et des notes",
     detail:
-      "supprimée si vous n'ouvrez pas l'app pendant 5 mois, puis recréée à votre retour.",
+      "supprimées si vous n'ouvrez pas l'app pendant 5 mois, puis recréées à votre retour.",
   },
+  { label: "Fil d'activité", detail: "30 jours." },
   {
     label: "Session de connexion",
     detail: "30 jours au plus, supprimée à la déconnexion.",
@@ -172,8 +179,15 @@ export function PrivacySection() {
           Les autres utilisateurs connectés peuvent vous trouver par votre nom ou votre ID TMDB
           et voir votre nom et votre avatar.
         </li>
-        <li>Votre watchlist et votre temps de visionnage ne sont visibles que par vos amis.</li>
-        <li>Les participants d&apos;une soirée « Ce soir ? » voient les autres participants.</li>
+        <li>
+          Votre watchlist, vos notes, votre temps de visionnage et votre activité ne sont visibles
+          que par vos amis. Votre bilan n&apos;est visible que par vous.
+        </li>
+        <li>
+          Les participants d&apos;une soirée « Ce soir ? » voient les autres participants. Avec
+          l&apos;option « Piocher dans nos watchlists », ils voient dans combien de watchlists se
+          trouve un film proposé ; votre nom n&apos;est montré qu&apos;à vos amis.
+        </li>
       </ul>
 
       <h3 className={legalText.subheading}>Bases légales (article 6 du RGPD)</h3>

@@ -1,8 +1,10 @@
 import axios from "axios";
 import type {
   TDiscoverMoviesResponse,
+  TMediaType,
   TWatchlistTvResponse,
 } from "@/types/movie.type";
+import type { TAvailableWatchlistItem } from "@/types/watchlist.type";
 
 const WatchlistService = {
   fetchWatchlistMovies: async (
@@ -79,6 +81,34 @@ const WatchlistService = {
       { withCredentials: true }
     );
   },
+
+  /** Médias de ma watchlist dispo sur mes plateformes (vérifiés un par un, peut prendre quelques secondes). */
+  fetchAvailableWatchlist: async (
+    mediaType: TMediaType
+  ): Promise<TAvailableWatchlistResponse> => {
+    const { data } = await axios.get<TAvailableWatchlistResponse>(
+      "/api/me/watchlist/available",
+      { params: { media_type: mediaType }, withCredentials: true }
+    );
+    return data;
+  },
+
+  /** Enregistre « mes plateformes » (partagées avec « Ce soir ? »). */
+  saveMyStreamingProviders: async (providerIds: number[]): Promise<number[]> => {
+    const { data } = await axios.put<{ providerIds: number[] }>(
+      "/api/me/streaming-providers",
+      { providerIds },
+      { withCredentials: true }
+    );
+    return data.providerIds;
+  },
+};
+
+export type TAvailableWatchlistResponse = {
+  items: TAvailableWatchlistItem[];
+  /** Watchlist trop longue : seuls les ajouts les plus récents ont été vérifiés. */
+  truncated: boolean;
+  providerIds: number[];
 };
 
 export default WatchlistService;

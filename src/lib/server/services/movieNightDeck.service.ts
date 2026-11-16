@@ -4,14 +4,20 @@ import { DECK_EXTRA_DETAILS, WATCH_REGION } from "@/lib/movie-night/constants";
 import {
   buildDiscoverParams,
   keepAvailableMovies,
+  matchesGenres,
   pickProviderBadge,
+  rankWatchlistCandidates,
   selectDeckMovieIds,
   shufflePageOrder,
   type TTmdbFlatrateProvider,
+  type TWatchlistCandidate,
 } from "@/lib/movie-night/deck";
 import type { TDeckMovie, TStreamingProvider } from "@/lib/movie-night/types";
+import { userDisplayName } from "./movieNightState";
 
 const PAGE_BATCH_SIZE = 3;
+/** Fiches de films de watchlist lues au plus par pile : les films hors abonnement ou hors genre sont retirés. */
+const MAX_WATCHLIST_DETAILS = 45;
 
 type TTmdbProviderListItem = {
   provider_id: number;
@@ -133,4 +139,58 @@ export async function buildDeck(args: {
   );
   const snapshots = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
   return keepAvailableMovies(snapshots, deckSize);
+}
+
+/** Films des watchlists de `userIds`, sans `excludedMovieIds`, les plus partagés d'abord. */
+export async function getWatchlistCandidates(
+  userIds: string[],
+  excludedMovieIds: number[]
+): Promise<TWatchlistCandidate[]> {
+  if (userIds.length === 0) return [];
+  const items = await prisma.watchlistItem.findMany({
+    where: { userId: { in: userIds }, media_type: "movie" },
+    select: {
+      tmdb_movie_id: true,
+      userId: true,
+      user: { select: { tmdb_id: true, username: true } },
+    },
+  });
+  return rankWatchlistCandidates(
+    items.map((item) => ({
+      movieId: item.tmdb_movie_id,
+      owner: { userId: item.userId, name: userDisplayName(item.user) },
+    })),
+    new Set(excludedMovieIds)
+  );
+}
+
+/**
+ * Début de pile tiré des watchlists, dans l'ordre des candidats : seuls les films inclus dans
+ * un abonnement choisi et dans les genres choisis sont gardés, avec leurs propriétaires.
+ * Lit au plus MAX_WATCHLIST_DETAILS fiches ; une fiche qui échoue retire le film.
+ */
+export async function buildWatchlistDeck(args: {
+  candidates: TWatchlistCandidate[];
+  providerIds: number[];
+  genreIds: number[];
+  deckSize: number;
+}): Promise<TDeckMovie[]> {
+  const { providerIds, genreIds, deckSize } = args;
+  const candidates = args.candidates.slice(0, MAX_WATCHLIST_DETAILS);
+  const kept: TDeckMovie[] = [];
+
+  for (let cursor = 0; cursor < candidates.length && kept.length < deckSize; cursor += deckSize) {
+    const batch = candidates.slice(cursor, cursor + deckSize);
+    const settled = await Promise.allSettled(
+      batch.map((candidate) => fetchMovieSnapshot(candidate.movieId, providerIds))
+    );
+    settled.forEach((result, i) => {
+      if (result.status !== "fulfilled") return;
+      const movie = result.value;
+      if (movie.provider === null || !matchesGenres(movie, genreIds)) return;
+      kept.push({ ...movie, watchlistOf: batch[i].owners });
+    });
+  }
+
+  return kept.slice(0, deckSize);
 }

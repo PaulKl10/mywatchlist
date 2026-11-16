@@ -17,6 +17,7 @@ import { saveSoloGame, startSoloGame } from "../utils/soloGame";
 import { GuestNameField } from "./GuestNameField";
 import { GenrePicker } from "./GenrePicker";
 import { ProviderPicker } from "./ProviderPicker";
+import { SettingSwitch } from "./SettingSwitch";
 import { JustWatchAttribution } from "@/components/JustWatchAttribution";
 
 const labelClass = "mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
@@ -32,6 +33,7 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [pickedProviders, setPickedProviders] = useState<number[] | null>(null);
   const [genreIds, setGenreIds] = useState<number[]>([]);
   const [includeSeen, setIncludeSeen] = useState(false);
+  const [fromWatchlists, setFromWatchlists] = useState(false);
   // Sans compte : plateformes mémorisées dans le navigateur (le formulaire n'est rendu qu'après
   // la résolution de l'auth, donc jamais côté serveur) et pseudo de l'hôte.
   const [rememberedIds] = useState(() => (isLoggedIn ? [] : loadRememberedProviderIds()));
@@ -53,6 +55,7 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
       providerIds,
       genreIds,
       includeSeen: isLoggedIn && includeSeen,
+      fromWatchlists: isLoggedIn && fromWatchlists,
     };
     if (!isLoggedIn) saveRememberedProviderIds(providerIds);
     create.reset();
@@ -70,8 +73,14 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
     soloDeck.reset();
     create.mutate(
       isLoggedIn
-        ? { providerIds, genreIds, includeSeen }
-        : { providerIds, genreIds, includeSeen: false, guestName: guestName.trim() },
+        ? { providerIds, genreIds, includeSeen, fromWatchlists }
+        : {
+            providerIds,
+            genreIds,
+            includeSeen: false,
+            fromWatchlists: false,
+            guestName: guestName.trim(),
+          },
       { onSuccess: ({ id }) => router.push(`/ce-soir/${id}`) },
     );
   };
@@ -119,27 +128,19 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
       </fieldset>
 
       {isLoggedIn && (
-        <div className="flex items-center justify-between gap-3">
-          <span id="include-seen-label" className="text-sm text-zinc-700 dark:text-zinc-300">
-            Inclure les films déjà vus
-          </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={includeSeen}
-            aria-labelledby="include-seen-label"
-            onClick={() => setIncludeSeen((v) => !v)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              includeSeen ? "bg-amber-500" : "bg-zinc-300 dark:bg-zinc-700"
-            }`}
-          >
-            <span
-              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                includeSeen ? "translate-x-5" : ""
-              }`}
-            />
-          </button>
-        </div>
+        <>
+          <SettingSwitch
+            label="Piocher dans nos watchlists"
+            description="Leurs films passent en premier, la découverte complète la pile."
+            checked={fromWatchlists}
+            onChange={setFromWatchlists}
+          />
+          <SettingSwitch
+            label="Inclure les films déjà vus"
+            checked={includeSeen}
+            onChange={setIncludeSeen}
+          />
+        </>
       )}
 
       {error && (

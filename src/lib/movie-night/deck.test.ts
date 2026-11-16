@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildDiscoverParams,
   keepAvailableMovies,
+  matchesGenres,
   pickProviderBadge,
+  rankWatchlistCandidates,
   selectDeckMovieIds,
   shufflePageOrder,
 } from "./deck";
@@ -68,5 +70,56 @@ describe("keepAvailableMovies", () => {
   it("pile plus courte s'il n'y a pas assez de films disponibles", () => {
     expect(keepAvailableMovies([movie(1, null), movie(2, netflix)], 15).map((m) => m.id)).toEqual([2]);
     expect(keepAvailableMovies([movie(1, null)], 15)).toEqual([]);
+  });
+});
+
+describe("rankWatchlistCandidates", () => {
+  const lea = { userId: "u1", name: "Léa" };
+  const tom = { userId: "u2", name: "Tom" };
+
+  it("regroupe par film, place en tête les films de plusieurs watchlists et retire les exclus", () => {
+    const ranked = rankWatchlistCandidates(
+      [
+        { movieId: 10, owner: lea },
+        { movieId: 20, owner: lea },
+        { movieId: 20, owner: tom },
+        { movieId: 30, owner: tom },
+      ],
+      new Set([30]),
+      () => 0
+    );
+    expect(ranked).toEqual([
+      { movieId: 20, owners: [lea, tom] },
+      { movieId: 10, owners: [lea] },
+    ]);
+  });
+
+  it("ne compte pas deux fois le même propriétaire", () => {
+    const ranked = rankWatchlistCandidates(
+      [{ movieId: 10, owner: lea }, { movieId: 10, owner: lea }],
+      new Set(),
+      () => 0
+    );
+    expect(ranked).toEqual([{ movieId: 10, owners: [lea] }]);
+  });
+
+  it("mélange les films à égalité", () => {
+    const entries = [1, 2, 3, 4, 5, 6].map((movieId) => ({ movieId, owner: lea }));
+    const orders = new Set(
+      [0, 0.3, 0.6, 0.99].map((r) =>
+        rankWatchlistCandidates(entries, new Set(), () => r).map((c) => c.movieId).join(",")
+      )
+    );
+    expect(orders.size).toBeGreaterThan(1);
+  });
+});
+
+describe("matchesGenres", () => {
+  it("sans genre choisi, tout film convient", () => {
+    expect(matchesGenres({ genreIds: [] }, [])).toBe(true);
+  });
+  it("genres en OU, comme la découverte", () => {
+    expect(matchesGenres({ genreIds: [18, 35] }, [28, 35])).toBe(true);
+    expect(matchesGenres({ genreIds: [18] }, [28, 35])).toBe(false);
   });
 });

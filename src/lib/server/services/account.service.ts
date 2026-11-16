@@ -7,9 +7,9 @@ import { revokeTmdbSession } from "./session.service";
  * et ses notes ne sont pas touchés.
  *
  * Amitiés et suggestions n'ont pas de suppression en cascade : elles sont effacées dans la
- * même transaction. Le reste part en cascade avec l'utilisateur : sessions, copie de la
- * watchlist, temps de visionnage, abonnements push, soirées hébergées (avec leurs participants
- * et votes) et participations aux soirées des autres.
+ * même transaction. Le reste part en cascade avec l'utilisateur : sessions, copies de la
+ * watchlist et des notes, fil d'activité, temps de visionnage, abonnements push, soirées
+ * hébergées (avec leurs participants et votes) et participations aux soirées des autres.
  *
  * Toutes les sessions TMDB du compte (un par appareil) sont ensuite révoquées, en best effort :
  * les données sont déjà supprimées et l'échec d'un appel TMDB ne doit pas l'annuler.

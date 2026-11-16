@@ -4,11 +4,12 @@ import {
   fetchStreamingProviders,
 } from "../services/movie-night.service";
 
-export function useStreamingProvidersQuery() {
+export function useStreamingProvidersQuery(enabled = true) {
   return useQuery({
     queryKey: ["movie-night", "providers"],
     queryFn: fetchStreamingProviders,
     staleTime: 24 * 60 * 60 * 1000,
+    enabled,
   });
 }
 

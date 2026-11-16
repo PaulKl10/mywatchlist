@@ -7,6 +7,8 @@ export {
   type TCurrentSession,
 } from "./session.service";
 export { deleteUserAccount } from "./account.service";
+export { getRecommendationRows } from "./recommendations.service";
+export { getAvailableWatchlistItems } from "./watchlistAvailability.service";
 export {
   getWatchTimeStats,
   recordWatchTime,
@@ -14,11 +16,11 @@ export {
   type TWatchTimeStats,
 } from "./watchTime.service";
 export { getFriendsWatchlistMovies } from "./friendsWatchlist.service";
-export {
-  scheduleWatchlistResync,
-  syncWatchlistItem,
-  updateTmdbWatchlist,
-} from "./watchlist.service";
+export { syncWatchlistItem, updateTmdbWatchlist } from "./watchlist.service";
+export { scheduleTmdbSync } from "./tmdbSync.service";
+export { recordRating, removeRating } from "./ratings.service";
+export { getFriendsActivity } from "./activity.service";
+export { getBilan } from "./bilan.service";
 export {
   getSuggestions,
   createSuggestion,
@@ -65,6 +67,7 @@ export {
   respondToInvite,
   reconcileMovieNight,
   getMovieNightState,
+  rememberProviders,
   type TResult,
 } from "./movieNight.service";
 export {

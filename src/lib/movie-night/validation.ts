@@ -28,24 +28,39 @@ function asObject(body: unknown): Record<string, unknown> | null {
     : null;
 }
 
+/** Ids de plateformes valides et dédoublonnés (liste vide acceptée), ou null. */
+export function parseProviderIds(value: unknown): number[] | null {
+  if (!Array.isArray(value) || !value.every(isMovieId)) return null;
+  const ids = [...new Set(value as number[])];
+  return ids.length > MAX_PROVIDER_IDS ? null : ids;
+}
+
 function parseSettings(input: Record<string, unknown>): TParsed<TMovieNightSettings> {
-  const { providerIds, genreIds, includeSeen } = input;
+  const { providerIds, genreIds, includeSeen, fromWatchlists } = input;
 
   if (!Array.isArray(providerIds) || providerIds.length === 0) return INVALID("Choisissez au moins une plateforme.");
-  if (!providerIds.every(isMovieId)) return INVALID("Requête invalide.");
-  const providers = [...new Set(providerIds as number[])];
-  if (providers.length > MAX_PROVIDER_IDS) return INVALID("Requête invalide.");
+  const providers = parseProviderIds(providerIds);
+  if (!providers) return INVALID("Requête invalide.");
 
   if (!Array.isArray(genreIds)) return INVALID("Requête invalide.");
   if (!genreIds.every((id) => typeof id === "number" && GENRE_IDS.has(id))) return INVALID("Genre inconnu.");
   const genres = [...new Set(genreIds as number[])];
 
   if (includeSeen !== undefined && typeof includeSeen !== "boolean") return INVALID("Requête invalide.");
+  if (fromWatchlists !== undefined && typeof fromWatchlists !== "boolean") return INVALID("Requête invalide.");
 
-  return { ok: true, value: { providerIds: providers, genreIds: genres, includeSeen: includeSeen ?? false } };
+  return {
+    ok: true,
+    value: {
+      providerIds: providers,
+      genreIds: genres,
+      includeSeen: includeSeen ?? false,
+      fromWatchlists: fromWatchlists ?? false,
+    },
+  };
 }
 
-/** Corps de `POST /api/movie-night` : `{ providerIds, genreIds, includeSeen? }`. */
+/** Corps de `POST /api/movie-night` : `{ providerIds, genreIds, includeSeen?, fromWatchlists? }`. */
 export function parseCreateMovieNightInput(body: unknown): TParsed<TCreateMovieNightInput> {
   const input = asObject(body);
   return input ? parseSettings(input) : INVALID("Requête invalide.");

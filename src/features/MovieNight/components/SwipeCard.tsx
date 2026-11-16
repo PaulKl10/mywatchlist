@@ -3,7 +3,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import Image from "next/image";
-import { Film } from "lucide-react";
+import { Bookmark, Film } from "lucide-react";
 import { TMDB_MOVIE_GENRES } from "@/features/DiscoverMovies/constants/genres";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import type { TDeckMovie } from "@/lib/movie-night/types";
@@ -15,6 +15,7 @@ import {
   type TSwipeDirection,
 } from "../hooks/useSwipeGesture";
 import { SWIPE_DISTANCE_THRESHOLD } from "../utils/swipe";
+import { formatWatchlistMention } from "../utils/watchlistMention";
 
 const GENRE_NAMES = new Map<number, string>(TMDB_MOVIE_GENRES.map((g) => [g.id, g.name]));
 const MAX_GENRES = 3;
@@ -131,6 +132,7 @@ interface SwipeCardProps {
 
 export function SwipeCard({ movie, depth, offsetX = 0, isDragging = false, bind }: SwipeCardProps) {
   const reducedMotion = usePrefersReducedMotion();
+  const watchlistMention = formatWatchlistMention(movie.watchlist);
   const [showSynopsis, setShowSynopsis] = useState(false);
   const tap = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   const isTop = depth === 0;
@@ -213,6 +215,12 @@ export function SwipeCard({ movie, depth, offsetX = 0, isDragging = false, bind 
       {isTop && <Stamp label="NON" direction="left" opacity={offsetX < 0 ? progress : 0} />}
 
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-4 text-white">
+        {watchlistMention && (
+          <p className="flex items-center gap-1.5 self-start rounded-full bg-amber-500/90 px-2.5 py-0.5 text-xs font-medium text-zinc-950">
+            <Bookmark className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {watchlistMention}
+          </p>
+        )}
         <h2 className="line-clamp-2 text-2xl font-bold leading-tight">{movie.title}</h2>
         {meta && <p className="text-sm text-zinc-300">{meta}</p>}
         {genres.length > 0 && (

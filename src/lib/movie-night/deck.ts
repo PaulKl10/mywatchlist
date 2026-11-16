@@ -1,5 +1,5 @@
 import { DISCOVER_MAX_PAGE, MIN_VOTE_COUNT, WATCH_REGION } from "./constants";
-import type { TDeckMovie } from "./types";
+import type { TDeckMovie, TWatchlistOwner } from "./types";
 
 export type TTmdbFlatrateProvider = {
   provider_id: number;
@@ -72,4 +72,32 @@ export function pickProviderBadge(
  */
 export function keepAvailableMovies(movies: TDeckMovie[], deckSize: number): TDeckMovie[] {
   return movies.filter((movie) => movie.provider !== null).slice(0, deckSize);
+}
+
+export type TWatchlistCandidate = { movieId: number; owners: TWatchlistOwner[] };
+
+/**
+ * Films des watchlists des participants, sans les exclus : ceux qu'ont le plus de participants
+ * d'abord, dans un ordre aléatoire à égalité.
+ */
+export function rankWatchlistCandidates(
+  entries: { movieId: number; owner: TWatchlistOwner }[],
+  excludedIds: ReadonlySet<number>,
+  random: () => number = Math.random
+): TWatchlistCandidate[] {
+  const byMovie = new Map<number, TWatchlistOwner[]>();
+  for (const { movieId, owner } of entries) {
+    if (excludedIds.has(movieId)) continue;
+    const owners = byMovie.get(movieId) ?? [];
+    if (!owners.some((o) => o.userId === owner.userId)) owners.push(owner);
+    byMovie.set(movieId, owners);
+  }
+  const candidates = [...byMovie].map(([movieId, owners]) => ({ movieId, owners }));
+  // Le tri est stable : le mélange préalable départage les films à égalité.
+  return shuffle(candidates, random).sort((a, b) => b.owners.length - a.owners.length);
+}
+
+/** Genres en OU, comme `buildDiscoverParams` ; aucun genre choisi = tous. */
+export function matchesGenres(movie: Pick<TDeckMovie, "genreIds">, genreIds: number[]): boolean {
+  return genreIds.length === 0 || movie.genreIds.some((id) => genreIds.includes(id));
 }

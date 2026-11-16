@@ -30,7 +30,15 @@ model User {
 
   // Watchlist en BDD (pour affichage public sur profils)
   watchlistItems      WatchlistItem[]
-  watchlist_synced_at DateTime? // dernière resynchro complète de la copie avec TMDB
+  // Dernière resynchro complète des copies du compte TMDB (verrou ; null tant que la
+  // première n'a pas réussi : import initial de la watchlist, sans activité)
+  watchlist_synced_at DateTime?
+  // Dernière resynchro réussie des notes (null : notes jamais importées)
+  ratings_synced_at   DateTime?
+
+  // Copie des notes TMDB (profils des amis, fil d'activité, bilan)
+  ratingItems RatingItem[]
+  activities  Activity[]
 
   // Films comptés pour le temps de visionnage (tracking interne uniquement)
   watchTimeEntries WatchTimeEntry[]
@@ -47,6 +55,7 @@ model WatchTimeEntry {
   tmdb_movie_id Int
   media_type    String   @default("movie") // "movie" | "tv"
   runtime       Int?
+  created_at    DateTime? // première note du média ; null pour les entrées d'avant fin 2026
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -69,6 +78,45 @@ model WatchlistItem {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, media_type, tmdb_movie_id])
+}
+
+/// Copie d'une note TMDB, resynchronisée comme la watchlist.
+model RatingItem {
+  id           String    @id @default(cuid())
+  userId       String
+  tmdb_id      Int
+  media_type   String // "movie" | "tv"
+  rating       Float // 0.5 à 10
+  title        String
+  poster_path  String?
+  release_date String?
+  genre_ids    Int[]     @default([])
+  rated_at     DateTime? // première note vue par l'app ; null si importée sans date connue
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, media_type, tmdb_id])
+  @@index([userId, rated_at])
+}
+
+/// Événement du fil d'activité des amis, gardé 30 jours.
+model Activity {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String // RATED | WATCHLIST_ADDED
+  tmdb_id     Int
+  media_type  String // "movie" | "tv"
+  title       String
+  poster_path String?
+  rating      Float? // pour RATED
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Un seul événement par titre et par type : le plus récent.
+  @@unique([userId, type, media_type, tmdb_id])
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model Session {
@@ -121,6 +169,7 @@ model MovieNight {
   genre_ids              Int[]
   deck_size              Int
   include_seen           Boolean  @default(false)
+  from_watchlists        Boolean  @default(false) // films des watchlists des participants d'abord
   pending_match_movie_id Int? // film du match en attente de décision (statut MATCH)
   chosen_movie_id        Int? // film retenu (statut ENDED via « On regarde ça »)
   createdAt              DateTime @default(now())

@@ -3,6 +3,7 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { MovieRow } from "@/features/Home/components/MovieRow";
 import { TvRow } from "@/features/Home/components/TvRow";
+import { RecommendationRows } from "@/features/Home/components/RecommendationRows";
 import { usePopularMoviesQuery } from "@/features/Home/hooks/usePopularMoviesQuery";
 import { usePopularTvQuery } from "@/features/Home/hooks/usePopularTvQuery";
 import { useGenreMoviesQuery } from "@/features/Home/hooks/useGenreMoviesQuery";
@@ -37,6 +38,8 @@ export function HomeView() {
 
   return (
     <div className="flex flex-col gap-4 pb-12 md:pl-24">
+      {user && <RecommendationRows />}
+
       <MovieRow
         title="Populaires"
         movies={popularData?.results ?? []}

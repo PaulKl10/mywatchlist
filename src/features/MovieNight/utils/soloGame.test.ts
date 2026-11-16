@@ -22,7 +22,7 @@ const movie = (id: number): TDeckMovie => ({
   overview: "",
   provider: { id: 8, name: "Netflix", logoPath: null },
 });
-const settings: TMovieNightSettings = { providerIds: [8], genreIds: [35], includeSeen: false };
+const settings: TMovieNightSettings = { providerIds: [8], genreIds: [35], includeSeen: false, fromWatchlists: false };
 const [a, b, c, d] = [movie(1), movie(2), movie(3), movie(4)];
 const start = () => startSoloGame(settings, [a, b, c]);
 
@@ -93,6 +93,13 @@ describe("readSoloGame", () => {
   it("aller-retour JSON", () => {
     const game = swipeSolo(start(), false);
     expect(readSoloGame(JSON.stringify(game))).toEqual(game);
+  });
+
+  it("partie enregistrée avant l'option « Piocher dans nos watchlists » : option désactivée", () => {
+    const game = start();
+    const oldSettings: Partial<TMovieNightSettings> = { ...game.settings };
+    delete oldSettings.fromWatchlists;
+    expect(readSoloGame(JSON.stringify({ ...game, settings: oldSettings }))).toEqual(game);
   });
 
   it.each([

@@ -14,6 +14,7 @@ import {
   Search,
   Star,
   User,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchMoviesView } from "@/features/SearchMovies/View/SearchMoviesView";
@@ -33,6 +34,8 @@ const PATH_TITLES: Record<string, string> = {
   "/rated-movies": "Mes notes",
   "/profile": "Mon profil",
   "/ce-soir": "Ce soir ?",
+  "/activite": "Activité",
+  "/bilan": "Mon bilan",
   "/login": "Connexion",
   "/login/callback": "Connexion",
 };
@@ -203,6 +206,17 @@ export function Header({ showSearch = true }: HeaderProps) {
                   title="Explorer"
                 >
                   <Compass className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/activite"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    pathname === "/activite"
+                      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-primary"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                  title="Activité des amis"
+                >
+                  <Users className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/profile"

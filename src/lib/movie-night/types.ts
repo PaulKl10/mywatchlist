@@ -10,7 +10,21 @@ export type TDeckMovie = {
   genreIds: number[];
   overview: string;
   provider: { id: number; name: string; logoPath: string | null } | null;
+  /**
+   * Serveur seulement, enregistré dans la pile : participants qui ont ce film dans leur
+   * watchlist (option « Piocher dans nos watchlists »). Jamais envoyé au client.
+   */
+  watchlistOf?: TWatchlistOwner[];
+  /** Ce que le client reçoit à la place de `watchlistOf`, selon qui regarde (`presentDeckMovie`). */
+  watchlist?: TWatchlistMention;
 };
+/** Participant connecté qui a un film de la pile dans sa watchlist. */
+export type TWatchlistOwner = { userId: string; name: string };
+/**
+ * Qui a ce film dans sa watchlist, vu par un participant : lui-même, ses amis (nommés, car
+ * leur watchlist lui est visible), et les autres (seulement comptés).
+ */
+export type TWatchlistMention = { me: boolean; friends: string[]; others: number };
 export type TVote = { participantId: string; movieId: number; liked: boolean };
 export type TParticipantLike = {
   id: string;
@@ -34,6 +48,8 @@ export type TMovieNightSettings = {
   providerIds: number[];
   genreIds: number[];
   includeSeen: boolean;
+  /** Films des watchlists des participants d'abord, la découverte complète la pile. */
+  fromWatchlists: boolean;
 };
 export type TMovieNightState = {
   id: string;

@@ -5,19 +5,29 @@ import {
   parseMovieNightDecision,
   parseSoloDeckInput,
   parseVoteInput,
+  parseProviderIds,
 } from "./validation";
 
 describe("parseCreateMovieNightInput", () => {
   it("normalise une entrée valide", () => {
     expect(parseCreateMovieNightInput({ providerIds: [8, 8, 337], genreIds: [35] })).toEqual({
       ok: true,
-      value: { providerIds: [8, 337], genreIds: [35], includeSeen: false },
+      value: { providerIds: [8, 337], genreIds: [35], includeSeen: false, fromWatchlists: false },
     });
   });
   it("ignore deckSize et solo d'un ancien client", () => {
     expect(
       parseCreateMovieNightInput({ providerIds: [8, 8, 337], genreIds: [35], deckSize: 10, solo: true }),
-    ).toEqual({ ok: true, value: { providerIds: [8, 337], genreIds: [35], includeSeen: false } });
+    ).toEqual({
+      ok: true,
+      value: { providerIds: [8, 337], genreIds: [35], includeSeen: false, fromWatchlists: false },
+    });
+  });
+  it("garde l'option « Piocher dans nos watchlists »", () => {
+    expect(parseCreateMovieNightInput({ providerIds: [8], genreIds: [], fromWatchlists: true })).toEqual({
+      ok: true,
+      value: { providerIds: [8], genreIds: [], includeSeen: false, fromWatchlists: true },
+    });
   });
   it("accepte un id de plateforme jusqu'à 2³¹−1 (colonne Int)", () => {
     expect(parseCreateMovieNightInput({ providerIds: [2_147_483_647], genreIds: [] }).ok).toBe(true);
@@ -30,6 +40,7 @@ describe("parseCreateMovieNightInput", () => {
     [{ providerIds: [2_147_483_648], genreIds: [] }],
     [{ providerIds: Array.from({ length: 51 }, (_, i) => i + 1), genreIds: [] }],
     [{ providerIds: [8], genreIds: [], includeSeen: "oui" }],
+    [{ providerIds: [8], genreIds: [], fromWatchlists: 1 }],
     [null],
   ])("refuse %j", (body) => {
     expect(parseCreateMovieNightInput(body).ok).toBe(false);
@@ -42,13 +53,13 @@ describe("parseSoloDeckInput", () => {
       parseSoloDeckInput({ providerIds: [8], genreIds: [], includeSeen: true, excludedMovieIds: [5, 5, 7] }),
     ).toEqual({
       ok: true,
-      value: { providerIds: [8], genreIds: [], includeSeen: true, excludedMovieIds: [5, 7] },
+      value: { providerIds: [8], genreIds: [], includeSeen: true, fromWatchlists: false, excludedMovieIds: [5, 7] },
     });
   });
   it("sans exclusions : liste vide", () => {
     expect(parseSoloDeckInput({ providerIds: [8], genreIds: [] })).toEqual({
       ok: true,
-      value: { providerIds: [8], genreIds: [], includeSeen: false, excludedMovieIds: [] },
+      value: { providerIds: [8], genreIds: [], includeSeen: false, fromWatchlists: false, excludedMovieIds: [] },
     });
   });
   it.each([
@@ -118,5 +129,15 @@ describe("parseMovieNightDecision", () => {
     [null],
   ])("refuse %j", (body) => {
     expect(parseMovieNightDecision(body)).toBeNull();
+  });
+});
+
+describe("parseProviderIds", () => {
+  it("dédoublonne et accepte une liste vide", () => {
+    expect(parseProviderIds([8, 8, 337])).toEqual([8, 337]);
+    expect(parseProviderIds([])).toEqual([]);
+  });
+  it.each([["8"], [[0]], [[8.5]], [Array.from({ length: 51 }, (_, i) => i + 1)]])("refuse %j", (value) => {
+    expect(parseProviderIds(value)).toBeNull();
   });
 });

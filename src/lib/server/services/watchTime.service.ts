@@ -55,6 +55,7 @@ export async function recordWatchTime(
       tmdb_movie_id: mediaId,
       media_type: mediaType,
       runtime,
+      created_at: new Date(),
     },
     update: { runtime },
   });

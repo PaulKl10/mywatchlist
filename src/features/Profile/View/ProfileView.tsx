@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Bookmark, Clapperboard, User } from "lucide-react";
+import { Bookmark, Clapperboard, Trophy, User } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { ProfileWatchlistCard } from "@/features/Watchlist/components/ProfileWatchlistCard";
 import { useGetMyWatchlistFromDbQuery } from "@/features/Watchlist/hooks/useGetWatchlistQuery";
@@ -96,6 +96,13 @@ export function ProfileView() {
         </div>
       </section>
       <WatchTimeStats />
+      <Link
+        href="/bilan"
+        className="-mt-6 inline-flex items-center gap-2 self-start text-sm font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-500"
+      >
+        <Trophy className="h-4 w-4" aria-hidden="true" />
+        Voir mon bilan
+      </Link>
       <PushNotificationsSettings />
       {/* Invitations comptées dans le badge de notifications, qui mène ici. */}
       <MovieNightInvitesList

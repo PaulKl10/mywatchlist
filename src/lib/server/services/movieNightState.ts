@@ -60,12 +60,13 @@ export function toParticipantStatus(value: string): TParticipantStatus {
 
 /** Réglages d'une session, depuis ses colonnes. */
 export function toMovieNightSettings(
-  night: Pick<MovieNight, "provider_ids" | "genre_ids" | "include_seen">
+  night: Pick<MovieNight, "provider_ids" | "genre_ids" | "include_seen" | "from_watchlists">
 ): TMovieNightSettings {
   return {
     providerIds: night.provider_ids,
     genreIds: night.genre_ids,
     includeSeen: night.include_seen,
+    fromWatchlists: night.from_watchlists,
   };
 }
 
@@ -124,6 +125,7 @@ export type TMovieNightStateInput = {
     | "provider_ids"
     | "genre_ids"
     | "include_seen"
+    | "from_watchlists"
     | "pending_match_movie_id"
     | "chosen_movie_id"
   >;

@@ -74,6 +74,7 @@ async function loadPlayNight(movieNightId: string, now: Date) {
       provider_ids: true,
       genre_ids: true,
       include_seen: true,
+      from_watchlists: true,
       participants: {
         select: { id: true, userId: true, status: true, isHost: true, lastSeenAt: true },
       },

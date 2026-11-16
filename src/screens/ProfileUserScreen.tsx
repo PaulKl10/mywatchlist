@@ -10,6 +10,7 @@ import { useRemoveFriendMutation } from "@/features/Profile/hooks/useRemoveFrien
 import { MovieCard } from "@/components/MovieCard";
 import type { TMovie } from "@/types/movie.type";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
+import { FriendRatingsSection } from "@/features/Profile/components/FriendRatingsSection";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
 type ProfileUserScreenProps = {
@@ -287,6 +288,8 @@ export function ProfileUserScreen({ params }: ProfileUserScreenProps) {
           </p>
         </section>
       )}
+
+      <FriendRatingsSection tmdbId={tmdbIdNum} />
 
       <section>
         <Link
