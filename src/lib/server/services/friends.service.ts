@@ -66,7 +66,7 @@ export async function getFriends(userId: string): Promise<TFriend[]> {
 }
 
 export type TAddFriendResult =
-  | { success: true }
+  | { success: true; receiverId: string }
   | { error: "user_not_found" }
   | { error: "cannot_add_self" }
   | { error: "request_already_sent" }
@@ -126,5 +126,5 @@ export async function addFriend(
     },
   });
 
-  return { success: true };
+  return { success: true, receiverId: receiver.id };
 }

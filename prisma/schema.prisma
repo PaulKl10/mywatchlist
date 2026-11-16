@@ -17,6 +17,9 @@ model User {
 
   sessions Session[]
 
+  // Appareils abonnés aux notifications push
+  pushSubscriptions PushSubscription[]
+
   // Relations pour les amis
   sentFriendRequests     Friendship[] @relation("sender")
   receivedFriendRequests Friendship[] @relation("receiver")
@@ -174,4 +177,18 @@ model MovieNightVote {
   participant MovieNightParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@unique([roundId, participantId, tmdb_movie_id])
+}
+
+/// Appareil abonné aux notifications push (un `endpoint` = un navigateur).
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

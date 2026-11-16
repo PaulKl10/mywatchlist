@@ -3,7 +3,13 @@ import {
   movieNightResultResponse,
   readJsonObject,
 } from "@/lib/server/movieNightHttp";
-import { inviteFriend, resolveMovieNightParticipant } from "@/lib/server/services";
+import {
+  getCurrentSession,
+  inviteFriend,
+  resolveMovieNightParticipant,
+  schedulePushNotification,
+} from "@/lib/server/services";
+import { userDisplayName } from "@/lib/server/services/movieNightState";
 
 /** Hôte : inviter un ami accepté `{ friendUserId }` → `{ ok: true }`. */
 export async function POST(
@@ -19,7 +25,17 @@ export async function POST(
     return movieNightErrorResponse("invalid_input");
   }
 
-  return movieNightResultResponse(await inviteFriend(id, actor, friendUserId), () => ({
-    ok: true,
-  }));
+  const result = await inviteFriend(id, actor, friendUserId);
+  if (result.ok && result.value.invited) {
+    // L'hôte qui invite est forcément connecté (compte requis par `inviteFriend`).
+    const current = await getCurrentSession();
+    if (current) {
+      schedulePushNotification(friendUserId, {
+        type: "movie_night_invite",
+        fromName: userDisplayName(current.user),
+        movieNightId: id,
+      });
+    }
+  }
+  return movieNightResultResponse(result, () => ({ ok: true }));
 }

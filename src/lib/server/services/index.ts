@@ -20,6 +20,11 @@ export {
   type CreateSuggestionInput,
 } from "./suggestions.service";
 export {
+  savePushSubscription,
+  deletePushSubscription,
+  schedulePushNotification,
+} from "./push.service";
+export {
   getFriends,
   getFriendIds,
   addFriend,

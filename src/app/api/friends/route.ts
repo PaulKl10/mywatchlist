@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { userDisplayName } from "@/lib/server/services/movieNightState";
 import {
   addFriend,
   getCurrentSession,
   getFriends,
+  schedulePushNotification,
   type TFriend,
 } from "@/lib/server/services";
 
@@ -38,6 +40,11 @@ export async function POST(request: Request) {
   const result = await addFriend(current.user.id, receiverTmdbId);
 
   if ("success" in result) {
+    schedulePushNotification(result.receiverId, {
+      type: "friend_request",
+      fromName: userDisplayName(current.user),
+      fromUserId: current.user.id,
+    });
     return NextResponse.json({ success: true });
   }
 

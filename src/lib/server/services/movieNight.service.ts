@@ -424,7 +424,7 @@ export async function inviteFriend(
   movieNightId: string,
   actor: MovieNightParticipant,
   friendUserId: string
-): Promise<TResult<null>> {
+): Promise<TResult<{ invited: boolean }>> {
   if (actor.status !== "JOINED") return fail("not_participant");
   if (!actor.isHost || !actor.userId) return fail("forbidden");
   const night = await prisma.movieNight.findUnique({
@@ -439,13 +439,13 @@ export async function inviteFriend(
     where: { movieNightId_userId: { movieNightId, userId: friendUserId } },
     select: { id: true, status: true },
   });
-  if (existing?.status === "JOINED") return ok(null);
+  if (existing?.status === "JOINED") return ok({ invited: false });
   if (existing) {
     await prisma.movieNightParticipant.updateMany({
       where: { id: existing.id, status: { not: "JOINED" } },
       data: { status: "INVITED" },
     });
-    return ok(null);
+    return ok({ invited: true });
   }
   try {
     await prisma.movieNightParticipant.create({
@@ -454,8 +454,9 @@ export async function inviteFriend(
   } catch (error) {
     // L'ami vient de rejoindre par le code : il est déjà dans la session.
     if (!isUniqueViolation(error)) throw error;
+    return ok({ invited: false });
   }
-  return ok(null);
+  return ok({ invited: true });
 }
 
 function pendingInvitesWhere(userId: string, now: Date): Prisma.MovieNightParticipantWhereInput {

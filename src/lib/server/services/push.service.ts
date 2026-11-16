@@ -1,0 +1,89 @@
+import { after } from "next/server";
+import webpush from "web-push";
+import { prisma } from "@/lib/prisma";
+import { isGonePushStatus, readVapidConfig } from "@/lib/push/config";
+import { buildPushPayload } from "@/lib/push/payload";
+import type {
+  TPushEvent,
+  TPushPayload,
+  TPushSubscriptionInput,
+} from "@/lib/push/types";
+
+/** Durée pendant laquelle le service push garde la notification d'un appareil hors ligne (24 h). */
+const PUSH_TTL_SECONDS = 86_400;
+
+let vapidReady: boolean | null = null;
+
+/** Configure web-push une seule fois ; false (et un seul avertissement) sans clés VAPID. */
+function ensureVapid(): boolean {
+  if (vapidReady !== null) return vapidReady;
+  const config = readVapidConfig(process.env);
+  if (!config) {
+    console.warn("push: clés VAPID absentes, notifications désactivées");
+    vapidReady = false;
+    return false;
+  }
+  webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+  vapidReady = true;
+  return true;
+}
+
+/** Enregistre l'appareil ; un même `endpoint` repasse sur l'utilisateur courant. */
+export async function savePushSubscription(
+  userId: string,
+  input: TPushSubscriptionInput
+): Promise<void> {
+  const { endpoint, p256dh, auth } = input;
+  await prisma.pushSubscription.upsert({
+    where: { endpoint },
+    create: { userId, endpoint, p256dh, auth },
+    update: { userId, p256dh, auth },
+  });
+}
+
+/** Supprime l'abonnement s'il appartient à l'utilisateur (sans erreur s'il n'existe pas). */
+export async function deletePushSubscription(
+  userId: string,
+  endpoint: string
+): Promise<void> {
+  await prisma.pushSubscription.deleteMany({ where: { endpoint, userId } });
+}
+
+/** Envoie à tous les appareils de l'utilisateur ; ne lève jamais (journalise les codes seuls). */
+async function sendPushToUser(userId: string, payload: TPushPayload): Promise<void> {
+  try {
+    if (!ensureVapid()) return;
+    const subscriptions = await prisma.pushSubscription.findMany({ where: { userId } });
+    const body = JSON.stringify(payload);
+    const results = await Promise.allSettled(
+      subscriptions.map((s) =>
+        webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          body,
+          { TTL: PUSH_TTL_SECONDS }
+        )
+      )
+    );
+    await Promise.all(
+      results.map(async (result, index) => {
+        if (result.status === "fulfilled") return;
+        const status = (result.reason as { statusCode?: number } | null)?.statusCode;
+        if (isGonePushStatus(status)) {
+          // Abonnement expiré ou révoqué : on l'oublie.
+          await prisma.pushSubscription.deleteMany({
+            where: { endpoint: subscriptions[index].endpoint },
+          });
+        } else {
+          console.error("push: échec d'envoi, statut", status);
+        }
+      })
+    );
+  } catch {
+    console.error("push: erreur inattendue pendant l'envoi");
+  }
+}
+
+/** Planifie l'envoi après la réponse. À appeler depuis un Route Handler uniquement. */
+export function schedulePushNotification(userId: string, event: TPushEvent): void {
+  after(() => sendPushToUser(userId, buildPushPayload(event)));
+}

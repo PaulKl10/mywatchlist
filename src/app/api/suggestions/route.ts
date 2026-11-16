@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { userDisplayName } from "@/lib/server/services/movieNightState";
 import {
   createSuggestion,
   getCurrentSession,
   getSuggestions,
+  schedulePushNotification,
   type TSuggestion,
 } from "@/lib/server/services";
 
@@ -52,15 +54,24 @@ export async function POST(request: Request) {
     );
   }
 
+  const mediaType = media_type === "tv" ? "tv" : "movie";
   const result = await createSuggestion(user.id, {
     receiverId,
     tmdbMovieId,
-    media_type: media_type === "tv" ? "tv" : "movie",
+    media_type: mediaType,
     title,
     poster_path,
   });
 
   if ("success" in result) {
+    schedulePushNotification(receiverId, {
+      type: "suggestion",
+      fromName: userDisplayName(user),
+      fromUserId: user.id,
+      title,
+      mediaType,
+      tmdbId: tmdbMovieId,
+    });
     return NextResponse.json({ success: true });
   }
 
