@@ -8,6 +8,7 @@ import {
   Clapperboard,
   Compass,
   Home,
+  LogIn,
   LogOut,
   Menu,
   Search,
@@ -60,7 +61,9 @@ export function Header({ showSearch = true }: HeaderProps) {
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, isLoading: isAuthLoading, logout } = useAuth();
+  const showLoginButton =
+    !user && !isAuthLoading && !pathname?.startsWith("/login");
 
   const handleLogoutClick = () => {
     setIsBurgerOpen(false);
@@ -245,6 +248,16 @@ export function Header({ showSearch = true }: HeaderProps) {
             >
               <Search className="h-6 w-6" />
             </button>
+          )}
+          {showLoginButton && (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-400"
+              aria-label="Se connecter"
+            >
+              <LogIn className="h-5 w-5" />
+              <span className="hidden sm:inline">Se connecter</span>
+            </Link>
           )}
         </div>
       </header>
