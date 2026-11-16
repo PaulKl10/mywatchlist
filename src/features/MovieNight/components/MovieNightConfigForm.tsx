@@ -115,27 +115,27 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
       </fieldset>
 
       {isLoggedIn && (
-      <div className="flex items-center justify-between gap-3">
-        <span id="include-seen-label" className="text-sm text-zinc-700 dark:text-zinc-300">
-          Inclure les films déjà vus
-        </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={includeSeen}
-          aria-labelledby="include-seen-label"
-          onClick={() => setIncludeSeen((v) => !v)}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-            includeSeen ? "bg-amber-500" : "bg-zinc-300 dark:bg-zinc-700"
-          }`}
-        >
-          <span
-            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-              includeSeen ? "translate-x-5" : ""
+        <div className="flex items-center justify-between gap-3">
+          <span id="include-seen-label" className="text-sm text-zinc-700 dark:text-zinc-300">
+            Inclure les films déjà vus
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={includeSeen}
+            aria-labelledby="include-seen-label"
+            onClick={() => setIncludeSeen((v) => !v)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+              includeSeen ? "bg-amber-500" : "bg-zinc-300 dark:bg-zinc-700"
             }`}
-          />
-        </button>
-      </div>
+          >
+            <span
+              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                includeSeen ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+        </div>
       )}
 
       {error && (

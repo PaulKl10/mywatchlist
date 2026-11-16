@@ -377,7 +377,8 @@ export async function markParticipantRemoved(
 }
 
 /**
- * Rejoindre par code (session en `LOBBY` et non expirée). Connecté : sous son compte.
+ * Rejoindre par code (session en `LOBBY` et non expirée). Un cookie invité désignant un
+ * participant `JOINED` l'emporte, connecté ou non. Sinon, connecté : sous son compte.
  * Invité : pseudo + nouveau jeton à poser en cookie (`guestToken`), sauf si le cookie du
  * navigateur désigne déjà un participant `JOINED` de cette session (rien à refaire).
  */
@@ -396,13 +397,15 @@ export async function joinMovieNightByCode(
   }
   const joined = { id: night.id, expiresAt: night.expiresAt };
 
+  // Le cookie invité prime, même connecté : un hôte invité qui s'est connecté reste le même participant.
+  const previous = await findGuestParticipant(night.id);
+  if (previous?.status === "JOINED") return ok({ ...joined, guestToken: null });
+
   if (args.user) {
     const admitted = await admitUser(night.id, args.user.id, "invalid_code", now);
     return admitted.ok ? ok({ ...joined, guestToken: null }) : admitted;
   }
 
-  const previous = await findGuestParticipant(night.id);
-  if (previous?.status === "JOINED") return ok({ ...joined, guestToken: null });
   if (previous?.status === "REMOVED") {
     return fail("forbidden", "Vous avez été retiré de cette session.");
   }
