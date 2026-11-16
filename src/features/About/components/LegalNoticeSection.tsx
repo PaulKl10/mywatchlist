@@ -1,7 +1,7 @@
 import { Scale } from "lucide-react";
 import {
   ABOUT_ANCHORS,
-  CONTACT_EMAIL,
+  CONTACT_URL,
   HOST,
   LEGAL_LAST_UPDATED,
   PUBLISHER,
@@ -25,10 +25,7 @@ export function LegalNoticeSection() {
         l&apos;hébergeur.
       </p>
       <p className={legalText.paragraph}>
-        Contact :{" "}
-        <a href={`mailto:${CONTACT_EMAIL}`} className={legalText.link}>
-          {CONTACT_EMAIL}
-        </a>
+        Contact : <ExternalLink href={CONTACT_URL}>tickets GitHub du projet</ExternalLink>
       </p>
 
       <h3 className={legalText.subheading}>Hébergeur</h3>
@@ -47,7 +44,7 @@ export function LegalNoticeSection() {
         Les informations sur les films et séries, ainsi que les affiches et photos, viennent
         de <ExternalLink href={TMDB_URL}>TMDB</ExternalLink> et restent la propriété de leurs
         ayants droit. Les messages et pseudos saisis par les utilisateurs restent sous leur
-        responsabilité. Pour signaler un contenu, écrivez à l&apos;adresse de contact.
+        responsabilité. Pour signaler un contenu, ouvrez un ticket sur GitHub.
       </p>
 
       <p className="text-sm text-zinc-500">Dernière mise à jour : {LEGAL_LAST_UPDATED}</p>

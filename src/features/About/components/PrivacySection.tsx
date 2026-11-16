@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { ABOUT_ANCHORS, CONTACT_EMAIL, LEGAL_LAST_UPDATED, PUBLISHER, TMDB_URL } from "@/lib/legal";
+import { ABOUT_ANCHORS, CONTACT_URL, LEGAL_LAST_UPDATED, PUBLISHER, TMDB_URL } from "@/lib/legal";
 import { GUEST_COOKIE, SESSION_TTL_MS } from "@/lib/movie-night/constants";
 import { REQUEST_TOKEN_COOKIE, SESSION_COOKIE } from "@/lib/constants";
 import { ExternalLink, LegalSection, legalText } from "./LegalSection";
@@ -148,11 +148,7 @@ function ItemList({ items }: { items: TItem[] }) {
 }
 
 export function PrivacySection() {
-  const mailto = (
-    <a href={`mailto:${CONTACT_EMAIL}`} className={legalText.link}>
-      {CONTACT_EMAIL}
-    </a>
-  );
+  const contact = <ExternalLink href={CONTACT_URL}>les tickets GitHub du projet</ExternalLink>;
 
   return (
     <LegalSection
@@ -162,8 +158,8 @@ export function PrivacySection() {
     >
       <p className={legalText.paragraph}>
         Le responsable du traitement est l&apos;éditeur du site,{" "}
-        <ExternalLink href={PUBLISHER.url}>{PUBLISHER.pseudonym}</ExternalLink>, joignable à{" "}
-        {mailto}. Vos données ne sont ni vendues, ni utilisées pour de la publicité ou du
+        <ExternalLink href={PUBLISHER.url}>{PUBLISHER.pseudonym}</ExternalLink>, joignable via{" "}
+        {contact}. Vos données ne sont ni vendues, ni utilisées pour de la publicité ou du
         profilage.
       </p>
 
@@ -211,7 +207,7 @@ export function PrivacySection() {
       <p className={legalText.paragraph}>
         Pour tout effacer, utilisez{" "}
         <span className={legalText.strong}>« Supprimer mon compte »</span> en bas de votre
-        profil. Pour toute autre demande, écrivez à {mailto}. Vous pouvez aussi adresser une
+        profil. Pour toute autre demande, passez par {contact}, sans y mettre de données personnelles : ils sont publics. Vous pouvez aussi adresser une
         réclamation à la <ExternalLink href="https://www.cnil.fr">CNIL</ExternalLink>.
       </p>
 

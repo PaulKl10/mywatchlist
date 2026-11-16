@@ -1,10 +1,7 @@
 /** Informations légales affichées sur la page « À propos » (crédits, mentions légales, confidentialité). */
 
-/**
- * Adresse de contact (demandes RGPD, signalements).
- * TODO : remplacer par une vraie adresse avant la mise en ligne.
- */
-export const CONTACT_EMAIL = "contact@example.com";
+/** Contact (demandes RGPD, signalements) : pas d'adresse e-mail, les tickets GitHub du projet, publics. */
+export const CONTACT_URL = "https://github.com/PaulKl10/mywatchlist/issues";
 
 /** Éditeur non professionnel : pseudonyme seul (LCEN), identité communiquée à l'hébergeur. */
 export const PUBLISHER = {
