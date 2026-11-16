@@ -37,3 +37,19 @@ export function getPushUiState(input: {
   if (input.permission === "denied") return "denied";
   return input.subscribed ? "on" : "off";
 }
+
+/**
+ * Vrai si la clé du serveur d'application de l'abonnement correspond à la clé VAPID attendue.
+ * Si le navigateur n'expose pas la clé ou si rien n'est configuré, on ne peut pas conclure :
+ * on garde l'abonnement.
+ */
+export function isSameApplicationServerKey(
+  current: ArrayBuffer | null | undefined,
+  expectedBase64: string | undefined
+): boolean {
+  if (!current || !expectedBase64) return true;
+  const expected = urlBase64ToUint8Array(expectedBase64);
+  const actual = new Uint8Array(current);
+  if (actual.length !== expected.length) return false;
+  return actual.every((byte, i) => byte === expected[i]);
+}

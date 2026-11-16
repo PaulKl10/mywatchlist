@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getPushUiState, isIosUserAgent, urlBase64ToUint8Array } from "./pushSupport";
+import {
+  getPushUiState,
+  isIosUserAgent,
+  isSameApplicationServerKey,
+  urlBase64ToUint8Array,
+} from "./pushSupport";
 
 const base = {
   hasPushApi: true,
@@ -67,5 +72,18 @@ describe("isIosUserAgent", () => {
 describe("urlBase64ToUint8Array", () => {
   it("décode du base64url sans remplissage", () => {
     expect(Array.from(urlBase64ToUint8Array("AQID_-8"))).toEqual([1, 2, 3, 255, 239]);
+  });
+});
+
+describe("isSameApplicationServerKey", () => {
+  const key = "AQID_-8"; // [1,2,3,255,239]
+  it("compare octet par octet avec la clé attendue", () => {
+    expect(isSameApplicationServerKey(new Uint8Array([1, 2, 3, 255, 239]).buffer, key)).toBe(true);
+    expect(isSameApplicationServerKey(new Uint8Array([1, 2, 3, 255, 238]).buffer, key)).toBe(false);
+    expect(isSameApplicationServerKey(new Uint8Array([1, 2, 3]).buffer, key)).toBe(false);
+  });
+  it("garde l'abonnement quand la comparaison est impossible", () => {
+    expect(isSameApplicationServerKey(null, key)).toBe(true);
+    expect(isSameApplicationServerKey(new Uint8Array([1]).buffer, undefined)).toBe(true);
   });
 });

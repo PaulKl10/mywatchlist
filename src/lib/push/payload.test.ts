@@ -47,4 +47,15 @@ describe("buildPushPayload", () => {
       }).body,
     ).toBe("Une série à découvrir sur votre profil.");
   });
+  it("tronque à 100 caractères le titre d'une suggestion", () => {
+    const { title } = buildPushPayload({
+      type: "suggestion",
+      fromName: "Max",
+      fromUserId: "u3",
+      title: "T".repeat(150),
+      mediaType: "movie",
+      tmdbId: 1,
+    });
+    expect(title).toBe(`Max vous propose « ${"T".repeat(99)}… »`);
+  });
 });

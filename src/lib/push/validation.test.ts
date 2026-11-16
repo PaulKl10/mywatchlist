@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { isAllowedPushEndpoint, parsePushEndpoint, parsePushSubscriptionInput } from "./validation";
 
+const P256 = "B" + "a".repeat(86);
+const AUTH = "a".repeat(22);
+
 const valid = {
   endpoint: "https://fcm.googleapis.com/fcm/send/abc",
-  keys: { p256dh: "BNc_x-1", auth: "tBH-q_9" },
+  keys: { p256dh: P256, auth: AUTH },
 };
 
 describe("parsePushSubscriptionInput", () => {
   it("normalise un PushSubscription.toJSON() valide", () => {
     expect(parsePushSubscriptionInput(valid)).toEqual({
       endpoint: valid.endpoint,
-      p256dh: "BNc_x-1",
-      auth: "tBH-q_9",
+      p256dh: P256,
+      auth: AUTH,
     });
   });
   it("ignore les champs supplémentaires", () => {
@@ -24,9 +27,12 @@ describe("parsePushSubscriptionInput", () => {
     [{ ...valid, endpoint: "http://fcm.googleapis.com/x" }],
     [{ ...valid, endpoint: "pas une url" }],
     [{ ...valid, endpoint: "https://a.b/" + "x".repeat(2048) }],
-    [{ ...valid, keys: { p256dh: "", auth: "a" } }],
-    [{ ...valid, keys: { p256dh: "a+b/c=", auth: "a" } }],
-    [{ ...valid, keys: { p256dh: "a".repeat(201), auth: "a" } }],
+    [{ ...valid, keys: { p256dh: "", auth: AUTH } }],
+    [{ ...valid, keys: { p256dh: "a+b/c=" + "a".repeat(81), auth: AUTH } }],
+    [{ ...valid, keys: { p256dh: "a".repeat(88), auth: AUTH } }],
+    [{ ...valid, keys: { p256dh: "a".repeat(86), auth: AUTH } }],
+    [{ ...valid, keys: { p256dh: P256, auth: "a".repeat(21) } }],
+    [{ ...valid, keys: { p256dh: P256, auth: "a".repeat(23) } }],
     [{ endpoint: valid.endpoint }],
   ])("refuse %j", (body) => {
     expect(parsePushSubscriptionInput(body)).toBeNull();

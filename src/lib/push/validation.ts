@@ -1,7 +1,10 @@
 import type { TPushSubscriptionInput } from "./types";
 
 export const MAX_ENDPOINT_LENGTH = 2048;
-export const MAX_KEY_LENGTH = 200;
+/** Clé publique P-256 non compressée (65 octets) en base64url sans remplissage. */
+export const P256DH_LENGTH = 87;
+/** Secret d'authentification (16 octets) en base64url sans remplissage. */
+export const AUTH_LENGTH = 22;
 
 const BASE64URL = /^[A-Za-z0-9_-]+$/;
 
@@ -49,9 +52,9 @@ function parseEndpoint(value: unknown): string | null {
   return isAllowedPushEndpoint(value) ? value : null;
 }
 
-/** Valide une clé de chiffrement : base64url non vide de longueur bornée. */
-function parseKey(value: unknown): string | null {
-  if (typeof value !== "string" || value.length === 0 || value.length > MAX_KEY_LENGTH) return null;
+/** Valide une clé de chiffrement : base64url de la longueur exacte attendue. */
+function parseKey(value: unknown, length: number): string | null {
+  if (typeof value !== "string" || value.length !== length) return null;
   return BASE64URL.test(value) ? value : null;
 }
 
@@ -59,8 +62,8 @@ function parseKey(value: unknown): string | null {
 export function parsePushSubscriptionInput(body: unknown): TPushSubscriptionInput | null {
   if (!isRecord(body) || !isRecord(body.keys)) return null;
   const endpoint = parseEndpoint(body.endpoint);
-  const p256dh = parseKey(body.keys.p256dh);
-  const auth = parseKey(body.keys.auth);
+  const p256dh = parseKey(body.keys.p256dh, P256DH_LENGTH);
+  const auth = parseKey(body.keys.auth, AUTH_LENGTH);
   if (!endpoint || !p256dh || !auth) return null;
   return { endpoint, p256dh, auth };
 }

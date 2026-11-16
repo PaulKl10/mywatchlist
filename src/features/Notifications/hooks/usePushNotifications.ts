@@ -53,7 +53,13 @@ export function usePushNotifications(): {
       setState("on");
     } catch (e) {
       if (e instanceof Error && e.message === "permission_denied") {
-        setState("denied");
+        // Refus définitif seulement ; une demande simplement fermée reste réessayable.
+        if (Notification.permission === "denied") {
+          setState("denied");
+        } else {
+          setState("off");
+          setError("Notifications non autorisées. Réessayez.");
+        }
       } else {
         setError("Impossible d'activer les notifications. Réessayez.");
       }

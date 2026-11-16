@@ -1,6 +1,7 @@
 import {
   getPushUiState,
   isIosUserAgent,
+  isSameApplicationServerKey,
   urlBase64ToUint8Array,
   type TPushUiState,
 } from "./pushSupport";
@@ -34,6 +35,18 @@ export async function readDevicePush(): Promise<{
       try {
         subscription = await registration.pushManager.getSubscription();
       } catch {
+        subscription = null;
+      }
+      // Abonnement créé avec une autre clé VAPID : il ne recevrait plus rien. On le purge
+      // et on l'affiche comme désactivé, sans réabonnement silencieux.
+      if (
+        subscription &&
+        !isSameApplicationServerKey(
+          subscription.options?.applicationServerKey,
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        )
+      ) {
+        await dropSubscription(subscription);
         subscription = null;
       }
     }
@@ -78,15 +91,19 @@ export async function unsubscribeDevice(): Promise<void> {
     return;
   }
   if (!subscription) return;
+  await dropSubscription(subscription);
+}
 
+/**
+ * Supprime l'abonnement côté serveur et côté navigateur en parallèle : le navigateur cesse
+ * de recevoir les notifications de l'ancien compte même si la requête serveur traîne.
+ * Ne lève jamais (le serveur purgera un abonnement mort à l'envoi suivant).
+ */
+async function dropSubscription(subscription: PushSubscription): Promise<void> {
+  const { endpoint } = subscription;
   try {
-    await removePushSubscription(subscription.endpoint);
+    await Promise.allSettled([removePushSubscription(endpoint), subscription.unsubscribe()]);
   } catch {
-    // Le serveur purgera l'abonnement mort à l'envoi suivant.
-  }
-  try {
-    await subscription.unsubscribe();
-  } catch {
-    // Rien de plus à faire.
+    // Échec synchrone d'un des appels : rien de plus à faire.
   }
 }

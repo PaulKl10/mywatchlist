@@ -441,11 +441,12 @@ export async function inviteFriend(
   });
   if (existing?.status === "JOINED") return ok({ invited: false });
   if (existing) {
-    await prisma.movieNightParticipant.updateMany({
-      where: { id: existing.id, status: { not: "JOINED" } },
+    // Ne renvoie « invité » que si le statut change vraiment (pas de push en double).
+    const { count } = await prisma.movieNightParticipant.updateMany({
+      where: { id: existing.id, status: { notIn: ["JOINED", "INVITED"] } },
       data: { status: "INVITED" },
     });
-    return ok({ invited: true });
+    return ok({ invited: count > 0 });
   }
   try {
     await prisma.movieNightParticipant.create({

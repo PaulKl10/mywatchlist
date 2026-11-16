@@ -13,6 +13,12 @@ import type {
 /** Durée pendant laquelle le service push garde la notification d'un appareil hors ligne (24 h). */
 const PUSH_TTL_SECONDS = 86_400;
 
+/** Nombre maximal d'appareils conservés par utilisateur (les plus anciens sont supprimés). */
+const MAX_PUSH_SUBSCRIPTIONS_PER_USER = 10;
+
+/** Délai d'attente maximal d'une requête vers le service push (10 s). */
+const PUSH_TIMEOUT_MS = 10_000;
+
 let vapidReady: boolean | null = null;
 
 /** Configure web-push une seule fois ; false (et un seul avertissement) sans clés VAPID. */
@@ -24,7 +30,14 @@ function ensureVapid(): boolean {
     vapidReady = false;
     return false;
   }
-  webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+  try {
+    webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+  } catch {
+    // Clés mal formées : même effet que des clés absentes, sans rien journaliser d'autre.
+    console.warn("Notifications push désactivées : clés VAPID invalides.");
+    vapidReady = false;
+    return false;
+  }
   vapidReady = true;
   return true;
 }
@@ -40,6 +53,18 @@ export async function savePushSubscription(
     create: { userId, endpoint, p256dh, auth },
     update: { userId, p256dh, auth },
   });
+  // Borne le nombre d'appareils : on supprime les plus anciens au-delà des plus récents.
+  const stale = await prisma.pushSubscription.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    skip: MAX_PUSH_SUBSCRIPTIONS_PER_USER,
+    select: { id: true },
+  });
+  if (stale.length > 0) {
+    await prisma.pushSubscription.deleteMany({
+      where: { id: { in: stale.map((s) => s.id) } },
+    });
+  }
 }
 
 /** Supprime l'abonnement s'il appartient à l'utilisateur (sans erreur s'il n'existe pas). */
@@ -70,7 +95,11 @@ async function sendPushToUser(userId: string, payload: TPushPayload): Promise<vo
         webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           body,
-          { TTL: PUSH_TTL_SECONDS }
+          // Notifications rares, visibles et sensibles au temps : l'urgence « high » les fait
+          // réveiller un téléphone Android inactif (FCM traite toute autre urgence en priorité
+          // normale, retardée en mode Doze). Le délai d'attente évite que `after()` ne reste
+          // bloqué sur un service push qui ne répond pas.
+          { TTL: PUSH_TTL_SECONDS, urgency: "high", timeout: PUSH_TIMEOUT_MS }
         )
       )
     );
