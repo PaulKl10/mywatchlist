@@ -140,7 +140,7 @@ export function MovieNightLobby({ id, state, onLeft }: MovieNightLobbyProps) {
         )}
       </section>
 
-      {isHost && (
+      {isHost && !state.me.isGuest && (
         <section className={sectionClass} aria-labelledby="invite-title">
           <h2 id="invite-title" className={titleClass}>
             Inviter un ami

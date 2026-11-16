@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Clapperboard, KeyRound, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
@@ -140,18 +139,7 @@ export function MovieNightHomeView() {
 
       {panel === "host" && (
         <Panel title="Héberger" onBack={back} headingRef={headingRef}>
-          {isLoggedIn ? (
-            <MovieNightConfigForm />
-          ) : (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              <Link
-                href="/login"
-                className="font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-500"
-              >
-                Connectez-vous pour héberger
-              </Link>
-            </p>
-          )}
+          <MovieNightConfigForm isLoggedIn={isLoggedIn} />
         </Panel>
       )}
 

@@ -57,7 +57,10 @@ async function request<T>(url: string, method = "GET", body?: unknown): Promise<
 
 const base = "/api/movie-night";
 
-export function createMovieNight(input: TCreateMovieNightInput): Promise<{ id: string }> {
+/** Corps de `POST /api/movie-night` ; `guestName` : pseudo de l'hôte sans compte. */
+export type TCreateMovieNightRequest = TCreateMovieNightInput & { guestName?: string };
+
+export function createMovieNight(input: TCreateMovieNightRequest): Promise<{ id: string }> {
   return request(base, "POST", input);
 }
 

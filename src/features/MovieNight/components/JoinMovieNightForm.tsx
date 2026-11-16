@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CODE_LENGTH, GUEST_NAME_MAX_LENGTH } from "@/lib/movie-night/constants";
+import { CODE_LENGTH } from "@/lib/movie-night/constants";
 import { useJoinMovieNightMutation } from "../hooks/useMovieNightMutations";
+import { GuestNameField } from "./GuestNameField";
 
 const inputClass =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 placeholder-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100";
@@ -50,23 +51,7 @@ export function JoinMovieNightForm({ initialCode, askName }: JoinMovieNightFormP
           className={`${inputClass} font-mono uppercase tracking-widest`}
         />
       </div>
-      {askName && (
-        <div>
-          <label htmlFor="movie-night-name" className="mb-1 block text-sm text-zinc-600 dark:text-zinc-400">
-            Pseudo
-          </label>
-          <input
-            id="movie-night-name"
-            type="text"
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            maxLength={GUEST_NAME_MAX_LENGTH}
-            autoComplete="nickname"
-            placeholder="Votre pseudo"
-            className={inputClass}
-          />
-        </div>
-      )}
+      {askName && <GuestNameField id="movie-night-name" value={guestName} onChange={setGuestName} />}
       {join.error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {join.error.message}

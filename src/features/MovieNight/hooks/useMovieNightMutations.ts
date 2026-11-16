@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TMovieNightDecision, TMovieNightState } from "@/lib/movie-night/types";
-import type { TCreateMovieNightInput } from "@/lib/movie-night/validation";
 import {
   castVote,
   createMovieNight,
@@ -14,6 +13,7 @@ import {
   respondToInvite,
   startMovieNight,
   startNewRound,
+  type TCreateMovieNightRequest,
   type TSoloDeckRequest,
 } from "../services/movie-night.service";
 import { isStaleDecisionError } from "../utils/errors";
@@ -92,7 +92,7 @@ export function useMovieNightMutations(id: string) {
 }
 
 export function useCreateMovieNightMutation() {
-  return useMutation({ mutationFn: (input: TCreateMovieNightInput) => createMovieNight(input) });
+  return useMutation({ mutationFn: (input: TCreateMovieNightRequest) => createMovieNight(input) });
 }
 
 export function useSoloDeckMutation() {
