@@ -24,6 +24,9 @@ export const PUSH_SERVICE_DOMAINS = [
  * Vrai si l'endpoint est une URL https sans identifiants ni port, dont le nom d'hôte est
  * un service push connu (domaine exact ou sous-domaine, frontière sur le point).
  * Les adresses IP sont refusées par construction.
+ * L'entrée doit aussi être déjà sous forme canonique (`new URL(x).href === x`) : la chaîne
+ * stockée puis envoyée à `web-push` est exactement celle validée, donc aucun autre analyseur
+ * d'URL (ex. `url.parse` de Node) ne peut en lire l'hôte différemment.
  */
 export function isAllowedPushEndpoint(endpoint: string): boolean {
   let url: URL;
@@ -32,6 +35,7 @@ export function isAllowedPushEndpoint(endpoint: string): boolean {
   } catch {
     return false;
   }
+  if (url.href !== endpoint) return false;
   if (url.protocol !== "https:" || url.username !== "" || url.password !== "" || url.port !== "") {
     return false;
   }

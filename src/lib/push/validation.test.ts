@@ -62,6 +62,18 @@ describe("isAllowedPushEndpoint", () => {
     "https://localhost/x",
     "pas une url",
   ])("refuse %s", (url) => expect(isAllowedPushEndpoint(url)).toBe(false));
+  it.each([
+    "https://fcm.googleapis.com/fcm/send/dXZ8aBc:APA91bHk_x-y",
+    "https://wns2-par02p.notify.windows.com/w/?token=BQYAAAB%2bQz%2fA",
+  ])("accepte la forme canonique %s", (url) => expect(isAllowedPushEndpoint(url)).toBe(true));
+  it.each([
+    "https://FCM.googleapis.com/x", // hôte en majuscules
+    "https://fcm.googleapis.com:443/x", // port par défaut explicite
+    "https://fcm.googleapis.com\\@evil.com/x", // antislash
+    "https://fcm.googleapis.com/x y", // espace
+    "https://fcm.googleapis.com/x\t", // caractère de contrôle
+    " https://fcm.googleapis.com/x", // espace initial
+  ])("refuse la forme non canonique %j", (url) => expect(isAllowedPushEndpoint(url)).toBe(false));
   it("est appliqué à la validation des corps", () => {
     expect(parsePushEndpoint({ endpoint: "https://evil.com/x" })).toBeNull();
     expect(
