@@ -18,6 +18,8 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
+const PUSH_CLEANUP_TIMEOUT_MS = 3000;
+
 const AUTH_QUERY_KEY = ["auth", "me"] as const;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,8 +58,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refetchQuery]);
 
   const logout = useCallback(async () => {
-    // Ne lève jamais : la déconnexion n'est pas bloquée par le nettoyage push.
-    await unsubscribeDevice();
+    // Le DELETE serveur doit partir tant que la session existe, mais une connexion
+    // qui se fige ne doit jamais empêcher la déconnexion : on borne l'attente.
+    // `unsubscribeDevice` ne lève jamais.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      unsubscribeDevice(),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, PUSH_CLEANUP_TIMEOUT_MS);
+      }),
+    ]);
+    clearTimeout(timer);
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
