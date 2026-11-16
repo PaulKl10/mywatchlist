@@ -22,7 +22,7 @@ const COLLECTED_DATA: TItem[] = [
   {
     label: "Watchlist et notes",
     detail:
-      "elles restent sur votre compte TMDB, que l'app lit et modifie pour vous. Une copie de votre watchlist (titre, affiche, date de sortie, note, résumé) est gardée pour l'afficher à vos amis.",
+      "elles restent sur votre compte TMDB, que l'app lit et modifie pour vous. Une copie de votre watchlist (titre, affiche, date de sortie, note, résumé) est gardée pour l'afficher à vos amis. Elle est remise à jour depuis TMDB quand vous ouvrez l'app, au plus une fois par heure.",
   },
   {
     label: "Amis et suggestions",
@@ -72,6 +72,11 @@ const LEGAL_BASES: TItem[] = [
 
 const RETENTION: TItem[] = [
   { label: "Données du compte", detail: "jusqu'à la suppression du compte." },
+  {
+    label: "Copie de la watchlist",
+    detail:
+      "supprimée si vous n'ouvrez pas l'app pendant 5 mois, puis recréée à votre retour.",
+  },
   {
     label: "Session de connexion",
     detail: "30 jours au plus, supprimée à la déconnexion.",

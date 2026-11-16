@@ -14,7 +14,11 @@ export {
   type TWatchTimeStats,
 } from "./watchTime.service";
 export { getFriendsWatchlistMovies } from "./friendsWatchlist.service";
-export { syncWatchlistItem, updateTmdbWatchlist } from "./watchlist.service";
+export {
+  scheduleWatchlistResync,
+  syncWatchlistItem,
+  updateTmdbWatchlist,
+} from "./watchlist.service";
 export {
   getSuggestions,
   createSuggestion,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentSession } from "@/lib/server/services";
+import { getCurrentSession, scheduleWatchlistResync } from "@/lib/server/services";
 
 export type TAccount = {
   id: number;
@@ -33,6 +33,9 @@ export async function GET() {
   if (!current) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
+
+  // Chaque ouverture de l'app rafraîchit la copie de la watchlist vue par les amis.
+  scheduleWatchlistResync(current);
 
   return NextResponse.json({ user: toAccount(current.user) });
 }

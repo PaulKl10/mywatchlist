@@ -29,7 +29,8 @@ model User {
   receivedSuggestions Suggestion[] @relation("suggestedTo")
 
   // Watchlist en BDD (pour affichage public sur profils)
-  watchlistItems WatchlistItem[]
+  watchlistItems      WatchlistItem[]
+  watchlist_synced_at DateTime? // dernière resynchro complète de la copie avec TMDB
 
   // Films comptés pour le temps de visionnage (tracking interne uniquement)
   watchTimeEntries WatchTimeEntry[]
