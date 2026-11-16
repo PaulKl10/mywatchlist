@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePushEndpoint, parsePushSubscriptionInput } from "./validation";
+import { isAllowedPushEndpoint, parsePushEndpoint, parsePushSubscriptionInput } from "./validation";
 
 const valid = {
   endpoint: "https://fcm.googleapis.com/fcm/send/abc",
@@ -40,5 +40,32 @@ describe("parsePushEndpoint", () => {
   it("refuse un endpoint non https ou un corps invalide", () => {
     expect(parsePushEndpoint({ endpoint: "http://x" })).toBeNull();
     expect(parsePushEndpoint(null)).toBeNull();
+  });
+});
+
+describe("isAllowedPushEndpoint", () => {
+  it.each([
+    "https://fcm.googleapis.com/fcm/send/abc",
+    "https://updates.push.services.mozilla.com/wpush/v2/abc",
+    "https://web.push.apple.com/QGx",
+    "https://wns2-par02p.notify.windows.com/w/?token=abc",
+  ])("accepte %s", (url) => expect(isAllowedPushEndpoint(url)).toBe(true));
+  it.each([
+    "http://fcm.googleapis.com/fcm/send/abc",
+    "https://evil.com/fcm.googleapis.com",
+    "https://fcm.googleapis.com.evil.com/x",
+    "https://evilfcm.googleapis.com/x",
+    "https://fcm.googleapis.com:8443/x",
+    "https://user:pw@fcm.googleapis.com/x",
+    "https://127.0.0.1/x",
+    "https://[::1]/x",
+    "https://localhost/x",
+    "pas une url",
+  ])("refuse %s", (url) => expect(isAllowedPushEndpoint(url)).toBe(false));
+  it("est appliqué à la validation des corps", () => {
+    expect(parsePushEndpoint({ endpoint: "https://evil.com/x" })).toBeNull();
+    expect(
+      parsePushSubscriptionInput({ ...valid, endpoint: "https://evil.com/x" })
+    ).toBeNull();
   });
 });

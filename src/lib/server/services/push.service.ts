@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { isGonePushStatus, readVapidConfig } from "@/lib/push/config";
 import { buildPushPayload } from "@/lib/push/payload";
+import { isAllowedPushEndpoint } from "@/lib/push/validation";
 import type {
   TPushEvent,
   TPushPayload,
@@ -53,7 +54,16 @@ export async function deletePushSubscription(
 async function sendPushToUser(userId: string, payload: TPushPayload): Promise<void> {
   try {
     if (!ensureVapid()) return;
-    const subscriptions = await prisma.pushSubscription.findMany({ where: { userId } });
+    const stored = await prisma.pushSubscription.findMany({ where: { userId } });
+    // Défense en profondeur (SSRF) : on n'envoie qu'aux services push connus ; les autres
+    // endpoints stockés sont supprimés comme des abonnements disparus, sans journaliser l'URL.
+    const subscriptions = stored.filter((s) => isAllowedPushEndpoint(s.endpoint));
+    const rejected = stored.filter((s) => !isAllowedPushEndpoint(s.endpoint));
+    if (rejected.length > 0) {
+      await prisma.pushSubscription.deleteMany({
+        where: { id: { in: rejected.map((s) => s.id) } },
+      });
+    }
     const body = JSON.stringify(payload);
     const results = await Promise.allSettled(
       subscriptions.map((s) =>

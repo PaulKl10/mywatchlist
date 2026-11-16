@@ -9,14 +9,40 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Valide un endpoint push : URL https de longueur bornée. */
+/**
+ * Services de notification push connus. Le serveur POSTe vers l'endpoint stocké :
+ * n'accepter que ces domaines évite qu'un utilisateur ne fasse requêter une URL arbitraire (SSRF).
+ */
+export const PUSH_SERVICE_DOMAINS = [
+  "fcm.googleapis.com",
+  "push.services.mozilla.com",
+  "push.apple.com",
+  "notify.windows.com",
+];
+
+/**
+ * Vrai si l'endpoint est une URL https sans identifiants ni port, dont le nom d'hôte est
+ * un service push connu (domaine exact ou sous-domaine, frontière sur le point).
+ * Les adresses IP sont refusées par construction.
+ */
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" || url.username !== "" || url.password !== "" || url.port !== "") {
+    return false;
+  }
+  const host = url.hostname.toLowerCase();
+  return PUSH_SERVICE_DOMAINS.some((d) => host === d || host.endsWith("." + d));
+}
+
+/** Valide un endpoint push : longueur bornée et service push connu (voir `isAllowedPushEndpoint`). */
 function parseEndpoint(value: unknown): string | null {
   if (typeof value !== "string" || value.length === 0 || value.length > MAX_ENDPOINT_LENGTH) return null;
-  try {
-    return new URL(value).protocol === "https:" ? value : null;
-  } catch {
-    return null;
-  }
+  return isAllowedPushEndpoint(value) ? value : null;
 }
 
 /** Valide une clé de chiffrement : base64url non vide de longueur bornée. */
