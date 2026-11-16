@@ -3,6 +3,7 @@
 import { Monitor } from "lucide-react";
 import type { TWatchProviders } from "@/types/movie.type";
 import { WatchProviderCard } from "@/features/MovieDetails/components/WatchProviderCard";
+import { JustWatchAttribution } from "@/components/JustWatchAttribution";
 
 interface MediaDetailsWatchProvidersProps {
   watchProviders: TWatchProviders;
@@ -56,17 +57,7 @@ export function MediaDetailsWatchProviders({
             )
         )}
       </div>
-      <p className="mt-3 text-xs text-zinc-500">
-        Données fournies par{" "}
-        <a
-          href="https://www.justwatch.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-zinc-400"
-        >
-          JustWatch
-        </a>
-      </p>
+      <JustWatchAttribution className="mt-3" />
     </div>
   );
 }

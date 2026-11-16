@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { tmdbClient } from "@/lib/tmdb-client";
+import { REQUEST_TOKEN_COOKIE } from "@/lib/constants";
 
 export async function POST(request: Request) {
   if (!tmdbClient.isConfigured()) {
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
       auth_url: authUrl,
     });
 
-    response.cookies.set("tmdb_request_token", requestToken, {
+    response.cookies.set(REQUEST_TOKEN_COOKIE, requestToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

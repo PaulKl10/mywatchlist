@@ -17,6 +17,7 @@ import { saveSoloGame, startSoloGame } from "../utils/soloGame";
 import { GuestNameField } from "./GuestNameField";
 import { GenrePicker } from "./GenrePicker";
 import { ProviderPicker } from "./ProviderPicker";
+import { JustWatchAttribution } from "@/components/JustWatchAttribution";
 
 const labelClass = "mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
@@ -101,11 +102,14 @@ export function MovieNightConfigForm({ isLoggedIn }: { isLoggedIn: boolean }) {
             </button>
           </p>
         ) : (
-          <ProviderPicker
-            providers={providers}
-            selected={providerIds}
-            onChange={setPickedProviders}
-          />
+          <>
+            <ProviderPicker
+              providers={providers}
+              selected={providerIds}
+              onChange={setPickedProviders}
+            />
+            <JustWatchAttribution className="mt-3" />
+          </>
         )}
       </fieldset>
 

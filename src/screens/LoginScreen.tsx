@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Film, ExternalLink } from "lucide-react";
+import { ABOUT_ANCHORS, ABOUT_PATH } from "@/lib/legal";
 
 const TMDB_SIGNUP_URL = "https://www.themoviedb.org/signup";
 
@@ -74,6 +75,16 @@ export function LoginScreen() {
         <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
           Vous n&apos;avez pas de compte ? Créez-en un gratuitement sur le site
           TMDB.
+        </p>
+        <p className="mt-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+          En vous connectant, vos données sont traitées comme décrit dans la{" "}
+          <Link
+            href={`${ABOUT_PATH}#${ABOUT_ANCHORS.privacy}`}
+            className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            politique de confidentialité
+          </Link>
+          .
         </p>
       </div>
     </div>

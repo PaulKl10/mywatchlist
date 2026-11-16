@@ -16,9 +16,27 @@ type AuthContextValue = {
   isLoading: boolean;
   refetch: () => Promise<void>;
   logout: () => Promise<void>;
+  /** Supprime le compte et ses données. Lève si le serveur refuse. */
+  deleteAccount: () => Promise<void>;
 };
 
 const PUSH_CLEANUP_TIMEOUT_MS = 3000;
+
+/**
+ * Désabonne l'appareil des notifications avant la fin de la session (le DELETE serveur doit
+ * partir tant qu'elle existe). Une connexion qui se fige ne doit jamais bloquer la suite :
+ * l'attente est bornée. `unsubscribeDevice` ne lève jamais.
+ */
+async function unsubscribeDeviceBounded(): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    unsubscribeDevice(),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, PUSH_CLEANUP_TIMEOUT_MS);
+    }),
+  ]);
+  clearTimeout(timer);
+}
 
 const AUTH_QUERY_KEY = ["auth", "me"] as const;
 
@@ -58,17 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refetchQuery]);
 
   const logout = useCallback(async () => {
-    // Le DELETE serveur doit partir tant que la session existe, mais une connexion
-    // qui se fige ne doit jamais empêcher la déconnexion : on borne l'attente.
-    // `unsubscribeDevice` ne lève jamais.
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    await Promise.race([
-      unsubscribeDevice(),
-      new Promise<void>((resolve) => {
-        timer = setTimeout(resolve, PUSH_CLEANUP_TIMEOUT_MS);
-      }),
-    ]);
-    clearTimeout(timer);
+    await unsubscribeDeviceBounded();
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
@@ -76,9 +84,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryClient.setQueryData(AUTH_QUERY_KEY, null);
   }, [queryClient]);
 
+  const deleteAccount = useCallback(async () => {
+    await unsubscribeDeviceBounded();
+    const res = await fetch("/api/me", {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      throw new Error(`DELETE /api/me failed with status ${res.status}`);
+    }
+    // Plus aucune donnée de ce compte ne doit rester en cache.
+    queryClient.removeQueries({
+      predicate: (query) => query.queryKey[0] !== AUTH_QUERY_KEY[0],
+    });
+    queryClient.setQueryData(AUTH_QUERY_KEY, null);
+  }, [queryClient]);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user: data ?? null, isLoading: isPending, refetch, logout }),
-    [data, isPending, refetch, logout]
+    () => ({ user: data ?? null, isLoading: isPending, refetch, logout, deleteAccount }),
+    [data, isPending, refetch, logout, deleteAccount]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

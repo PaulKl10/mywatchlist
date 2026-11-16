@@ -1,3 +1,13 @@
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ABOUT_ANCHORS,
+  ABOUT_PATH,
+  PUBLISHER,
+  TMDB_NOTICE,
+  TMDB_URL,
+} from "@/lib/legal";
+
 function GithubIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -16,25 +26,60 @@ function GithubIcon({ className }: { className?: string }) {
   );
 }
 
+const LEGAL_LINKS = [
+  { href: `${ABOUT_PATH}#${ABOUT_ANCHORS.credits}`, label: "À propos et crédits" },
+  { href: `${ABOUT_PATH}#${ABOUT_ANCHORS.legalNotice}`, label: "Mentions légales" },
+  { href: `${ABOUT_PATH}#${ABOUT_ANCHORS.privacy}`, label: "Confidentialité" },
+] as const;
+
+const linkClass =
+  "text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
+
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-zinc-200 bg-white px-4 py-6 dark:border-zinc-800 dark:bg-zinc-900 md:px-32">
-      <div className="flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:gap-3">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-          My Watchlist
-        </span>
-        <span className="hidden text-zinc-300 dark:text-zinc-600 sm:inline">
-          •
-        </span>
-        <a
-          href="https://github.com/PaulKl10"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          <GithubIcon className="h-4 w-4" />
-          PaulKl10
-        </a>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            My Watchlist
+          </span>
+          <span className="hidden text-zinc-300 dark:text-zinc-600 sm:inline">
+            •
+          </span>
+          <a
+            href={PUBLISHER.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2 text-sm ${linkClass}`}
+          >
+            <GithubIcon className="h-4 w-4" />
+            {PUBLISHER.pseudonym}
+          </a>
+        </div>
+
+        <nav aria-label="Informations légales">
+          <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm">
+            {LEGAL_LINKS.map(({ href, label }) => (
+              <li key={href}>
+                <Link href={href} className={linkClass}>
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="flex max-w-md flex-col items-center gap-2">
+          <a
+            href={TMDB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="The Movie Database (TMDB)"
+          >
+            <Image src="/tmdb-logo.svg" alt="TMDB" width={92} height={12} unoptimized />
+          </a>
+          <p className="text-xs text-zinc-500">{TMDB_NOTICE}</p>
+        </div>
       </div>
     </footer>
   );

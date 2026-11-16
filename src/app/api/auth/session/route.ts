@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE } from "@/lib/server/services";
 import { tmdbClient } from "@/lib/tmdb-client";
+import { REQUEST_TOKEN_COOKIE } from "@/lib/constants";
 
 type TMDBAccount = {
   id: number;
@@ -24,7 +25,7 @@ export async function POST() {
     );
   }
 
-  const requestToken = cookieStore.get("tmdb_request_token")?.value;
+  const requestToken = cookieStore.get(REQUEST_TOKEN_COOKIE)?.value;
 
   if (!requestToken) {
     return NextResponse.json(
@@ -80,7 +81,7 @@ export async function POST() {
       path: "/",
     });
 
-    cookieStore.delete("tmdb_request_token");
+    cookieStore.delete(REQUEST_TOKEN_COOKIE);
 
     return response;
   } catch {

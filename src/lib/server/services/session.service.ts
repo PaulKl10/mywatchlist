@@ -1,9 +1,15 @@
 import { cookies } from "next/headers";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { SESSION_COOKIE } from "@/lib/constants";
+import { tmdbClient } from "@/lib/tmdb-client";
 
-/** Cookie httpOnly contenant le session_id TMDB. */
-export const SESSION_COOKIE = "tmdb_session_id";
+export { SESSION_COOKIE };
+
+/** Révoque une session côté TMDB (sinon le session_id reste utilisable indéfiniment). */
+export async function revokeTmdbSession(sessionId: string): Promise<void> {
+  await tmdbClient.delete("/authentication/session", {}, { session_id: sessionId });
+}
 
 /** session_id TMDB de la requête courante (lu dans le cookie), ou undefined. */
 export async function getSessionId(): Promise<string | undefined> {

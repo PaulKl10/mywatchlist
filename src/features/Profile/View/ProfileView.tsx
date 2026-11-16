@@ -9,6 +9,7 @@ import { useGetMyWatchlistFromDbQuery } from "@/features/Watchlist/hooks/useGetW
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
 import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
+import { DeleteAccountSection } from "@/features/Profile/components/DeleteAccountSection";
 import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
 import { PushNotificationsSettings } from "@/features/Notifications/components/PushNotificationsSettings";
@@ -160,6 +161,7 @@ export function ProfileView() {
           </Link>
         )}
       </section>
+      <DeleteAccountSection />
     </div>
   );
 }

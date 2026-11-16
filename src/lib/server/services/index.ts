@@ -3,8 +3,10 @@ export {
   getSessionId,
   getUserFromSessionId,
   getCurrentSession,
+  revokeTmdbSession,
   type TCurrentSession,
 } from "./session.service";
+export { deleteUserAccount } from "./account.service";
 export {
   getWatchTimeStats,
   recordWatchTime,
