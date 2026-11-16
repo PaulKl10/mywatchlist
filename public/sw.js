@@ -4,7 +4,12 @@ const CACHE_VERSION = "v8";
 const STATIC_CACHE = `mywatchlist-static-${CACHE_VERSION}`;
 const API_CACHE = `mywatchlist-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `mywatchlist-image-${CACHE_VERSION}`;
-const CURRENT_CACHES = new Set([STATIC_CACHE, API_CACHE, IMAGE_CACHE]);
+// Page à ouvrir après un toucher sur une notification, lue puis effacée par l'app
+// (mêmes noms que src/features/Notifications/utils/notificationTarget.ts).
+const NOTIFICATION_TARGET_CACHE = "mywatchlist-notification-target";
+const NOTIFICATION_TARGET_KEY = "/__notification-target";
+const NOTIFICATION_TARGET_MESSAGE = "notification-target";
+const CURRENT_CACHES = new Set([STATIC_CACHE, API_CACHE, IMAGE_CACHE, NOTIFICATION_TARGET_CACHE]);
 
 const STATIC_MAX_ENTRIES = 200;
 const API_MAX_ENTRIES = 100;
@@ -174,16 +179,38 @@ self.addEventListener("notificationclick", (event) => {
     typeof requested === "string" && requested.startsWith("/") && !requested.startsWith("//")
       ? requested
       : "/";
+  // `client.navigate()` échoue sur iPhone quand l'app est suspendue, et `openWindow(url)`
+  // y ouvre parfois l'accueil : on enregistre la cible pour que l'app y navigue elle-même
+  // (au lancement, au retour au premier plan ou à réception du message).
   event.waitUntil(
     (async () => {
+      try {
+        const cache = await caches.open(NOTIFICATION_TARGET_CACHE);
+        await cache.put(
+          NOTIFICATION_TARGET_KEY,
+          new Response(JSON.stringify({ url, at: Date.now() }), {
+            headers: { "Content-Type": "application/json" },
+          })
+        );
+      } catch {
+        // Sans Cache Storage, l'ouverture ci-dessous reste le seul moyen.
+      }
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       const client = windows.find((c) => new URL(c.url).origin === self.location.origin);
       if (client) {
-        await client.focus();
-        if ("navigate" in client) await client.navigate(url);
+        try {
+          await client.focus();
+        } catch {
+          // Le message suffit : l'app navigue dès qu'elle reprend la main.
+        }
+        client.postMessage({ type: NOTIFICATION_TARGET_MESSAGE });
         return;
       }
-      await self.clients.openWindow(url);
+      try {
+        await self.clients.openWindow(url);
+      } catch {
+        // Rien d'autre à tenter depuis le service worker.
+      }
     })()
   );
 });
