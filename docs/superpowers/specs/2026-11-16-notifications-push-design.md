@@ -150,9 +150,13 @@ abonnés, dans ces trois cas, uniquement quand l'action réussit :
   générique « My Watchlist » vers `/` (une notification est obligatoire à
   chaque push).
 - `notificationclick` : ferme la notification ; si `url` n'est pas un chemin
-  relatif interne (commence par un seul `/`), utilise `/`. Met au premier plan
-  un onglet de l'app déjà ouvert et le dirige vers `url`, sinon ouvre une
-  fenêtre sur `url`.
+  relatif interne (commence par un seul `/`), utilise `/`. Enregistre `url`
+  dans le Cache Storage (`{ url, at }`), puis met au premier plan un onglet de
+  l'app déjà ouvert et lui envoie un message, sinon ouvre une fenêtre sur `url`.
+  L'app lit et efface cette cible au lancement, au retour au premier plan et à
+  réception du message, puis y navigue (cible ignorée au-delà de 5 minutes).
+  *(Correctif 2026-11-16 : sur iPhone, `client.navigate()` échoue quand l'app
+  est suspendue et `openWindow(url)` ouvre parfois l'accueil.)*
 
 ## Données
 
