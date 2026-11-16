@@ -45,6 +45,7 @@ export {
   prepareRoundDeck,
   saveNextRound,
   createMovieNight,
+  createGuestMovieNight,
   buildSoloDeck,
   joinMovieNightByCode,
   inviteFriend,

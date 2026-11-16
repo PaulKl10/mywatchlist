@@ -103,12 +103,20 @@ describe("buildMovieNightState", () => {
     expect(state.participants.map((p) => p.name)).toEqual(["Paul", "Léa"]);
     expect(state.participants[1]).toMatchObject({ isGuest: true, isHost: false, avatarUrl: null });
     expect(state.invitedFriendIds).toEqual(["u-friend"]);
-    expect(state.me).toEqual({ participantId: "p-host", isHost: true });
+    expect(state.me).toEqual({ participantId: "p-host", isHost: true, isGuest: false });
     expect(state.settings).toEqual({ providerIds: [8], genreIds: [35], includeSeen: false });
 
     const asGuest = buildMovieNightState(input({ rounds: [], meId: guest.id }, { status: "LOBBY" }));
     expect(asGuest.invitedFriendIds).toEqual([]);
     expect(asGuest.me.isHost).toBe(false);
+  });
+
+  it("me.isGuest : vrai pour un participant sans compte, hôte compris", () => {
+    const guestHost: TStateParticipant = { ...guest, id: "p-guest-host", isHost: true };
+    const state = buildMovieNightState(
+      input({ participants: [guestHost, guest], meId: guestHost.id }, { status: "LOBBY" }),
+    );
+    expect(state.me).toEqual({ participantId: "p-guest-host", isHost: true, isGuest: true });
   });
 
   it("swipe : mes votes seulement, compteurs des autres, pas de code", () => {

@@ -147,35 +147,38 @@ async function rememberProviders(userId: string, providerIds: number[]): Promise
   await prisma.user.update({ where: { id: userId }, data: { streaming_provider_ids: providerIds } });
 }
 
-/** Crée une session en salle d'attente dont `host` est l'hôte (le solo ne crée pas de session). */
-export async function createMovieNight(
-  host: User,
-  settings: TMovieNightSettings,
-  now: Date = new Date()
-): Promise<TResult<{ id: string }>> {
+/**
+ * Insère une session en salle d'attente avec son hôte, atomiquement. Supprime
+ * paresseusement les sessions expirées et retente avec un nouveau code en cas de collision.
+ */
+async function insertMovieNight(
+  args: {
+    hostId: string | null;
+    hostParticipant: Prisma.MovieNightParticipantCreateWithoutMovieNightInput;
+    settings: TMovieNightSettings;
+  },
+  now: Date
+): Promise<{ id: string; expiresAt: Date }> {
+  const { hostId, hostParticipant, settings } = args;
   await prisma.movieNight.deleteMany({ where: { expiresAt: { lt: now } } });
-  await rememberProviders(host.id, settings.providerIds);
 
   for (let attempt = 1; ; attempt++) {
     try {
       // Une création avec écriture imbriquée est atomique : session et hôte ensemble.
-      const night = await prisma.movieNight.create({
+      return await prisma.movieNight.create({
         data: {
           code: generateMovieNightCode(),
-          hostId: host.id,
+          hostId,
           status: "LOBBY",
           provider_ids: settings.providerIds,
           genre_ids: settings.genreIds,
           deck_size: DECK_SIZE,
           include_seen: settings.includeSeen,
           expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-          participants: {
-            create: { userId: host.id, status: "JOINED", isHost: true, lastSeenAt: now },
-          },
+          participants: { create: hostParticipant },
         },
-        select: { id: true },
+        select: { id: true, expiresAt: true },
       });
-      return ok({ id: night.id });
     } catch (error) {
       // Seul le code est unique parmi ces nouvelles lignes : collision → nouveau code.
       if (!isUniqueViolation(error) || attempt >= MAX_CODE_ATTEMPTS) throw error;
@@ -183,20 +186,74 @@ export async function createMovieNight(
   }
 }
 
+/** Crée une session en salle d'attente dont `host` est l'hôte (le solo ne crée pas de session). */
+export async function createMovieNight(
+  host: User,
+  settings: TMovieNightSettings,
+  now: Date = new Date()
+): Promise<TResult<{ id: string }>> {
+  await rememberProviders(host.id, settings.providerIds);
+  const night = await insertMovieNight(
+    {
+      hostId: host.id,
+      hostParticipant: {
+        user: { connect: { id: host.id } },
+        status: "JOINED",
+        isHost: true,
+        lastSeenAt: now,
+      },
+      settings,
+    },
+    now
+  );
+  return ok({ id: night.id });
+}
+
+/**
+ * Crée une session dont l'hôte est un invité (sans compte) identifié par un pseudo et le
+ * cookie invité : renvoie le jeton à poser. Rien n'est écrit si le pseudo est invalide.
+ */
+export async function createGuestMovieNight(
+  args: { guestName: unknown; settings: TMovieNightSettings },
+  now: Date = new Date()
+): Promise<TResult<{ id: string; guestToken: string; expiresAt: Date }>> {
+  const guestName = parseGuestName(args.guestName);
+  if (guestName === null) {
+    return fail("invalid_input", `Choisissez un pseudo de 1 à ${GUEST_NAME_MAX_LENGTH} caractères.`);
+  }
+  const { token, hash } = createGuestToken();
+  const night = await insertMovieNight(
+    {
+      hostId: null,
+      hostParticipant: {
+        guestName,
+        guestTokenHash: hash,
+        status: "JOINED",
+        isHost: true,
+        lastSeenAt: now,
+      },
+      settings: args.settings,
+    },
+    now
+  );
+  return ok({ id: night.id, guestToken: token, expiresAt: night.expiresAt });
+}
+
 /**
  * Pile d'une partie solo, jouée dans le navigateur : aucune session en base. Mémorise les
- * plateformes, exclut les déjà-vus de `user` (sauf `includeSeen`) et `excludedMovieIds`
+ * plateformes et exclut les déjà-vus de `user` (sauf `includeSeen`) ; sans compte (`user` nul),
+ * ni l'un ni l'autre. Exclut aussi `excludedMovieIds`
  * (films déjà proposés, pour « Nouvelle pile »). `MovieNightTmdbError` si TMDB échoue.
  */
 export async function buildSoloDeck(
-  user: User,
+  user: User | null,
   settings: TMovieNightSettings,
   excludedMovieIds: number[]
 ): Promise<TResult<TDeckMovie[]>> {
-  await rememberProviders(user.id, settings.providerIds);
+  if (user) await rememberProviders(user.id, settings.providerIds);
   return prepareRoundDeck({
     settings,
-    participantUserIds: [user.id],
+    participantUserIds: user ? [user.id] : [],
     previousMovieIds: excludedMovieIds,
   });
 }
@@ -421,8 +478,8 @@ export async function listPendingInvites(
   });
   return rows.map((row) => ({
     movieNightId: row.movieNight.id,
-    hostName: userDisplayName(row.movieNight.host),
-    hostAvatarUrl: userAvatarUrl(row.movieNight.host),
+    hostName: row.movieNight.host ? userDisplayName(row.movieNight.host) : "Invité",
+    hostAvatarUrl: row.movieNight.host ? userAvatarUrl(row.movieNight.host) : null,
     createdAt: row.createdAt.toISOString(),
   }));
 }

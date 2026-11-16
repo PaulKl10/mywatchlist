@@ -40,7 +40,7 @@ export type TMovieNightState = {
   status: TMovieNightStatus;
   code: string | null; // seulement en LOBBY
   settings: TMovieNightSettings;
-  me: { participantId: string; isHost: boolean };
+  me: { participantId: string; isHost: boolean; isGuest: boolean };
   canDecide: boolean;
   participants: TParticipantView[]; // statut JOINED uniquement
   invitedFriendIds: string[]; // ids User des amis au statut INVITED (vue hôte en LOBBY)

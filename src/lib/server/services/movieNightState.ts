@@ -201,7 +201,7 @@ export function buildMovieNightState(input: TMovieNightStateInput): TMovieNightS
     status,
     code: status === "LOBBY" ? night.code : null,
     settings: toMovieNightSettings(night),
-    me: { participantId: meId, isHost: me?.isHost ?? false },
+    me: { participantId: meId, isHost: me?.isHost ?? false, isGuest: me ? me.userId === null : false },
     canDecide: canParticipantDecide(meId, likes, now),
     participants: views,
     invitedFriendIds:
