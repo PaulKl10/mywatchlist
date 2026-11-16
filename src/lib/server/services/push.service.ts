@@ -122,6 +122,11 @@ async function sendPushToUser(userId: string, payload: TPushPayload): Promise<vo
   }
 }
 
+/** Envoie tout de suite (tâche planifiée, hors requête d'un utilisateur). Ne lève jamais. */
+export async function sendPushNotification(userId: string, event: TPushEvent): Promise<void> {
+  await sendPushToUser(userId, buildPushPayload(event));
+}
+
 /** Planifie l'envoi après la réponse. À appeler depuis un Route Handler uniquement. */
 export function schedulePushNotification(userId: string, event: TPushEvent): void {
   after(() => sendPushToUser(userId, buildPushPayload(event)));

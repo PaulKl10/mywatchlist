@@ -119,6 +119,18 @@ model Activity {
   @@index([createdAt])
 }
 
+/// Plateformes d'un titre présent dans au moins une watchlist, relevées chaque jour
+/// (alerte « enfin dispo »). Aucune donnée personnelle.
+model TitleAvailability {
+  media_type   String // "movie" | "tv"
+  tmdb_id      Int
+  provider_ids Int[] // plateformes qui le proposent en abonnement en France (JustWatch via TMDB)
+  checked_at   DateTime
+
+  @@id([media_type, tmdb_id])
+  @@index([checked_at])
+}
+
 model Session {
   id               String @id @default(cuid())
   tmdb_session_id  String @unique

@@ -12,7 +12,15 @@ export type TPushEvent =
       title: string;
       mediaType: "movie" | "tv";
       tmdbId: number;
-    };
+    }
+  | {
+      type: "now_available";
+      title: string;
+      mediaType: "movie" | "tv";
+      tmdbId: number;
+      providerName: string;
+    }
+  | { type: "now_available_many"; count: number; providerNames: string[] };
 
 /** Abonnement push normalisé (issu de `PushSubscription.toJSON()`). */
 export type TPushSubscriptionInput = { endpoint: string; p256dh: string; auth: string };

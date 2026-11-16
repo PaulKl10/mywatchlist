@@ -1,28 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { tmdbClient, tmdbErrorMessage } from "@/lib/tmdb-client";
-import { WATCH_REGION } from "@/lib/movie-night/constants";
-import { pickProviderBadge, type TTmdbFlatrateProvider } from "@/lib/movie-night/deck";
+import { tmdbErrorMessage } from "@/lib/tmdb-client";
 import type { TMediaType } from "@/types/movie.type";
 import type { TAvailableWatchlistItem } from "@/types/watchlist.type";
+import { fetchFrenchStreamingProviders } from "./movieNightDeck.service";
+import { fetchFrenchFlatrateIds } from "./watchProviders.service";
 
 /** Médias de la watchlist vérifiés au plus (les plus récemment ajoutés). */
 const MAX_ITEMS = 250;
 /** Fiches de plateformes demandées en parallèle à TMDB. */
 const CONCURRENCY = 10;
-
-type TWatchProvidersResponse = {
-  results?: Record<string, { flatrate?: TTmdbFlatrateProvider[] } | undefined>;
-};
-
-async function fetchFlatrate(mediaType: TMediaType, id: number): Promise<TTmdbFlatrateProvider[]> {
-  const data = await tmdbClient.get<TWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`);
-  return data.results?.[WATCH_REGION]?.flatrate ?? [];
-}
+/** Un relevé quotidien (alerte « enfin dispo ») plus récent que ça est réutilisé tel quel. */
+const FRESH_FOR_MS = 26 * 60 * 60 * 1000;
 
 /**
  * Médias de la watchlist (copie en base) inclus dans un abonnement parmi `providerIds`, en
  * France, du plus récemment ajouté au plus ancien. `truncated` si la watchlist dépasse
- * MAX_ITEMS. Un média dont TMDB ne renvoie pas les plateformes est omis.
+ * MAX_ITEMS. Les relevés quotidiens récents évitent de relire TMDB ; ils ne sont jamais écrits
+ * ici, sinon le passage quotidien manquerait l'arrivée d'un titre sur une plateforme.
  */
 export async function getAvailableWatchlistItems(
   userId: string,
@@ -38,19 +32,37 @@ export async function getAvailableWatchlistItems(
   });
   const truncated = rows.length > MAX_ITEMS;
   const checked = rows.slice(0, MAX_ITEMS);
+
+  const [snapshots, providers] = await Promise.all([
+    prisma.titleAvailability.findMany({
+      where: {
+        media_type: mediaType,
+        tmdb_id: { in: checked.map((row) => row.tmdb_movie_id) },
+        checked_at: { gte: new Date(Date.now() - FRESH_FOR_MS) },
+      },
+    }),
+    fetchFrenchStreamingProviders(),
+  ]);
+  const freshIds = new Map(snapshots.map((s) => [s.tmdb_id, s.provider_ids]));
+
+  // Badge : la plateforme de l'utilisateur la plus prioritaire en France.
+  const mine = providers.filter((p) => providerIds.includes(p.id));
   const items: TAvailableWatchlistItem[] = [];
 
   for (let start = 0; start < checked.length; start += CONCURRENCY) {
     const batch = checked.slice(start, start + CONCURRENCY);
     const settled = await Promise.allSettled(
-      batch.map((row) => fetchFlatrate(mediaType, row.tmdb_movie_id))
+      batch.map(
+        (row) =>
+          freshIds.get(row.tmdb_movie_id) ?? fetchFrenchFlatrateIds(mediaType, row.tmdb_movie_id)
+      )
     );
     settled.forEach((result, i) => {
       if (result.status === "rejected") {
         console.error("[watchlist] Plateformes illisibles", tmdbErrorMessage(result.reason));
         return;
       }
-      const provider = pickProviderBadge(result.value, providerIds);
+      const provider = mine.find((p) => result.value.includes(p.id));
       if (!provider) return;
       const row = batch[i];
       items.push({

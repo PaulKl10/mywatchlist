@@ -46,7 +46,7 @@ const COLLECTED_DATA: TItem[] = [
   {
     label: "Notifications push (si vous les activez)",
     detail:
-      "adresse technique de l'appareil fournie par le navigateur et ses clés de chiffrement.",
+      "adresse technique de l'appareil fournie par le navigateur et ses clés de chiffrement. Une fois par jour, l'app vérifie si un titre de votre watchlist est arrivé sur une de vos plateformes pour vous prévenir.",
   },
   {
     label: "Mesure d'audience et performances",

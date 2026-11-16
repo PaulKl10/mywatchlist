@@ -58,4 +58,30 @@ describe("buildPushPayload", () => {
     });
     expect(title).toBe(`Max vous propose « ${"T".repeat(99)}… »`);
   });
+  it("construit l'alerte d'un film arrivé sur une plateforme", () => {
+    expect(
+      buildPushPayload({
+        type: "now_available",
+        title: "Dune",
+        mediaType: "movie",
+        tmdbId: 438631,
+        providerName: "Netflix",
+      }),
+    ).toEqual({
+      title: "« Dune » est dispo sur Netflix",
+      body: "Il est dans votre watchlist. Source : JustWatch.",
+      url: "/movies/438631",
+      tag: "available-movie-438631",
+    });
+  });
+  it("regroupe les alertes de plusieurs titres", () => {
+    expect(
+      buildPushPayload({ type: "now_available_many", count: 3, providerNames: ["Netflix", "Max"] }),
+    ).toEqual({
+      title: "3 titres de votre watchlist sont dispo",
+      body: "Sur Netflix, Max. Source : JustWatch.",
+      url: "/watchlist",
+      tag: "available-many",
+    });
+  });
 });

@@ -21,6 +21,7 @@ export { scheduleTmdbSync } from "./tmdbSync.service";
 export { recordRating, removeRating } from "./ratings.service";
 export { getFriendsActivity } from "./activity.service";
 export { getBilan } from "./bilan.service";
+export { runAvailabilityCheck } from "./availabilityAlerts.service";
 export {
   getSuggestions,
   createSuggestion,
