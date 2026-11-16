@@ -6,20 +6,30 @@ function rated(id: number, rating: number, mediaType: "movie" | "tv" = "movie"):
 }
 
 describe("pickSeeds", () => {
-  it("ne propose rien sans note de 8 ou plus", () => {
-    expect(pickSeeds([rated(1, 7)], [rated(2, 5, "tv")], () => 0)).toEqual([]);
+  it("ne propose rien sans note de 7 ou plus", () => {
+    expect(pickSeeds([rated(1, 6.5)], [rated(2, 5, "tv")], () => 0)).toEqual([]);
   });
 
-  it("part de la dernière bonne note, puis d'un coup de cœur tiré au hasard parmi les autres", () => {
-    const seeds = pickSeeds(
-      [rated(1, 6), rated(2, 9), rated(3, 8)],
-      [rated(4, 10, "tv")],
-      () => 0.99
+  it("un titre noté 7 compte comme aimé", () => {
+    expect(pickSeeds([rated(1, 7)], [], () => 0)).toEqual([{ id: 1, mediaType: "movie", title: "t1" }]);
+  });
+
+  it("1re rangée : au hasard parmi les 5 derniers films et 5 dernières séries bien notés", () => {
+    const movies = [1, 2, 3, 4, 5, 6, 7].map((id) => rated(id, 9));
+    const tv = [11, 12, 13].map((id) => rated(id, 8, "tv"));
+    const recent = new Set([1, 2, 3, 4, 5, 11, 12, 13]);
+    const firsts = new Set(
+      [0, 0.2, 0.45, 0.7, 0.99].map((r) => pickSeeds([rated(0, 6), ...movies], tv, () => r)[0].id)
     );
-    expect(seeds).toEqual([
-      { id: 2, mediaType: "movie", title: "t2" },
-      { id: 4, mediaType: "tv", title: "t4" },
-    ]);
+    expect(firsts.size).toBeGreaterThan(1);
+    for (const id of firsts) expect(recent.has(id)).toBe(true);
+  });
+
+  it("2e rangée : au hasard parmi tous les autres coups de cœur", () => {
+    const movies = [1, 2, 3, 4, 5, 6, 7].map((id) => rated(id, 9));
+    const values = [0, 0.99];
+    const seeds = pickSeeds(movies, [], () => values.shift() ?? 0);
+    expect(seeds.map((s) => s.id)).toEqual([1, 7]);
   });
 
   it("prend la dernière bonne note de série quand aucun film n'est bien noté", () => {
