@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { unsubscribeDevice } from "@/features/Notifications/utils/devicePush";
 
 export type TAccount = {
   id: number;
@@ -55,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refetchQuery]);
 
   const logout = useCallback(async () => {
+    // Ne lève jamais : la déconnexion n'est pas bloquée par le nettoyage push.
+    await unsubscribeDevice();
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",

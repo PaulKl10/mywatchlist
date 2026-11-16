@@ -11,6 +11,7 @@ import { FriendsList } from "@/features/Profile/components/FriendsList";
 import { FriendRequestsList } from "@/features/Profile/components/FriendRequestsList";
 import { SuggestionsList } from "@/features/Suggestions/components/SuggestionsList";
 import { WatchTimeStats } from "@/features/WatchTime/components/WatchTimeStats";
+import { PushNotificationsSettings } from "@/features/Notifications/components/PushNotificationsSettings";
 import { MovieNightInvitesList } from "@/features/MovieNight/components/MovieNightInvitesList";
 import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
@@ -94,6 +95,7 @@ export function ProfileView() {
         </div>
       </section>
       <WatchTimeStats />
+      <PushNotificationsSettings />
       {/* Invitations comptées dans le badge de notifications, qui mène ici. */}
       <MovieNightInvitesList
         enabled={(notificationCounts?.movieNightInvites ?? 0) > 0}
