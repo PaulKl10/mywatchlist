@@ -36,7 +36,7 @@ const COLLECTED_DATA: TItem[] = [
   {
     label: "Fil d'activité",
     detail:
-      "les films et séries que vous notez ou ajoutez à votre watchlist, montrés à vos amis. Ils peuvent les aimer (« J'aime ») ; vous voyez qui, et vos amis voient combien.",
+      "les films et séries que vous notez ou ajoutez à votre watchlist, montrés à vos amis. Ils peuvent y réagir (j'aime, rire, je n'aime pas) ; vous voyez qui a réagi, et vos amis voient combien.",
   },
   {
     label: "« Ce soir ? »",
@@ -83,9 +83,9 @@ const RETENTION: TItem[] = [
     detail:
       "supprimées si vous n'ouvrez pas l'app pendant 5 mois, puis recréées à votre retour.",
   },
-  { label: "Fil d'activité et ses « J'aime »", detail: "30 jours." },
+  { label: "Fil d'activité et ses réactions", detail: "30 jours." },
   {
-    label: "Notifications (réponses à vos suggestions, « J'aime »)",
+    label: "Notifications (réponses à vos suggestions, réactions)",
     detail: "30 jours.",
   },
   {

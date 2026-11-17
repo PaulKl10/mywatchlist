@@ -1,4 +1,5 @@
 import { PROFILE_ANCHORS } from "@/lib/constants";
+import type { TReaction } from "@/lib/activity/reactions";
 import type { TActivityType } from "@/types/activity.type";
 import type { TMediaType } from "@/types/movie.type";
 import type { TNotificationActor, TNotificationItem } from "@/types/notification.type";
@@ -6,7 +7,7 @@ import type { TNotificationActor, TNotificationItem } from "@/types/notification
 /** Nombre maximal de notifications renvoyées au panneau. */
 export const NOTIFICATIONS_LIMIT = 50;
 
-/** Durée de conservation des notifications enregistrées (réponses aux suggestions, « J'aime »). */
+/** Durée de conservation des notifications enregistrées (réponses aux suggestions, réactions). */
 export const NOTIFICATION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Pages où chaque demande se traite. */
@@ -15,13 +16,13 @@ export const NOTIFICATION_HREFS = {
   friend_request: `/profile#${PROFILE_ANCHORS.friendRequests}`,
   suggestion: `/profile#${PROFILE_ANCHORS.suggestions}`,
 } as const satisfies Record<
-  Exclude<TNotificationItem["type"], "suggestion_answered" | "activity_liked">,
+  Exclude<TNotificationItem["type"], "suggestion_answered" | "activity_reaction">,
   string
 >;
 
 /** Notification enregistrée pas encore vue (les demandes en attente ne le sont jamais). */
 export function isUnreadNotification(item: TNotificationItem): boolean {
-  return (item.type === "suggestion_answered" || item.type === "activity_liked") && item.unread;
+  return (item.type === "suggestion_answered" || item.type === "activity_reaction") && item.unread;
 }
 
 const mediaHref = (mediaType: TMediaType, tmdbId: number) =>
@@ -49,11 +50,12 @@ export type TNotificationSources = {
     tmdbId: number;
     read: boolean;
   }[];
-  /** « J'aime » des amis sur mon activité. */
-  likes: {
+  /** Réactions des amis à mon activité. */
+  reactions: {
     id: string;
     createdAt: Date;
-    liker: TNotificationActor;
+    reactor: TNotificationActor;
+    reaction: TReaction;
     activityType: TActivityType;
     rating: number | null;
     title: string;
@@ -65,7 +67,7 @@ export type TNotificationSources = {
 
 /** Demandes en attente → notifications, de la plus récente à la plus ancienne. */
 export function buildNotificationItems(
-  { invites, friendRequests, suggestions, answers, likes }: TNotificationSources,
+  { invites, friendRequests, suggestions, answers, reactions }: TNotificationSources,
   limit: number = NOTIFICATIONS_LIMIT
 ): TNotificationItem[] {
   const dated: { at: number; item: TNotificationItem }[] = [
@@ -116,19 +118,20 @@ export function buildNotificationItems(
         unread: !answer.read,
       },
     })),
-    ...likes.map((like) => ({
-      at: like.createdAt.getTime(),
+    ...reactions.map((reaction) => ({
+      at: reaction.createdAt.getTime(),
       item: {
-        type: "activity_liked" as const,
-        id: `activity_liked:${like.id}`,
-        actor: like.liker,
-        createdAt: like.createdAt.toISOString(),
-        href: mediaHref(like.mediaType, like.tmdbId),
-        title: like.title,
-        mediaType: like.mediaType,
-        activityType: like.activityType,
-        rating: like.activityType === "RATED" ? like.rating : null,
-        unread: !like.read,
+        type: "activity_reaction" as const,
+        id: `activity_reaction:${reaction.id}`,
+        actor: reaction.reactor,
+        createdAt: reaction.createdAt.toISOString(),
+        href: mediaHref(reaction.mediaType, reaction.tmdbId),
+        reaction: reaction.reaction,
+        title: reaction.title,
+        mediaType: reaction.mediaType,
+        activityType: reaction.activityType,
+        rating: reaction.activityType === "RATED" ? reaction.rating : null,
+        unread: !reaction.read,
       },
     })),
   ];

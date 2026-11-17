@@ -20,7 +20,7 @@ export { getFriendsRatingsForTitle } from "./friendsRatings.service";
 export { syncWatchlistItem, updateTmdbWatchlist } from "./watchlist.service";
 export { scheduleTmdbSync } from "./tmdbSync.service";
 export { recordRating, removeRating } from "./ratings.service";
-export { getFriendsActivity, setActivityLike } from "./activity.service";
+export { getFriendsActivity, setActivityReaction } from "./activity.service";
 export {
   listNotifications,
   countUnreadNotifications,

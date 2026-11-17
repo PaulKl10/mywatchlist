@@ -19,8 +19,8 @@ interface NotificationBellProps {
 
 /**
  * Cloche de l'en-tête : ouvre la liste des demandes en attente (invitations « Ce soir ? »,
- * demandes d'ami, suggestions), des réponses à mes suggestions et des « J'aime » sur mon
- * activité, marqués lus à l'ouverture.
+ * demandes d'ami, suggestions), des réponses à mes suggestions et des réactions à mon
+ * activité, marquées lues à l'ouverture.
  * Un clic sur une ligne mène à la page où la traiter.
  * Le panneau se place contre l'en-tête (positionné), pas contre la cloche : il garde ainsi
  * les marges de la page, y compris sur mobile.
@@ -102,7 +102,7 @@ export function NotificationBell({ count }: NotificationBellProps) {
           <p className="font-medium text-zinc-700 dark:text-zinc-300">Aucune notification</p>
           <p className="mt-1">
             Invitations « Ce soir ? », suggestions, demandes d&apos;ami, réponses à vos
-            suggestions et « J&apos;aime » sur votre activité arriveront ici.
+            suggestions et réactions à votre activité arriveront ici.
           </p>
         </div>
       );

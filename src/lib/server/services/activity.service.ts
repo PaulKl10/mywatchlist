@@ -1,5 +1,12 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  countReactions,
+  REACTION_NOTIFICATION_TYPES,
+  storedReaction,
+  type TReaction,
+  type TReactionCounts,
+} from "@/lib/activity/reactions";
 import type { TActivityItem, TActivityType } from "@/types/activity.type";
 import type { TMediaType } from "@/types/movie.type";
 import { findAcceptedFriendship, getFriendIds } from "./friends.service";
@@ -32,15 +39,17 @@ export function activityData(
  * Enregistre l'événement d'un titre, ou le remonte en tête du fil s'il existe déjà : un seul
  * événement par utilisateur, type et titre (contrainte unique), même si l'app et la
  * resynchro le signalent en même temps. Un événement remonté est un nouvel événement (note
- * changée…) : ses « J'aime » et leurs notifications repartent de zéro.
+ * changée…) : ses réactions et leurs notifications repartent de zéro.
  * Opérations à exécuter dans une même transaction.
  */
 export function upsertActivity(data: Prisma.ActivityCreateManyInput) {
   const { userId, type, media_type, tmdb_id, title, poster_path, rating } = data;
   const key = { userId, type, media_type, tmdb_id };
   return [
-    prisma.activityLike.deleteMany({ where: { activity: key } }),
-    prisma.userNotification.deleteMany({ where: { type: "ACTIVITY_LIKED", activity: key } }),
+    prisma.activityReaction.deleteMany({ where: { activity: key } }),
+    prisma.userNotification.deleteMany({
+      where: { type: { in: REACTION_NOTIFICATION_TYPES }, activity: key },
+    }),
     prisma.activity.upsert({
       where: { userId_type_media_type_tmdb_id: key },
       create: data,
@@ -83,8 +92,7 @@ export async function getFriendsActivity(
       user: {
         select: { tmdb_id: true, username: true, gravatar_hash: true, tmdb_avatar_path: true },
       },
-      _count: { select: { likes: true } },
-      likes: { where: { userId }, select: { id: true } },
+      reactions: { select: { userId: true, kind: true } },
     },
   });
 
@@ -97,8 +105,11 @@ export async function getFriendsActivity(
     posterPath: row.poster_path,
     rating: row.rating,
     createdAt: row.createdAt.toISOString(),
-    likeCount: row._count.likes,
-    likedByMe: row.likes.length > 0,
+    reactions: countReactions(row.reactions.map((reaction) => reaction.kind)),
+    myReaction: (() => {
+      const mine = row.reactions.find((reaction) => reaction.userId === userId);
+      return mine ? storedReaction(mine.kind) : null;
+    })(),
     user: {
       tmdbId: row.user.tmdb_id,
       name: userDisplayName(row.user),
@@ -108,20 +119,21 @@ export async function getFriendsActivity(
   return { items, hasFriends: true };
 }
 
-export type TActivityLikeResult =
-  | { ok: true; liked: boolean; likeCount: number }
+export type TActivityReactionResult =
+  | { ok: true; reaction: TReaction | null; counts: TReactionCounts }
   | { ok: false; error: "not_found" };
 
 /**
- * « J'aime » (ou retrait) de `userId` sur un événement du fil d'un ami. L'auteur est prévenu
- * par une notification, retirée avec le « J'aime ». Un événement inconnu, à soi ou d'un
- * non-ami renvoie `not_found` (rien n'est révélé). Idempotent.
+ * Réaction de `userId` (ou retrait avec null) à un événement du fil d'un ami : une par
+ * personne, remplacée par la suivante. L'auteur est prévenu par une notification, remplacée
+ * ou retirée avec la réaction. Un événement inconnu, à soi ou d'un non-ami renvoie
+ * `not_found` (rien n'est révélé). Idempotent.
  */
-export async function setActivityLike(
+export async function setActivityReaction(
   userId: string,
   activityId: string,
-  liked: boolean
-): Promise<TActivityLikeResult> {
+  reaction: TReaction | null
+): Promise<TActivityReactionResult> {
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
     select: { id: true, userId: true, tmdb_id: true, media_type: true, title: true },
@@ -131,18 +143,29 @@ export async function setActivityLike(
     return { ok: false, error: "not_found" };
   }
 
-  const likeCount = await prisma.$transaction(async (tx) => {
-    if (liked) {
-      const { count } = await tx.activityLike.createMany({
-        data: [{ activityId, userId }],
-        skipDuplicates: true,
+  const counts = await prisma.$transaction(async (tx) => {
+    const key = { activityId_userId: { activityId, userId } };
+    const existing = await tx.activityReaction.findUnique({ where: key, select: { kind: true } });
+    const current = existing ? storedReaction(existing.kind) : null;
+
+    if (current !== reaction) {
+      await tx.userNotification.deleteMany({
+        where: { type: { in: REACTION_NOTIFICATION_TYPES }, actorId: userId, activityId },
       });
-      if (count === 1) {
+      if (reaction === null) {
+        await tx.activityReaction.deleteMany({ where: { activityId, userId } });
+      } else {
+        await tx.activityReaction.upsert({
+          where: key,
+          create: { activityId, userId, kind: reaction },
+          update: { kind: reaction },
+        });
         await tx.userNotification.create({
           data: {
             userId: activity.userId,
             actorId: userId,
-            type: "ACTIVITY_LIKED",
+            type: "ACTIVITY_REACTION",
+            reaction,
             activityId,
             tmdb_id: activity.tmdb_id,
             media_type: activity.media_type,
@@ -150,14 +173,11 @@ export async function setActivityLike(
           },
         });
       }
-    } else {
-      await tx.activityLike.deleteMany({ where: { activityId, userId } });
-      await tx.userNotification.deleteMany({
-        where: { type: "ACTIVITY_LIKED", actorId: userId, activityId },
-      });
     }
-    return tx.activityLike.count({ where: { activityId } });
+
+    const rows = await tx.activityReaction.findMany({ where: { activityId }, select: { kind: true } });
+    return countReactions(rows.map((row) => row.kind));
   });
 
-  return { ok: true, liked, likeCount };
+  return { ok: true, reaction, counts };
 }

@@ -1,3 +1,4 @@
+import type { TReaction } from "@/lib/activity/reactions";
 import type { TActivityType } from "./activity.type";
 import type { TMediaType } from "./movie.type";
 
@@ -17,7 +18,7 @@ type TNotificationBase = {
 /**
  * Notification du panneau de l'en-tête. Les demandes en attente (invitation, demande d'ami,
  * suggestion) disparaissent dès qu'elles sont traitées ; les réponses à mes suggestions et
- * les « J'aime » sur mon activité restent 30 jours, signalés tant qu'ils ne sont pas lus.
+ * les réactions à mon activité restent 30 jours, signalées tant qu'elles ne sont pas lues.
  */
 export type TNotificationItem =
   | (TNotificationBase & { type: "movie_night_invite" })
@@ -33,10 +34,11 @@ export type TNotificationItem =
       unread: boolean;
     })
   | (TNotificationBase & {
-      type: "activity_liked";
+      type: "activity_reaction";
+      reaction: TReaction;
       title: string;
       mediaType: TMediaType;
-      /** Événement aimé : note (avec sa valeur) ou ajout à la watchlist. */
+      /** Événement concerné : note (avec sa valeur) ou ajout à la watchlist. */
       activityType: TActivityType;
       rating: number | null;
       unread: boolean;

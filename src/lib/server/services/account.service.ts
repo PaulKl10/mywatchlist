@@ -8,7 +8,7 @@ import { revokeTmdbSession } from "./session.service";
  *
  * Amitiés et suggestions n'ont pas de suppression en cascade : elles sont effacées dans la
  * même transaction. Le reste part en cascade avec l'utilisateur : sessions, copies de la
- * watchlist et des notes, fil d'activité et « J'aime », notifications (reçues et provoquées), temps de
+ * watchlist et des notes, fil d'activité et réactions, notifications (reçues et provoquées), temps de
  * visionnage, abonnements push, soirées hébergées (avec leurs participants et votes) et
  * participations aux soirées des autres.
  *

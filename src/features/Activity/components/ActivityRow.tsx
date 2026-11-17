@@ -2,42 +2,77 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, User } from "lucide-react";
+import { Heart, Laugh, ThumbsDown, User, type LucideIcon } from "lucide-react";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import { formatRating } from "@/lib/ratings/format";
 import type { TActivityItem } from "@/types/activity.type";
-import { useActivityLikeMutation } from "../hooks/useActivityLikeMutation";
+import type { TReaction } from "@/lib/activity/reactions";
+import { useActivityReactionMutation } from "../hooks/useActivityReactionMutation";
 import { formatRelativeTime } from "../utils/relativeTime";
 
-/** « J'aime » de l'événement : bouton bascule et nombre de « J'aime ». */
-function LikeButton({ item }: { item: TActivityItem }) {
-  const like = useActivityLikeMutation();
-  const label = item.likedByMe
-    ? `Ne plus aimer l'activité de ${item.user.name}`
-    : `Aimer l'activité de ${item.user.name}`;
+const REACTION_BUTTONS: {
+  reaction: TReaction;
+  Icon: LucideIcon;
+  /** Verbe de l'action, pour le nom accessible. */
+  verb: string;
+  activeClass: string;
+}[] = [
+  {
+    reaction: "LIKE",
+    Icon: Heart,
+    verb: "Aimer",
+    activeClass: "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10",
+  },
+  {
+    reaction: "LAUGH",
+    Icon: Laugh,
+    verb: "Rire de",
+    activeClass: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10",
+  },
+  {
+    reaction: "DISLIKE",
+    Icon: ThumbsDown,
+    verb: "Ne pas aimer",
+    activeClass: "text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/10",
+  },
+];
+
+/** Réactions à l'événement : une au plus par personne ; un 2e clic sur la même la retire. */
+function ReactionBar({ item }: { item: TActivityItem }) {
+  const react = useActivityReactionMutation();
 
   return (
-    <button
-      type="button"
-      onClick={() => like.mutate({ activityId: item.id, liked: !item.likedByMe })}
-      disabled={like.isPending}
-      aria-pressed={item.likedByMe}
-      aria-label={label}
-      title={label}
-      className={`-my-1 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors disabled:opacity-60 ${
-        item.likedByMe
-          ? "text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
-          : "text-zinc-500 hover:bg-zinc-100 hover:text-rose-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-rose-400"
-      }`}
-    >
-      <Heart className={`h-4 w-4 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
-      {item.likeCount > 0 && (
-        <span>
-          {item.likeCount}
-          <span className="sr-only"> J&apos;aime</span>
-        </span>
-      )}
-    </button>
+    <div className="-my-1 flex items-center gap-0.5" role="group" aria-label="Réactions">
+      {REACTION_BUTTONS.map(({ reaction, Icon, verb, activeClass }) => {
+        const isMine = item.myReaction === reaction;
+        const count = item.reactions[reaction];
+        const label = `${verb} l'activité de ${item.user.name}`;
+        return (
+          <button
+            key={reaction}
+            type="button"
+            onClick={() =>
+              react.mutate({ activityId: item.id, reaction: isMine ? null : reaction })
+            }
+            disabled={react.isPending}
+            aria-pressed={isMine}
+            aria-label={count > 0 ? `${label} (${count})` : label}
+            title={label}
+            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors disabled:opacity-60 ${
+              isMine
+                ? activeClass
+                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            }`}
+          >
+            <Icon
+              className={`h-4 w-4 ${isMine && reaction === "LIKE" ? "fill-current" : ""}`}
+              aria-hidden="true"
+            />
+            {count > 0 && <span aria-hidden="true">{count}</span>}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -90,7 +125,7 @@ export function ActivityRow({ item, now }: { item: TActivityItem; now: Date }) {
           >
             {formatRelativeTime(new Date(item.createdAt), now)}
           </time>
-          <LikeButton item={item} />
+          <ReactionBar item={item} />
         </div>
       </div>
 

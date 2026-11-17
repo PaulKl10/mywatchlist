@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { REACTION_NOTIFICATION_TYPES, storedReaction } from "@/lib/activity/reactions";
 import {
   buildNotificationItems,
   NOTIFICATION_MAX_AGE_MS,
@@ -18,7 +19,7 @@ function storedNotificationsWhere(userId: string, now: Date) {
 /**
  * Notifications du panneau, les plus récentes d'abord : demandes en attente (invitations
  * « Ce soir ? », demandes d'ami, suggestions ; mêmes critères que le compteur), réponses
- * des amis à mes suggestions et « J'aime » sur mon activité.
+ * des amis à mes suggestions et réactions à mon activité.
  */
 export async function listNotifications(
   userId: string,
@@ -58,6 +59,7 @@ export async function listNotifications(
         readAt: true,
         createdAt: true,
         actor: { select: USER_DISPLAY_SELECT },
+        reaction: true,
         activity: { select: { type: true, rating: true } },
       },
     }),
@@ -66,9 +68,11 @@ export async function listNotifications(
   const answers = stored.filter(
     (row) => row.type === "SUGGESTION_ACCEPTED" || row.type === "SUGGESTION_DECLINED"
   );
-  // L'événement aimé part avec sa notification (cascade) : `activity` est toujours là.
-  const likes = stored.flatMap((row) =>
-    row.type === "ACTIVITY_LIKED" && row.activity ? [{ ...row, activity: row.activity }] : []
+  // L'événement part avec ses notifications (cascade) : `activity` est toujours là.
+  const reactions = stored.flatMap((row) =>
+    REACTION_NOTIFICATION_TYPES.includes(row.type) && row.activity
+      ? [{ ...row, activity: row.activity }]
+      : []
   );
 
   return buildNotificationItems({
@@ -100,16 +104,17 @@ export async function listNotifications(
       tmdbId: answer.tmdb_id,
       read: answer.readAt !== null,
     })),
-    likes: likes.map((like) => ({
-      id: like.id,
-      createdAt: like.createdAt,
-      liker: toActor(like.actor),
-      activityType: like.activity.type === "RATED" ? "RATED" : "WATCHLIST_ADDED",
-      rating: like.activity.rating,
-      title: like.title,
-      mediaType: like.media_type === "tv" ? "tv" : "movie",
-      tmdbId: like.tmdb_id,
-      read: like.readAt !== null,
+    reactions: reactions.map((row) => ({
+      id: row.id,
+      createdAt: row.createdAt,
+      reactor: toActor(row.actor),
+      reaction: storedReaction(row.reaction),
+      activityType: row.activity.type === "RATED" ? "RATED" : "WATCHLIST_ADDED",
+      rating: row.activity.rating,
+      title: row.title,
+      mediaType: row.media_type === "tv" ? "tv" : "movie",
+      tmdbId: row.tmdb_id,
+      read: row.readAt !== null,
     })),
   });
 }

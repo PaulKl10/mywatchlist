@@ -1,3 +1,4 @@
+import type { TReaction, TReactionCounts } from "@/lib/activity/reactions";
 import type { TMediaType } from "./movie.type";
 
 export type TActivityType = "RATED" | "WATCHLIST_ADDED";
@@ -14,8 +15,9 @@ export type TActivityItem = {
   rating: number | null;
   /** ISO 8601. */
   createdAt: string;
-  /** « J'aime » des amis de l'auteur. */
-  likeCount: number;
-  likedByMe: boolean;
+  /** Réactions des amis de l'auteur, par type. */
+  reactions: TReactionCounts;
+  /** Ma réaction, une au plus. */
+  myReaction: TReaction | null;
   user: { tmdbId: number; name: string; avatarUrl: string | null };
 };

@@ -14,7 +14,7 @@ const empty: TNotificationSources = {
   friendRequests: [],
   suggestions: [],
   answers: [],
-  likes: [],
+  reactions: [],
 };
 
 const answer = (overrides: Partial<TNotificationSources["answers"][number]> = {}) => ({
@@ -140,14 +140,15 @@ describe("buildNotificationItems", () => {
     expect(item).toMatchObject({ accepted: true, reason: null });
   });
 
-  it("« J'aime » sur mon activité : mène à la fiche, garde la note aimée", () => {
-    const [rated, added] = buildNotificationItems({
+  it("réaction à mon activité : mène à la fiche, garde la réaction et la note", () => {
+    const [laughed, liked] = buildNotificationItems({
       ...empty,
-      likes: [
+      reactions: [
         {
-          id: "l1",
+          id: "r1",
           createdAt: at("2026-11-17T10:00:00Z"),
-          liker: actor("Tom"),
+          reactor: actor("Tom"),
+          reaction: "LAUGH",
           activityType: "RATED",
           rating: 9,
           title: "Dune",
@@ -156,9 +157,10 @@ describe("buildNotificationItems", () => {
           read: false,
         },
         {
-          id: "l2",
+          id: "r2",
           createdAt: at("2026-11-17T09:00:00Z"),
-          liker: actor("Léa"),
+          reactor: actor("Léa"),
+          reaction: "LIKE",
           activityType: "WATCHLIST_ADDED",
           rating: 7,
           title: "The Bear",
@@ -168,19 +170,26 @@ describe("buildNotificationItems", () => {
         },
       ],
     });
-    expect(rated).toEqual({
-      type: "activity_liked",
-      id: "activity_liked:l1",
+    expect(laughed).toEqual({
+      type: "activity_reaction",
+      id: "activity_reaction:r1",
       actor: actor("Tom"),
       createdAt: "2026-11-17T10:00:00.000Z",
       href: "/movies/438631",
+      reaction: "LAUGH",
       title: "Dune",
       mediaType: "movie",
       activityType: "RATED",
       rating: 9,
       unread: true,
     });
-    expect(added).toMatchObject({ href: "/tv/136315", activityType: "WATCHLIST_ADDED", rating: null, unread: false });
+    expect(liked).toMatchObject({
+      href: "/tv/136315",
+      reaction: "LIKE",
+      activityType: "WATCHLIST_ADDED",
+      rating: null,
+      unread: false,
+    });
   });
 
   it("seules les notifications enregistrées peuvent être non lues", () => {

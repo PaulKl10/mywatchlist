@@ -1,7 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookmarkCheck, Clapperboard, Gift, Heart, User, UserPlus, X } from "lucide-react";
+import {
+  BookmarkCheck,
+  Clapperboard,
+  Gift,
+  Heart,
+  Laugh,
+  ThumbsDown,
+  User,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { formatRelativeTime } from "@/features/Activity/utils/relativeTime";
+import type { TReaction } from "@/lib/activity/reactions";
 import { isUnreadNotification } from "@/lib/notifications/items";
 import { formatRating } from "@/lib/ratings/format";
 import { declineReasonLabel } from "@/lib/suggestions/declineReasons";
@@ -9,6 +20,13 @@ import type { TNotificationItem } from "@/types/notification.type";
 
 /** « Titre », guillemets collés au titre par des espaces insécables. */
 const quoted = (title: string) => `«\u00A0${title}\u00A0»`;
+
+/** « Tom aime / rit de / n'aime pas votre note de… » */
+const REACTION_VERBS: Record<TReaction, string> = {
+  LIKE: "aime",
+  LAUGH: "rit de",
+  DISLIKE: "n'aime pas",
+};
 
 /** Pictogramme du type, posé sur l'avatar. */
 function NotificationIcon({ item }: { item: TNotificationItem }) {
@@ -26,8 +44,15 @@ function NotificationIcon({ item }: { item: TNotificationItem }) {
       ) : (
         <X className={className} aria-hidden="true" />
       );
-    case "activity_liked":
-      return <Heart className={`${className} fill-current`} aria-hidden="true" />;
+    case "activity_reaction":
+      switch (item.reaction) {
+        case "LIKE":
+          return <Heart className={`${className} fill-current`} aria-hidden="true" />;
+        case "LAUGH":
+          return <Laugh className={className} aria-hidden="true" />;
+        case "DISLIKE":
+          return <ThumbsDown className={className} aria-hidden="true" />;
+      }
   }
 }
 
@@ -61,13 +86,14 @@ function NotificationText({ item }: { item: TNotificationItem }) {
         </>
       );
     }
-    case "activity_liked": {
+    case "activity_reaction": {
       const title = (
         <span className="font-medium text-zinc-900 dark:text-zinc-100">{quoted(item.title)}</span>
       );
+      const verb = REACTION_VERBS[item.reaction];
       return item.activityType === "RATED" ? (
         <>
-          {name} aime votre note de {title}
+          {name} {verb} votre note de {title}
           {item.rating !== null && (
             <span className="ml-1.5 whitespace-nowrap font-semibold text-amber-600 dark:text-amber-500">
               <span aria-hidden="true">★ </span>
@@ -78,7 +104,7 @@ function NotificationText({ item }: { item: TNotificationItem }) {
         </>
       ) : (
         <>
-          {name} aime votre ajout de {title} à votre watchlist
+          {name} {verb} votre ajout de {title} à votre watchlist
         </>
       );
     }
@@ -93,7 +119,7 @@ interface NotificationRowProps {
 
 /**
  * Ligne du panneau : avatar de l'ami, pictogramme du type, texte et date (et motif d'un refus) ;
- * mène à la page où traiter la demande, ou à la fiche du titre pour une réponse ou un « J'aime ».
+ * mène à la page où traiter la demande, ou à la fiche du titre pour une réponse ou une réaction.
  */
 export function NotificationRow({ item, now, onNavigate }: NotificationRowProps) {
   const isUnread = isUnreadNotification(item);
@@ -117,7 +143,8 @@ export function NotificationRow({ item, now, onNavigate }: NotificationRowProps)
           </span>
           <span
             className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-white dark:ring-zinc-900 ${
-              item.type === "suggestion_answered" && !item.accepted
+              (item.type === "suggestion_answered" && !item.accepted) ||
+              (item.type === "activity_reaction" && item.reaction === "DISLIKE")
                 ? "bg-zinc-500 text-white dark:bg-zinc-600"
                 : "bg-amber-500 text-zinc-900"
             }`}

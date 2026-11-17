@@ -37,9 +37,9 @@ model User {
   ratings_synced_at   DateTime?
 
   // Copie des notes TMDB (profils des amis, fil d'activité, bilan)
-  ratingItems   RatingItem[]
-  activities    Activity[]
-  activityLikes ActivityLike[]
+  ratingItems       RatingItem[]
+  activities        Activity[]
+  activityReactions ActivityReaction[]
 
   // Notifications enregistrées (réponses aux suggestions), reçues et provoquées
   notifications     UserNotification[] @relation("notificationRecipient")
@@ -117,7 +117,7 @@ model Activity {
   createdAt   DateTime @default(now())
 
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes         ActivityLike[]
+  reactions     ActivityReaction[]
   notifications UserNotification[]
 
   // Un seul événement par titre et par type : le plus récent.
@@ -126,11 +126,13 @@ model Activity {
   @@index([createdAt])
 }
 
-/// « J'aime » d'un ami sur un événement du fil, supprimé avec l'événement (30 jours).
-model ActivityLike {
+/// Réaction d'un ami (j'aime, rire, je n'aime pas) à un événement du fil, une par ami,
+/// supprimée avec l'événement (30 jours). Table créée pour les seuls « J'aime ».
+model ActivityReaction {
   id         String   @id @default(cuid())
   activityId String
-  userId     String // ami qui aime
+  userId     String // ami qui réagit
+  kind       String   @default("LIKE") // LIKE | LAUGH | DISLIKE
   createdAt  DateTime @default(now())
 
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
@@ -138,6 +140,7 @@ model ActivityLike {
 
   @@unique([activityId, userId])
   @@index([userId])
+  @@map("ActivityLike")
 }
 
 /// Notification enregistrée pour le panneau de l'en-tête, gardée 30 jours. Les demandes en
@@ -146,12 +149,13 @@ model UserNotification {
   id         String    @id @default(cuid())
   userId     String // destinataire
   actorId    String // ami à l'origine
-  type       String // SUGGESTION_ACCEPTED | SUGGESTION_DECLINED | ACTIVITY_LIKED
+  type       String // SUGGESTION_ACCEPTED | SUGGESTION_DECLINED | ACTIVITY_REACTION (ACTIVITY_LIKED : ancien « J'aime »)
   tmdb_id    Int
   media_type String // "movie" | "tv"
   title      String
   reason     String? // motif du refus (voir src/lib/suggestions/declineReasons.ts)
-  activityId String? // événement aimé (ACTIVITY_LIKED), supprimé avec lui
+  reaction   String? // réaction à l'événement (ACTIVITY_REACTION) : LIKE | LAUGH | DISLIKE
+  activityId String? // événement concerné par la réaction, supprimé avec lui
   readAt     DateTime?
   createdAt  DateTime  @default(now())
 
