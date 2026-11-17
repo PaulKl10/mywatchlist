@@ -1,10 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { buildNotificationItems, NOTIFICATION_HREFS, type TNotificationSources } from "./items";
+import {
+  buildNotificationItems,
+  isUnreadNotification,
+  NOTIFICATION_HREFS,
+  type TNotificationSources,
+} from "./items";
 
 const actor = (name: string) => ({ name, avatarUrl: null });
 const at = (iso: string) => new Date(iso);
 
-const empty: TNotificationSources = { invites: [], friendRequests: [], suggestions: [], answers: [] };
+const empty: TNotificationSources = {
+  invites: [],
+  friendRequests: [],
+  suggestions: [],
+  answers: [],
+  likes: [],
+};
 
 const answer = (overrides: Partial<TNotificationSources["answers"][number]> = {}) => ({
   id: "a1",
@@ -127,6 +138,58 @@ describe("buildNotificationItems", () => {
   it("ignore le motif d'une suggestion acceptée", () => {
     const [item] = buildNotificationItems({ ...empty, answers: [answer({ reason: "NOT_NOW" })] });
     expect(item).toMatchObject({ accepted: true, reason: null });
+  });
+
+  it("« J'aime » sur mon activité : mène à la fiche, garde la note aimée", () => {
+    const [rated, added] = buildNotificationItems({
+      ...empty,
+      likes: [
+        {
+          id: "l1",
+          createdAt: at("2026-11-17T10:00:00Z"),
+          liker: actor("Tom"),
+          activityType: "RATED",
+          rating: 9,
+          title: "Dune",
+          mediaType: "movie",
+          tmdbId: 438631,
+          read: false,
+        },
+        {
+          id: "l2",
+          createdAt: at("2026-11-17T09:00:00Z"),
+          liker: actor("Léa"),
+          activityType: "WATCHLIST_ADDED",
+          rating: 7,
+          title: "The Bear",
+          mediaType: "tv",
+          tmdbId: 136315,
+          read: true,
+        },
+      ],
+    });
+    expect(rated).toEqual({
+      type: "activity_liked",
+      id: "activity_liked:l1",
+      actor: actor("Tom"),
+      createdAt: "2026-11-17T10:00:00.000Z",
+      href: "/movies/438631",
+      title: "Dune",
+      mediaType: "movie",
+      activityType: "RATED",
+      rating: 9,
+      unread: true,
+    });
+    expect(added).toMatchObject({ href: "/tv/136315", activityType: "WATCHLIST_ADDED", rating: null, unread: false });
+  });
+
+  it("seules les notifications enregistrées peuvent être non lues", () => {
+    const items = buildNotificationItems({
+      ...empty,
+      friendRequests: [{ id: "f1", createdAt: at("2026-11-17T11:00:00Z"), sender: actor("Tom") }],
+      answers: [answer(), answer({ id: "a2", read: true })],
+    });
+    expect(items.map(isUnreadNotification)).toEqual([false, true, false]);
   });
 
   it("borne le nombre de notifications en gardant les plus récentes", () => {

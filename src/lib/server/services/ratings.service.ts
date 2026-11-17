@@ -147,7 +147,7 @@ export async function resyncRatings(
     ),
     // Une note retirée sur TMDB sort aussi du fil des amis.
     ...(plan.deletes.length > 0 ? [deleteActivities(userId, "RATED", plan.deletes)] : []),
-    ...plan.activities.map(({ tmdbId, mediaType, snapshot }) =>
+    ...plan.activities.flatMap(({ tmdbId, mediaType, snapshot }) =>
       upsertActivity(
         activityData(
           userId,
@@ -218,7 +218,7 @@ export async function recordRating(
       where: { userId, media_type: mediaType, tmdb_id: mediaId, rated_at: null },
       data: { rated_at: now },
     }),
-    upsertActivity(
+    ...upsertActivity(
       activityData(
         userId,
         "RATED",

@@ -37,8 +37,9 @@ model User {
   ratings_synced_at   DateTime?
 
   // Copie des notes TMDB (profils des amis, fil d'activité, bilan)
-  ratingItems RatingItem[]
-  activities  Activity[]
+  ratingItems   RatingItem[]
+  activities    Activity[]
+  activityLikes ActivityLike[]
 
   // Notifications enregistrées (réponses aux suggestions), reçues et provoquées
   notifications     UserNotification[] @relation("notificationRecipient")
@@ -115,12 +116,28 @@ model Activity {
   rating      Float? // pour RATED
   createdAt   DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes         ActivityLike[]
+  notifications UserNotification[]
 
   // Un seul événement par titre et par type : le plus récent.
   @@unique([userId, type, media_type, tmdb_id])
   @@index([userId, createdAt])
   @@index([createdAt])
+}
+
+/// « J'aime » d'un ami sur un événement du fil, supprimé avec l'événement (30 jours).
+model ActivityLike {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String // ami qui aime
+  createdAt  DateTime @default(now())
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId])
 }
 
 /// Notification enregistrée pour le panneau de l'en-tête, gardée 30 jours. Les demandes en
@@ -129,19 +146,22 @@ model UserNotification {
   id         String    @id @default(cuid())
   userId     String // destinataire
   actorId    String // ami à l'origine
-  type       String // SUGGESTION_ACCEPTED | SUGGESTION_DECLINED
+  type       String // SUGGESTION_ACCEPTED | SUGGESTION_DECLINED | ACTIVITY_LIKED
   tmdb_id    Int
   media_type String // "movie" | "tv"
   title      String
   reason     String? // motif du refus (voir src/lib/suggestions/declineReasons.ts)
+  activityId String? // événement aimé (ACTIVITY_LIKED), supprimé avec lui
   readAt     DateTime?
   createdAt  DateTime  @default(now())
 
-  user  User @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
-  actor User @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  user     User      @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor    User      @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  activity Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([createdAt])
+  @@index([activityId])
 }
 
 /// Plateformes d'un titre présent dans au moins une watchlist, relevées chaque jour

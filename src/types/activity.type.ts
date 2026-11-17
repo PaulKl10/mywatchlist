@@ -14,5 +14,8 @@ export type TActivityItem = {
   rating: number | null;
   /** ISO 8601. */
   createdAt: string;
+  /** « J'aime » des amis de l'auteur. */
+  likeCount: number;
+  likedByMe: boolean;
   user: { tmdbId: number; name: string; avatarUrl: string | null };
 };

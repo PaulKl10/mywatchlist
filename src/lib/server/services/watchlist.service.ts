@@ -68,16 +68,14 @@ export async function syncWatchlistItem(
     // Un ajout (pas une mise à jour) entre dans le fil d'activité des amis.
     ...(existing
       ? []
-      : [
-          upsertActivity(
-            activityData(userId, "WATCHLIST_ADDED", {
-              tmdbId: mediaId,
-              mediaType,
-              title: snapshot.title,
-              posterPath: snapshot.poster_path,
-            })
-          ),
-        ]),
+      : upsertActivity(
+          activityData(userId, "WATCHLIST_ADDED", {
+            tmdbId: mediaId,
+            mediaType,
+            title: snapshot.title,
+            posterPath: snapshot.poster_path,
+          })
+        )),
   ]);
 }
 

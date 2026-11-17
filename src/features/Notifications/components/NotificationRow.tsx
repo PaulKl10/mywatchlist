@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookmarkCheck, Clapperboard, Gift, User, UserPlus, X } from "lucide-react";
+import { BookmarkCheck, Clapperboard, Gift, Heart, User, UserPlus, X } from "lucide-react";
 import { formatRelativeTime } from "@/features/Activity/utils/relativeTime";
+import { isUnreadNotification } from "@/lib/notifications/items";
+import { formatRating } from "@/lib/ratings/format";
 import { declineReasonLabel } from "@/lib/suggestions/declineReasons";
 import type { TNotificationItem } from "@/types/notification.type";
 
@@ -24,6 +26,8 @@ function NotificationIcon({ item }: { item: TNotificationItem }) {
       ) : (
         <X className={className} aria-hidden="true" />
       );
+    case "activity_liked":
+      return <Heart className={`${className} fill-current`} aria-hidden="true" />;
   }
 }
 
@@ -57,6 +61,27 @@ function NotificationText({ item }: { item: TNotificationItem }) {
         </>
       );
     }
+    case "activity_liked": {
+      const title = (
+        <span className="font-medium text-zinc-900 dark:text-zinc-100">{quoted(item.title)}</span>
+      );
+      return item.activityType === "RATED" ? (
+        <>
+          {name} aime votre note de {title}
+          {item.rating !== null && (
+            <span className="ml-1.5 whitespace-nowrap font-semibold text-amber-600 dark:text-amber-500">
+              <span aria-hidden="true">★ </span>
+              {formatRating(item.rating)}
+              <span className="sr-only"> sur 10</span>
+            </span>
+          )}
+        </>
+      ) : (
+        <>
+          {name} aime votre ajout de {title} à votre watchlist
+        </>
+      );
+    }
   }
 }
 
@@ -68,10 +93,10 @@ interface NotificationRowProps {
 
 /**
  * Ligne du panneau : avatar de l'ami, pictogramme du type, texte et date (et motif d'un refus) ;
- * mène à la page où traiter la demande, ou à la fiche du titre pour une réponse.
+ * mène à la page où traiter la demande, ou à la fiche du titre pour une réponse ou un « J'aime ».
  */
 export function NotificationRow({ item, now, onNavigate }: NotificationRowProps) {
-  const isUnread = item.type === "suggestion_answered" && item.unread;
+  const isUnread = isUnreadNotification(item);
   const reason =
     item.type === "suggestion_answered" && !item.accepted ? declineReasonLabel(item.reason) : null;
 

@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { TActivityItem, TActivityType } from "@/types/activity.type";
 import type { TMediaType } from "@/types/movie.type";
-import { getFriendIds } from "./friends.service";
+import { findAcceptedFriendship, getFriendIds } from "./friends.service";
 import { userAvatarUrl, userDisplayName } from "./movieNightState";
 
 /** Durée de conservation des événements du fil. */
@@ -31,15 +31,22 @@ export function activityData(
 /**
  * Enregistre l'événement d'un titre, ou le remonte en tête du fil s'il existe déjà : un seul
  * événement par utilisateur, type et titre (contrainte unique), même si l'app et la
- * resynchro le signalent en même temps.
+ * resynchro le signalent en même temps. Un événement remonté est un nouvel événement (note
+ * changée…) : ses « J'aime » et leurs notifications repartent de zéro.
+ * Opérations à exécuter dans une même transaction.
  */
 export function upsertActivity(data: Prisma.ActivityCreateManyInput) {
   const { userId, type, media_type, tmdb_id, title, poster_path, rating } = data;
-  return prisma.activity.upsert({
-    where: { userId_type_media_type_tmdb_id: { userId, type, media_type, tmdb_id } },
-    create: data,
-    update: { title, poster_path, rating, createdAt: new Date() },
-  });
+  const key = { userId, type, media_type, tmdb_id };
+  return [
+    prisma.activityLike.deleteMany({ where: { activity: key } }),
+    prisma.userNotification.deleteMany({ where: { type: "ACTIVITY_LIKED", activity: key } }),
+    prisma.activity.upsert({
+      where: { userId_type_media_type_tmdb_id: key },
+      create: data,
+      update: { title, poster_path, rating, createdAt: new Date() },
+    }),
+  ];
 }
 
 /** Retire les événements `type` de ces titres. */
@@ -76,6 +83,8 @@ export async function getFriendsActivity(
       user: {
         select: { tmdb_id: true, username: true, gravatar_hash: true, tmdb_avatar_path: true },
       },
+      _count: { select: { likes: true } },
+      likes: { where: { userId }, select: { id: true } },
     },
   });
 
@@ -88,6 +97,8 @@ export async function getFriendsActivity(
     posterPath: row.poster_path,
     rating: row.rating,
     createdAt: row.createdAt.toISOString(),
+    likeCount: row._count.likes,
+    likedByMe: row.likes.length > 0,
     user: {
       tmdbId: row.user.tmdb_id,
       name: userDisplayName(row.user),
@@ -95,4 +106,58 @@ export async function getFriendsActivity(
     },
   }));
   return { items, hasFriends: true };
+}
+
+export type TActivityLikeResult =
+  | { ok: true; liked: boolean; likeCount: number }
+  | { ok: false; error: "not_found" };
+
+/**
+ * « J'aime » (ou retrait) de `userId` sur un événement du fil d'un ami. L'auteur est prévenu
+ * par une notification, retirée avec le « J'aime ». Un événement inconnu, à soi ou d'un
+ * non-ami renvoie `not_found` (rien n'est révélé). Idempotent.
+ */
+export async function setActivityLike(
+  userId: string,
+  activityId: string,
+  liked: boolean
+): Promise<TActivityLikeResult> {
+  const activity = await prisma.activity.findUnique({
+    where: { id: activityId },
+    select: { id: true, userId: true, tmdb_id: true, media_type: true, title: true },
+  });
+  if (!activity || activity.userId === userId) return { ok: false, error: "not_found" };
+  if (!(await findAcceptedFriendship(userId, activity.userId))) {
+    return { ok: false, error: "not_found" };
+  }
+
+  const likeCount = await prisma.$transaction(async (tx) => {
+    if (liked) {
+      const { count } = await tx.activityLike.createMany({
+        data: [{ activityId, userId }],
+        skipDuplicates: true,
+      });
+      if (count === 1) {
+        await tx.userNotification.create({
+          data: {
+            userId: activity.userId,
+            actorId: userId,
+            type: "ACTIVITY_LIKED",
+            activityId,
+            tmdb_id: activity.tmdb_id,
+            media_type: activity.media_type,
+            title: activity.title,
+          },
+        });
+      }
+    } else {
+      await tx.activityLike.deleteMany({ where: { activityId, userId } });
+      await tx.userNotification.deleteMany({
+        where: { type: "ACTIVITY_LIKED", actorId: userId, activityId },
+      });
+    }
+    return tx.activityLike.count({ where: { activityId } });
+  });
+
+  return { ok: true, liked, likeCount };
 }

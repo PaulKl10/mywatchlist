@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { NotificationBadge } from "@/components/NotificationBadge";
+import { isUnreadNotification } from "@/lib/notifications/items";
 import { useMarkNotificationsReadMutation } from "../hooks/useMarkNotificationsReadMutation";
 import { useNotificationsQuery } from "../hooks/useNotificationsQuery";
 import { NotificationRow } from "./NotificationRow";
@@ -18,7 +19,8 @@ interface NotificationBellProps {
 
 /**
  * Cloche de l'en-tête : ouvre la liste des demandes en attente (invitations « Ce soir ? »,
- * demandes d'ami, suggestions) et des réponses à mes suggestions, marquées lues à l'ouverture.
+ * demandes d'ami, suggestions), des réponses à mes suggestions et des « J'aime » sur mon
+ * activité, marqués lus à l'ouverture.
  * Un clic sur une ligne mène à la page où la traiter.
  * Le panneau se place contre l'en-tête (positionné), pas contre la cloche : il garde ainsi
  * les marges de la page, y compris sur mobile.
@@ -33,10 +35,8 @@ export function NotificationBell({ count }: NotificationBellProps) {
   const { data: items, isPending, isError, refetch, dataUpdatedAt } = useNotificationsQuery(isOpen);
   const { mutate: markRead } = useMarkNotificationsReadMutation();
 
-  // Réponses vues à l'ouverture : marquées lues une fois (liste triée, la 1re est la plus récente).
-  const newestUnread = isOpen
-    ? (items?.find((item) => item.type === "suggestion_answered" && item.unread)?.createdAt ?? null)
-    : null;
+  // Notifications vues à l'ouverture : marquées lues une fois (liste triée, la 1re est la plus récente).
+  const newestUnread = isOpen ? (items?.find(isUnreadNotification)?.createdAt ?? null) : null;
   const markedUntilRef = useRef<string | null>(null);
   useEffect(() => {
     if (!newestUnread || markedUntilRef.current === newestUnread) return;
@@ -101,8 +101,8 @@ export function NotificationBell({ count }: NotificationBellProps) {
         <div className={messageClass}>
           <p className="font-medium text-zinc-700 dark:text-zinc-300">Aucune notification</p>
           <p className="mt-1">
-            Invitations « Ce soir ? », suggestions, demandes d&apos;ami et réponses à vos
-            suggestions arriveront ici.
+            Invitations « Ce soir ? », suggestions, demandes d&apos;ami, réponses à vos
+            suggestions et « J&apos;aime » sur votre activité arriveront ici.
           </p>
         </div>
       );
@@ -116,7 +116,7 @@ export function NotificationBell({ count }: NotificationBellProps) {
           ))}
         </ul>
         <p className="border-t border-zinc-200 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-          Les demandes disparaissent une fois traitées, les réponses au bout de 30 jours.
+          Les demandes disparaissent une fois traitées, le reste au bout de 30 jours.
         </p>
       </>
     );

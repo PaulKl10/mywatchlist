@@ -1,11 +1,12 @@
 import { PROFILE_ANCHORS } from "@/lib/constants";
+import type { TActivityType } from "@/types/activity.type";
 import type { TMediaType } from "@/types/movie.type";
 import type { TNotificationActor, TNotificationItem } from "@/types/notification.type";
 
 /** Nombre maximal de notifications renvoyées au panneau. */
 export const NOTIFICATIONS_LIMIT = 50;
 
-/** Durée de conservation des notifications enregistrées (réponses aux suggestions). */
+/** Durée de conservation des notifications enregistrées (réponses aux suggestions, « J'aime »). */
 export const NOTIFICATION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Pages où chaque demande se traite. */
@@ -13,7 +14,15 @@ export const NOTIFICATION_HREFS = {
   movie_night_invite: "/ce-soir",
   friend_request: `/profile#${PROFILE_ANCHORS.friendRequests}`,
   suggestion: `/profile#${PROFILE_ANCHORS.suggestions}`,
-} as const satisfies Record<Exclude<TNotificationItem["type"], "suggestion_answered">, string>;
+} as const satisfies Record<
+  Exclude<TNotificationItem["type"], "suggestion_answered" | "activity_liked">,
+  string
+>;
+
+/** Notification enregistrée pas encore vue (les demandes en attente ne le sont jamais). */
+export function isUnreadNotification(item: TNotificationItem): boolean {
+  return (item.type === "suggestion_answered" || item.type === "activity_liked") && item.unread;
+}
 
 const mediaHref = (mediaType: TMediaType, tmdbId: number) =>
   mediaType === "tv" ? `/tv/${tmdbId}` : `/movies/${tmdbId}`;
@@ -40,11 +49,23 @@ export type TNotificationSources = {
     tmdbId: number;
     read: boolean;
   }[];
+  /** « J'aime » des amis sur mon activité. */
+  likes: {
+    id: string;
+    createdAt: Date;
+    liker: TNotificationActor;
+    activityType: TActivityType;
+    rating: number | null;
+    title: string;
+    mediaType: TMediaType;
+    tmdbId: number;
+    read: boolean;
+  }[];
 };
 
 /** Demandes en attente → notifications, de la plus récente à la plus ancienne. */
 export function buildNotificationItems(
-  { invites, friendRequests, suggestions, answers }: TNotificationSources,
+  { invites, friendRequests, suggestions, answers, likes }: TNotificationSources,
   limit: number = NOTIFICATIONS_LIMIT
 ): TNotificationItem[] {
   const dated: { at: number; item: TNotificationItem }[] = [
@@ -93,6 +114,21 @@ export function buildNotificationItems(
         accepted: answer.accepted,
         reason: answer.accepted ? null : answer.reason,
         unread: !answer.read,
+      },
+    })),
+    ...likes.map((like) => ({
+      at: like.createdAt.getTime(),
+      item: {
+        type: "activity_liked" as const,
+        id: `activity_liked:${like.id}`,
+        actor: like.liker,
+        createdAt: like.createdAt.toISOString(),
+        href: mediaHref(like.mediaType, like.tmdbId),
+        title: like.title,
+        mediaType: like.mediaType,
+        activityType: like.activityType,
+        rating: like.activityType === "RATED" ? like.rating : null,
+        unread: !like.read,
       },
     })),
   ];

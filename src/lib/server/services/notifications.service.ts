@@ -17,14 +17,14 @@ function storedNotificationsWhere(userId: string, now: Date) {
 
 /**
  * Notifications du panneau, les plus récentes d'abord : demandes en attente (invitations
- * « Ce soir ? », demandes d'ami, suggestions ; mêmes critères que le compteur) et réponses
- * des amis à mes suggestions.
+ * « Ce soir ? », demandes d'ami, suggestions ; mêmes critères que le compteur), réponses
+ * des amis à mes suggestions et « J'aime » sur mon activité.
  */
 export async function listNotifications(
   userId: string,
   now: Date = new Date()
 ): Promise<TNotificationItem[]> {
-  const [invites, friendRequests, suggestions, answers] = await Promise.all([
+  const [invites, friendRequests, suggestions, stored] = await Promise.all([
     listPendingInvites(userId, now),
     prisma.friendship.findMany({
       where: { receiverId: userId, status: "PENDING" },
@@ -58,9 +58,18 @@ export async function listNotifications(
         readAt: true,
         createdAt: true,
         actor: { select: USER_DISPLAY_SELECT },
+        activity: { select: { type: true, rating: true } },
       },
     }),
   ]);
+
+  const answers = stored.filter(
+    (row) => row.type === "SUGGESTION_ACCEPTED" || row.type === "SUGGESTION_DECLINED"
+  );
+  // L'événement aimé part avec sa notification (cascade) : `activity` est toujours là.
+  const likes = stored.flatMap((row) =>
+    row.type === "ACTIVITY_LIKED" && row.activity ? [{ ...row, activity: row.activity }] : []
+  );
 
   return buildNotificationItems({
     invites: invites.map((invite) => ({
@@ -90,6 +99,17 @@ export async function listNotifications(
       mediaType: answer.media_type === "tv" ? "tv" : "movie",
       tmdbId: answer.tmdb_id,
       read: answer.readAt !== null,
+    })),
+    likes: likes.map((like) => ({
+      id: like.id,
+      createdAt: like.createdAt,
+      liker: toActor(like.actor),
+      activityType: like.activity.type === "RATED" ? "RATED" : "WATCHLIST_ADDED",
+      rating: like.activity.rating,
+      title: like.title,
+      mediaType: like.media_type === "tv" ? "tv" : "movie",
+      tmdbId: like.tmdb_id,
+      read: like.readAt !== null,
     })),
   });
 }

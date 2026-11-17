@@ -1,3 +1,4 @@
+import type { TActivityType } from "./activity.type";
 import type { TMediaType } from "./movie.type";
 
 /** Ami à l'origine d'une notification. */
@@ -15,8 +16,8 @@ type TNotificationBase = {
 
 /**
  * Notification du panneau de l'en-tête. Les demandes en attente (invitation, demande d'ami,
- * suggestion) disparaissent dès qu'elles sont traitées ; les réponses à mes suggestions
- * restent 30 jours, signalées tant qu'elles ne sont pas lues.
+ * suggestion) disparaissent dès qu'elles sont traitées ; les réponses à mes suggestions et
+ * les « J'aime » sur mon activité restent 30 jours, signalés tant qu'ils ne sont pas lus.
  */
 export type TNotificationItem =
   | (TNotificationBase & { type: "movie_night_invite" })
@@ -29,6 +30,15 @@ export type TNotificationItem =
       accepted: boolean;
       /** Code du motif d'un refus (voir `src/lib/suggestions/declineReasons.ts`). */
       reason: string | null;
+      unread: boolean;
+    })
+  | (TNotificationBase & {
+      type: "activity_liked";
+      title: string;
+      mediaType: TMediaType;
+      /** Événement aimé : note (avec sa valeur) ou ajout à la watchlist. */
+      activityType: TActivityType;
+      rating: number | null;
       unread: boolean;
     });
 

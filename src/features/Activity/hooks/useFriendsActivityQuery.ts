@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { TActivityItem } from "@/types/activity.type";
 
-type TFriendsActivity = { items: TActivityItem[]; hasFriends: boolean };
+export type TFriendsActivity = { items: TActivityItem[]; hasFriends: boolean };
+
+export const FRIENDS_ACTIVITY_KEY = ["friends", "activity"] as const;
 
 async function fetchFriendsActivity(): Promise<TFriendsActivity> {
   const res = await fetch("/api/friends/activity", { credentials: "include" });
@@ -11,7 +13,7 @@ async function fetchFriendsActivity(): Promise<TFriendsActivity> {
 
 export function useFriendsActivityQuery(enabled: boolean) {
   return useQuery({
-    queryKey: ["friends", "activity"],
+    queryKey: FRIENDS_ACTIVITY_KEY,
     queryFn: fetchFriendsActivity,
     enabled,
   });
