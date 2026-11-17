@@ -2,6 +2,32 @@ import { describe, expect, it } from "vitest";
 import { buildPushPayload } from "./payload";
 
 describe("buildPushPayload", () => {
+  const answer = {
+    type: "suggestion_answered" as const,
+    fromName: "Léa",
+    fromUserId: "u2",
+    title: "Dune",
+    mediaType: "movie" as const,
+    tmdbId: 438631,
+  };
+  it("prévient l'auteur d'une suggestion acceptée", () => {
+    expect(buildPushPayload({ ...answer, accepted: true, reasonLabel: null })).toEqual({
+      title: "Léa a ajouté « Dune » à sa watchlist",
+      body: "Votre suggestion a été acceptée.",
+      url: "/movies/438631",
+      tag: "suggestion-answer-u2-movie-438631",
+    });
+  });
+  it("prévient l'auteur d'une suggestion refusée, avec le motif", () => {
+    expect(
+      buildPushPayload({ ...answer, mediaType: "tv", accepted: false, reasonLabel: "Déjà vu" })
+    ).toEqual({
+      title: "Léa a refusé « Dune »",
+      body: "Motif : Déjà vu.",
+      url: "/tv/438631",
+      tag: "suggestion-answer-u2-tv-438631",
+    });
+  });
   it("construit la notification d'invitation « Ce soir ? »", () => {
     expect(buildPushPayload({ type: "movie_night_invite", fromName: "Paul", movieNightId: "mn1" })).toEqual({
       title: "Paul vous invite à « Ce soir ? »",

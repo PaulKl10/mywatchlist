@@ -11,6 +11,10 @@ function truncate(title: string): string {
 /** Les plateformes viennent de JustWatch (via TMDB), qui doit être cité. */
 const JUSTWATCH_CREDIT = "Source : JustWatch.";
 
+function mediaPath(mediaType: "movie" | "tv", tmdbId: number): string {
+  return mediaType === "tv" ? `/tv/${tmdbId}` : `/movies/${tmdbId}`;
+}
+
 export function buildPushPayload(event: TPushEvent): TPushPayload {
   switch (event.type) {
     case "movie_night_invite":
@@ -36,11 +40,25 @@ export function buildPushPayload(event: TPushEvent): TPushPayload {
         tag: `suggestion-${event.fromUserId}-${event.mediaType}-${event.tmdbId}`,
       };
     }
+    case "suggestion_answered": {
+      const title = truncate(event.title);
+      const refusal = event.reasonLabel
+        ? `Motif : ${event.reasonLabel}.`
+        : "Votre suggestion a été refusée.";
+      return {
+        title: event.accepted
+          ? `${event.fromName} a ajouté « ${title} » à sa watchlist`
+          : `${event.fromName} a refusé « ${title} »`,
+        body: event.accepted ? "Votre suggestion a été acceptée." : refusal,
+        url: mediaPath(event.mediaType, event.tmdbId),
+        tag: `suggestion-answer-${event.fromUserId}-${event.mediaType}-${event.tmdbId}`,
+      };
+    }
     case "now_available":
       return {
         title: `« ${truncate(event.title)} » est dispo sur ${event.providerName}`,
         body: `${event.mediaType === "tv" ? "Elle" : "Il"} est dans votre watchlist. ${JUSTWATCH_CREDIT}`,
-        url: event.mediaType === "tv" ? `/tv/${event.tmdbId}` : `/movies/${event.tmdbId}`,
+        url: mediaPath(event.mediaType, event.tmdbId),
         tag: `available-${event.mediaType}-${event.tmdbId}`,
       };
     case "now_available_many":

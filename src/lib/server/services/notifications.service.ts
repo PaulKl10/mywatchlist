@@ -1,18 +1,31 @@
 import { prisma } from "@/lib/prisma";
-import { buildNotificationItems, NOTIFICATIONS_LIMIT } from "@/lib/notifications/items";
+import {
+  buildNotificationItems,
+  NOTIFICATION_MAX_AGE_MS,
+  NOTIFICATIONS_LIMIT,
+} from "@/lib/notifications/items";
 import type { TNotificationItem } from "@/types/notification.type";
 import { listPendingInvites } from "./movieNight.service";
 import { USER_DISPLAY_SELECT, userAvatarUrl, userDisplayName, type TUserDisplay } from "./movieNightState";
 
 const toActor = (user: TUserDisplay) => ({ name: userDisplayName(user), avatarUrl: userAvatarUrl(user) });
 
+/** Notifications enregistrées encore affichées (plus récentes que NOTIFICATION_MAX_AGE_MS). */
+function storedNotificationsWhere(userId: string, now: Date) {
+  return { userId, createdAt: { gte: new Date(now.getTime() - NOTIFICATION_MAX_AGE_MS) } };
+}
+
 /**
- * Demandes en attente de l'utilisateur (invitations « Ce soir ? », demandes d'ami, suggestions),
- * les plus récentes d'abord. Mêmes critères que le compteur `/api/notifications/count`.
+ * Notifications du panneau, les plus récentes d'abord : demandes en attente (invitations
+ * « Ce soir ? », demandes d'ami, suggestions ; mêmes critères que le compteur) et réponses
+ * des amis à mes suggestions.
  */
-export async function listNotifications(userId: string): Promise<TNotificationItem[]> {
-  const [invites, friendRequests, suggestions] = await Promise.all([
-    listPendingInvites(userId),
+export async function listNotifications(
+  userId: string,
+  now: Date = new Date()
+): Promise<TNotificationItem[]> {
+  const [invites, friendRequests, suggestions, answers] = await Promise.all([
+    listPendingInvites(userId, now),
     prisma.friendship.findMany({
       where: { receiverId: userId, status: "PENDING" },
       orderBy: { createdAt: "desc" },
@@ -29,6 +42,22 @@ export async function listNotifications(userId: string): Promise<TNotificationIt
         media_type: true,
         createdAt: true,
         sender: { select: USER_DISPLAY_SELECT },
+      },
+    }),
+    prisma.userNotification.findMany({
+      where: storedNotificationsWhere(userId, now),
+      orderBy: { createdAt: "desc" },
+      take: NOTIFICATIONS_LIMIT,
+      select: {
+        id: true,
+        type: true,
+        tmdb_id: true,
+        media_type: true,
+        title: true,
+        reason: true,
+        readAt: true,
+        createdAt: true,
+        actor: { select: USER_DISPLAY_SELECT },
       },
     }),
   ]);
@@ -51,5 +80,38 @@ export async function listNotifications(userId: string): Promise<TNotificationIt
       title: suggestion.title,
       mediaType: suggestion.media_type === "tv" ? "tv" : "movie",
     })),
+    answers: answers.map((answer) => ({
+      id: answer.id,
+      createdAt: answer.createdAt,
+      responder: toActor(answer.actor),
+      accepted: answer.type === "SUGGESTION_ACCEPTED",
+      reason: answer.reason,
+      title: answer.title,
+      mediaType: answer.media_type === "tv" ? "tv" : "movie",
+      tmdbId: answer.tmdb_id,
+      read: answer.readAt !== null,
+    })),
+  });
+}
+
+/** Notifications enregistrées pas encore vues (badge). */
+export async function countUnreadNotifications(userId: string, now: Date = new Date()): Promise<number> {
+  return prisma.userNotification.count({
+    where: { ...storedNotificationsWhere(userId, now), readAt: null },
+  });
+}
+
+/**
+ * Marque comme lues les notifications enregistrées jusqu'à `until` inclus (la plus récente
+ * affichée) : une réponse arrivée pendant que le panneau était ouvert reste non lue.
+ */
+export async function markNotificationsRead(
+  userId: string,
+  until: Date,
+  now: Date = new Date()
+): Promise<void> {
+  await prisma.userNotification.updateMany({
+    where: { userId, readAt: null, createdAt: { lte: until } },
+    data: { readAt: now },
   });
 }

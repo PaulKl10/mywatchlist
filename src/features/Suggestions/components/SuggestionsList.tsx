@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Gift, Check, X } from "lucide-react";
@@ -10,12 +11,18 @@ import { useAuth } from "@/providers/AuthProvider";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
 import { PROFILE_ANCHORS, TMDB_IMAGE_BASE } from "@/lib/constants";
 import { useScrollToHash } from "@/hooks/useScrollToHash";
+import type { TSuggestion } from "@/app/api/suggestions/route";
+import { DeclineSuggestionModal } from "./DeclineSuggestionModal";
+
+const senderName = (suggestion: TSuggestion) =>
+  suggestion.sender.username || formatUserId(suggestion.sender.tmdb_id);
 
 export function SuggestionsList() {
   const { user } = useAuth();
   const { data: suggestions, isLoading } = useSuggestionsQuery(!!user);
   const acceptMutation = useAcceptSuggestionMutation();
   const declineMutation = useDeclineSuggestionMutation();
+  const [declining, setDeclining] = useState<TSuggestion | null>(null);
   const hasSuggestions = !!user && !isLoading && !!suggestions && suggestions.length > 0;
   useScrollToHash(PROFILE_ANCHORS.suggestions, hasSuggestions);
 
@@ -67,17 +74,18 @@ export function SuggestionsList() {
                 {suggestion.title}
               </Link>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Par {suggestion.sender.username || formatUserId(suggestion.sender.tmdb_id)}
+                Par {senderName(suggestion)}
               </p>
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
                   onClick={() => acceptMutation.mutate(suggestion.id)}
+                  aria-label={`Accepter « ${suggestion.title} »`}
                   disabled={
                     (acceptMutation.isPending &&
                       acceptMutation.variables === suggestion.id) ||
                     (declineMutation.isPending &&
-                      declineMutation.variables === suggestion.id)
+                      declineMutation.variables?.suggestionId === suggestion.id)
                   }
                   className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 px-2 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
@@ -89,12 +97,16 @@ export function SuggestionsList() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => declineMutation.mutate(suggestion.id)}
+                  onClick={() => {
+                    declineMutation.reset();
+                    setDeclining(suggestion);
+                  }}
+                  aria-label={`Refuser « ${suggestion.title} »`}
                   disabled={
                     (acceptMutation.isPending &&
                       acceptMutation.variables === suggestion.id) ||
                     (declineMutation.isPending &&
-                      declineMutation.variables === suggestion.id)
+                      declineMutation.variables?.suggestionId === suggestion.id)
                   }
                   className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-zinc-300 px-2 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
@@ -106,6 +118,22 @@ export function SuggestionsList() {
           </div>
         ))}
       </div>
+      <DeclineSuggestionModal
+        suggestion={
+          declining ? { title: declining.title, senderName: senderName(declining) } : null
+        }
+        onClose={() => setDeclining(null)}
+        onDecline={(reason) => {
+          if (!declining) return;
+          declineMutation.mutate(
+            { suggestionId: declining.id, reason },
+            { onSuccess: () => setDeclining(null) }
+          );
+        }}
+        isPending={declineMutation.isPending}
+        pendingReason={declineMutation.variables?.reason ?? null}
+        error={declineMutation.error?.message ?? null}
+      />
     </section>
   );
 }

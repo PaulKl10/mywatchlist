@@ -5,12 +5,18 @@ import type { TNotificationActor, TNotificationItem } from "@/types/notification
 /** Nombre maximal de notifications renvoyées au panneau. */
 export const NOTIFICATIONS_LIMIT = 50;
 
+/** Durée de conservation des notifications enregistrées (réponses aux suggestions). */
+export const NOTIFICATION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
 /** Pages où chaque demande se traite. */
 export const NOTIFICATION_HREFS = {
   movie_night_invite: "/ce-soir",
   friend_request: `/profile#${PROFILE_ANCHORS.friendRequests}`,
   suggestion: `/profile#${PROFILE_ANCHORS.suggestions}`,
-} as const satisfies Record<TNotificationItem["type"], string>;
+} as const satisfies Record<Exclude<TNotificationItem["type"], "suggestion_answered">, string>;
+
+const mediaHref = (mediaType: TMediaType, tmdbId: number) =>
+  mediaType === "tv" ? `/tv/${tmdbId}` : `/movies/${tmdbId}`;
 
 export type TNotificationSources = {
   invites: { movieNightId: string; createdAt: Date; host: TNotificationActor }[];
@@ -22,11 +28,23 @@ export type TNotificationSources = {
     title: string;
     mediaType: TMediaType;
   }[];
+  /** Réponses des amis à mes suggestions. */
+  answers: {
+    id: string;
+    createdAt: Date;
+    responder: TNotificationActor;
+    accepted: boolean;
+    reason: string | null;
+    title: string;
+    mediaType: TMediaType;
+    tmdbId: number;
+    read: boolean;
+  }[];
 };
 
 /** Demandes en attente → notifications, de la plus récente à la plus ancienne. */
 export function buildNotificationItems(
-  { invites, friendRequests, suggestions }: TNotificationSources,
+  { invites, friendRequests, suggestions, answers }: TNotificationSources,
   limit: number = NOTIFICATIONS_LIMIT
 ): TNotificationItem[] {
   const dated: { at: number; item: TNotificationItem }[] = [
@@ -60,6 +78,21 @@ export function buildNotificationItems(
         href: NOTIFICATION_HREFS.suggestion,
         title: suggestion.title,
         mediaType: suggestion.mediaType,
+      },
+    })),
+    ...answers.map((answer) => ({
+      at: answer.createdAt.getTime(),
+      item: {
+        type: "suggestion_answered" as const,
+        id: `suggestion_answered:${answer.id}`,
+        actor: answer.responder,
+        createdAt: answer.createdAt.toISOString(),
+        href: mediaHref(answer.mediaType, answer.tmdbId),
+        title: answer.title,
+        mediaType: answer.mediaType,
+        accepted: answer.accepted,
+        reason: answer.accepted ? null : answer.reason,
+        unread: !answer.read,
       },
     })),
   ];

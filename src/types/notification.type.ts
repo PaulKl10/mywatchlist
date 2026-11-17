@@ -14,12 +14,22 @@ type TNotificationBase = {
 };
 
 /**
- * Notification du panneau de l'en-tête : une demande en attente de réponse. Elle disparaît
- * dès qu'elle est traitée (acceptée, refusée, rejointe…).
+ * Notification du panneau de l'en-tête. Les demandes en attente (invitation, demande d'ami,
+ * suggestion) disparaissent dès qu'elles sont traitées ; les réponses à mes suggestions
+ * restent 30 jours, signalées tant qu'elles ne sont pas lues.
  */
 export type TNotificationItem =
   | (TNotificationBase & { type: "movie_night_invite" })
   | (TNotificationBase & { type: "friend_request" })
-  | (TNotificationBase & { type: "suggestion"; title: string; mediaType: TMediaType });
+  | (TNotificationBase & { type: "suggestion"; title: string; mediaType: TMediaType })
+  | (TNotificationBase & {
+      type: "suggestion_answered";
+      title: string;
+      mediaType: TMediaType;
+      accepted: boolean;
+      /** Code du motif d'un refus (voir `src/lib/suggestions/declineReasons.ts`). */
+      reason: string | null;
+      unread: boolean;
+    });
 
 export type TNotificationType = TNotificationItem["type"];

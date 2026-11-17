@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { tmdbClient, tmdbErrorMessage } from "@/lib/tmdb-client";
+import { NOTIFICATION_MAX_AGE_MS } from "@/lib/notifications/items";
 import { ACTIVITY_MAX_AGE_MS } from "./activity.service";
 import { resyncRatings } from "./ratings.service";
 import type { TCurrentSession } from "./session.service";
@@ -62,7 +63,7 @@ async function syncTmdbCopies(session: TCurrentSession): Promise<void> {
 /**
  * Supprime les copies dont les données ont plus de COPY_MAX_AGE_MS (utilisateurs sans
  * resynchro depuis, ou jamais resynchronisés : l'âge est alors celui de l'ajout ou de la
- * note), et les événements du fil de plus de 30 jours.
+ * note), les événements du fil et les notifications enregistrées de plus de 30 jours.
  */
 async function purgeStaleData(now: Date): Promise<void> {
   const cutoff = new Date(now.getTime() - COPY_MAX_AGE_MS);
@@ -88,6 +89,9 @@ async function purgeStaleData(now: Date): Promise<void> {
       }),
       prisma.activity.deleteMany({
         where: { createdAt: { lt: new Date(now.getTime() - ACTIVITY_MAX_AGE_MS) } },
+      }),
+      prisma.userNotification.deleteMany({
+        where: { createdAt: { lt: new Date(now.getTime() - NOTIFICATION_MAX_AGE_MS) } },
       }),
     ]);
   } catch (error) {

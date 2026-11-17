@@ -40,6 +40,10 @@ model User {
   ratingItems RatingItem[]
   activities  Activity[]
 
+  // Notifications enregistrées (réponses aux suggestions), reçues et provoquées
+  notifications     UserNotification[] @relation("notificationRecipient")
+  sentNotifications UserNotification[] @relation("notificationActor")
+
   // Films comptés pour le temps de visionnage (tracking interne uniquement)
   watchTimeEntries WatchTimeEntry[]
 
@@ -115,6 +119,27 @@ model Activity {
 
   // Un seul événement par titre et par type : le plus récent.
   @@unique([userId, type, media_type, tmdb_id])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+/// Notification enregistrée pour le panneau de l'en-tête, gardée 30 jours. Les demandes en
+/// attente (amis, suggestions, « Ce soir ? ») n'y sont pas : elles sont lues à la source.
+model UserNotification {
+  id         String    @id @default(cuid())
+  userId     String // destinataire
+  actorId    String // ami à l'origine
+  type       String // SUGGESTION_ACCEPTED | SUGGESTION_DECLINED
+  tmdb_id    Int
+  media_type String // "movie" | "tv"
+  title      String
+  reason     String? // motif du refus (voir src/lib/suggestions/declineReasons.ts)
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  user  User @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
   @@index([userId, createdAt])
   @@index([createdAt])
 }

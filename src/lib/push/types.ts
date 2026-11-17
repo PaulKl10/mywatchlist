@@ -14,6 +14,17 @@ export type TPushEvent =
       tmdbId: number;
     }
   | {
+      type: "suggestion_answered";
+      fromName: string;
+      fromUserId: string;
+      title: string;
+      mediaType: "movie" | "tv";
+      tmdbId: number;
+      accepted: boolean;
+      /** Libellé du motif d'un refus. */
+      reasonLabel: string | null;
+    }
+  | {
       type: "now_available";
       title: string;
       mediaType: "movie" | "tv";

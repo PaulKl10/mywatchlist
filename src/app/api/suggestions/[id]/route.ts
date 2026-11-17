@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
+  closeSuggestion,
   getCurrentSession,
   syncWatchlistItem,
   updateTmdbWatchlist,
 } from "@/lib/server/services";
+import { parseDeclineReason } from "@/lib/suggestions/declineReasons";
 import { tmdbClient } from "@/lib/tmdb-client";
 import type { TMediaType } from "@/types/movie.type";
 
 type TSuggestionRouteContext = { params: Promise<{ id: string }> };
 
-/** Accepter une suggestion : ajout à la watchlist (TMDB + BDD) puis suppression de la suggestion. */
+/**
+ * Accepter une suggestion : ajout à la watchlist (TMDB + BDD), puis suppression de la
+ * suggestion et notification de son auteur.
+ */
 export async function PATCH(_request: Request, { params }: TSuggestionRouteContext) {
   const { id } = await params;
   const current = await getCurrentSession();
@@ -53,9 +58,8 @@ export async function PATCH(_request: Request, { params }: TSuggestionRouteConte
       true
     );
 
-    await prisma.suggestion.delete({
-      where: { id },
-    });
+    // Déjà traitée ailleurs entre-temps : l'ajout à la watchlist reste, sans nouvelle notification.
+    await closeSuggestion(suggestion, current.user, { accepted: true });
 
     return NextResponse.json({ success: true });
   } catch {
@@ -66,12 +70,23 @@ export async function PATCH(_request: Request, { params }: TSuggestionRouteConte
   }
 }
 
-/** Refuser une suggestion. */
-export async function DELETE(_request: Request, { params }: TSuggestionRouteContext) {
+/** Refuser une suggestion, avec un motif (`{ reason }`) transmis à son auteur. */
+export async function DELETE(request: Request, { params }: TSuggestionRouteContext) {
   const { id } = await params;
   const current = await getCurrentSession();
   if (!current) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { reason?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  const reason = parseDeclineReason(body?.reason);
+  if (!reason) {
+    return NextResponse.json({ error: "Motif de refus requis" }, { status: 400 });
   }
 
   const suggestion = await prisma.suggestion.findUnique({
@@ -86,9 +101,13 @@ export async function DELETE(_request: Request, { params }: TSuggestionRouteCont
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.suggestion.delete({
-    where: { id },
-  });
-
-  return NextResponse.json({ success: true });
+  try {
+    const closed = await closeSuggestion(suggestion, current.user, { accepted: false, reason });
+    if (!closed) {
+      return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Impossible de refuser la suggestion" }, { status: 500 });
+  }
 }

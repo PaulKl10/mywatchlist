@@ -18,7 +18,7 @@ export const HOST = {
 } as const;
 
 /** Date de dernière mise à jour des mentions légales et de la politique de confidentialité. */
-export const LEGAL_LAST_UPDATED = "16 novembre 2026";
+export const LEGAL_LAST_UPDATED = "17 novembre 2026";
 
 export const TMDB_URL = "https://www.themoviedb.org";
 export const JUSTWATCH_URL = "https://www.justwatch.com";

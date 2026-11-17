@@ -21,13 +21,19 @@ export { syncWatchlistItem, updateTmdbWatchlist } from "./watchlist.service";
 export { scheduleTmdbSync } from "./tmdbSync.service";
 export { recordRating, removeRating } from "./ratings.service";
 export { getFriendsActivity } from "./activity.service";
-export { listNotifications } from "./notifications.service";
+export {
+  listNotifications,
+  countUnreadNotifications,
+  markNotificationsRead,
+} from "./notifications.service";
 export { getBilan } from "./bilan.service";
 export { runAvailabilityCheck } from "./availabilityAlerts.service";
 export {
   getSuggestions,
   createSuggestion,
+  closeSuggestion,
   type TSuggestion,
+  type TSuggestionAnswer,
   type CreateSuggestionInput,
 } from "./suggestions.service";
 export {

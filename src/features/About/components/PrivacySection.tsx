@@ -27,7 +27,7 @@ const COLLECTED_DATA: TItem[] = [
   {
     label: "Amis et suggestions",
     detail:
-      "demandes d'ami, liste d'amis, suggestions envoyées et reçues avec leur message éventuel.",
+      "demandes d'ami, liste d'amis, suggestions envoyées et reçues avec leur message éventuel. Quand vous acceptez ou refusez une suggestion, son auteur en est prévenu, avec le motif choisi en cas de refus.",
   },
   {
     label: "Temps de visionnage",
@@ -84,6 +84,7 @@ const RETENTION: TItem[] = [
       "supprimées si vous n'ouvrez pas l'app pendant 5 mois, puis recréées à votre retour.",
   },
   { label: "Fil d'activité", detail: "30 jours." },
+  { label: "Réponses à vos suggestions (notifications)", detail: "30 jours." },
   {
     label: "Session de connexion",
     detail: "30 jours au plus, supprimée à la déconnexion.",

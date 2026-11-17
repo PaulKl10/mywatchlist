@@ -1,5 +1,9 @@
+import type { Suggestion, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { declineReasonLabel, type TDeclineReason } from "@/lib/suggestions/declineReasons";
 import { findAcceptedFriendship } from "./friends.service";
+import { userDisplayName } from "./movieNightState";
+import { schedulePushNotification } from "./push.service";
 
 export type TSuggestion = {
   id: string;
@@ -93,4 +97,53 @@ export async function createSuggestion(
   });
 
   return { success: true };
+}
+
+/** Réponse du destinataire : ajout à sa watchlist, ou refus avec un motif. */
+export type TSuggestionAnswer = { accepted: true } | { accepted: false; reason: TDeclineReason };
+
+/**
+ * Clôt la suggestion et prévient son auteur (notification enregistrée, puis push après la
+ * réponse HTTP). Suppression et notification sont atomiques ; false si la suggestion était
+ * déjà traitée (double clic, autre appareil) : rien n'est alors notifié une seconde fois.
+ * À appeler depuis un Route Handler (push planifié avec `after`).
+ */
+export async function closeSuggestion(
+  suggestion: Suggestion,
+  responder: Pick<User, "id" | "tmdb_id" | "username">,
+  answer: TSuggestionAnswer
+): Promise<boolean> {
+  const mediaType = suggestion.media_type === "tv" ? "tv" : "movie";
+  const reason = answer.accepted ? null : answer.reason;
+
+  const closed = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.suggestion.deleteMany({ where: { id: suggestion.id } });
+    if (count === 0) return false;
+    await tx.userNotification.create({
+      data: {
+        userId: suggestion.fromUserId,
+        actorId: responder.id,
+        type: answer.accepted ? "SUGGESTION_ACCEPTED" : "SUGGESTION_DECLINED",
+        tmdb_id: suggestion.tmdb_movie_id,
+        media_type: mediaType,
+        title: suggestion.title,
+        reason,
+      },
+    });
+    return true;
+  });
+
+  if (closed) {
+    schedulePushNotification(suggestion.fromUserId, {
+      type: "suggestion_answered",
+      fromName: userDisplayName(responder),
+      fromUserId: responder.id,
+      title: suggestion.title,
+      mediaType,
+      tmdbId: suggestion.tmdb_movie_id,
+      accepted: answer.accepted,
+      reasonLabel: declineReasonLabel(reason),
+    });
+  }
+  return closed;
 }
