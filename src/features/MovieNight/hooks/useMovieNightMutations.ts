@@ -113,7 +113,7 @@ export function useRespondToInviteMutation() {
     // valable, la liste et le compteur sont relus. Le message d'erreur reste affiché.
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ["movie-night", "invites"] });
-      void queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

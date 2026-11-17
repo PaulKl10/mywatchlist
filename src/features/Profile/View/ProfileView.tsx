@@ -95,16 +95,7 @@ export function ProfileView() {
           </p>
         </div>
       </section>
-      <WatchTimeStats />
-      <Link
-        href="/bilan"
-        className="-mt-6 inline-flex items-center gap-2 self-start text-sm font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-500"
-      >
-        <Trophy className="h-4 w-4" aria-hidden="true" />
-        Voir mon bilan
-      </Link>
-      <PushNotificationsSettings />
-      {/* Invitations comptées dans le badge de notifications, qui mène ici. */}
+      {/* Demandes en attente d'abord : les notifications de l'en-tête mènent à leurs sections. */}
       <MovieNightInvitesList
         enabled={(notificationCounts?.movieNightInvites ?? 0) > 0}
         title={
@@ -115,9 +106,18 @@ export function ProfileView() {
         }
         titleClassName="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200"
       />
-      <SuggestionsList />
-      <FriendsList />
       <FriendRequestsList />
+      <SuggestionsList />
+      <WatchTimeStats />
+      <Link
+        href="/bilan"
+        className="-mt-6 inline-flex items-center gap-2 self-start text-sm font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-500"
+      >
+        <Trophy className="h-4 w-4" aria-hidden="true" />
+        Voir mon bilan
+      </Link>
+      <PushNotificationsSettings />
+      <FriendsList />
       {/* Watchlist - aperçu */}
       <section>
         <div className="mb-4 flex items-center justify-between">

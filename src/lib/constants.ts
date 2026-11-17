@@ -10,3 +10,9 @@ export const SESSION_COOKIE = "tmdb_session_id";
 
 /** Cookie temporaire du request token TMDB, le temps de la connexion. */
 export const REQUEST_TOKEN_COOKIE = "tmdb_request_token";
+
+/** Ancres des sections « à traiter » du profil (liens des notifications). */
+export const PROFILE_ANCHORS = {
+  friendRequests: "demandes-ami",
+  suggestions: "suggestions",
+} as const;

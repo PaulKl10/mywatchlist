@@ -18,7 +18,7 @@ export function useDeclineSuggestionMutation() {
     mutationFn: declineSuggestion,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suggestions"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

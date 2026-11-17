@@ -8,22 +8,23 @@ import { useAcceptSuggestionMutation } from "@/features/Suggestions/hooks/useAcc
 import { useDeclineSuggestionMutation } from "@/features/Suggestions/hooks/useDeclineSuggestionMutation";
 import { useAuth } from "@/providers/AuthProvider";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { PROFILE_ANCHORS, TMDB_IMAGE_BASE } from "@/lib/constants";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 
 export function SuggestionsList() {
   const { user } = useAuth();
   const { data: suggestions, isLoading } = useSuggestionsQuery(!!user);
   const acceptMutation = useAcceptSuggestionMutation();
   const declineMutation = useDeclineSuggestionMutation();
+  const hasSuggestions = !!user && !isLoading && !!suggestions && suggestions.length > 0;
+  useScrollToHash(PROFILE_ANCHORS.suggestions, hasSuggestions);
 
   // Pas de skeleton : la section est absente la plupart du temps (aucune
   // suggestion en attente), un placeholder s'effondrerait au chargement.
-  if (!user || isLoading) return null;
-
-  if (!suggestions || suggestions.length === 0) return null;
+  if (!hasSuggestions) return null;
 
   return (
-    <section>
+    <section id={PROFILE_ANCHORS.suggestions} className="scroll-mt-24">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
         <Gift className="h-5 w-5" />
         Suggestions reçues

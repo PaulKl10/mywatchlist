@@ -81,7 +81,7 @@ export function MenuBurger({
                 onClick={onClose}
                 className="mb-3 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800"
               >
-                <span className="relative shrink-0">
+                <span className="shrink-0">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}
@@ -94,11 +94,6 @@ export function MenuBurger({
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
                       <User className="h-5 w-5 text-zinc-500" />
                     </div>
-                  )}
-                  {(notificationCounts?.total ?? 0) > 0 && (
-                    <span className="absolute -right-1 -top-1">
-                      <NotificationBadge count={notificationCounts!.total} />
-                    </span>
                   )}
                 </span>
                 <span className="truncate font-medium text-zinc-900 dark:text-zinc-100">

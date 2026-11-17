@@ -6,16 +6,19 @@ import { Check, User, UserPlus, X } from "lucide-react";
 import { useFriendRequestsQuery } from "@/features/Profile/hooks/useFriendRequestsQuery";
 import { useRespondToFriendRequestMutation } from "@/features/Profile/hooks/useRespondToFriendRequestMutation";
 import { formatUserId } from "@/features/Profile/utils/formatUserId";
-import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { PROFILE_ANCHORS, TMDB_IMAGE_BASE } from "@/lib/constants";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 
 export function FriendRequestsList() {
   const { data: friendRequests, isLoading } = useFriendRequestsQuery(true);
   const respondMutation = useRespondToFriendRequestMutation();
+  const hasRequests = !!friendRequests && friendRequests.length > 0;
+  useScrollToHash(PROFILE_ANCHORS.friendRequests, hasRequests);
 
-  if (!friendRequests || friendRequests.length === 0) return null;
+  if (!hasRequests) return null;
 
   return (
-    <section>
+    <section id={PROFILE_ANCHORS.friendRequests} className="scroll-mt-24">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
         <UserPlus className="h-5 w-5" />
         Demandes d&apos;ami

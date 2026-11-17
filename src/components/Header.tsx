@@ -23,6 +23,7 @@ import { MenuBurger } from "@/components/MenuBurger";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotificationCountsQuery } from "@/features/Notifications/hooks/useNotificationCountsQuery";
 import { useAppBadge } from "@/features/Notifications/hooks/useAppBadge";
+import { NotificationBell } from "@/features/Notifications/components/NotificationBell";
 import { useTheme } from "@/hooks/useTheme";
 import Image from "next/image";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
@@ -116,19 +117,10 @@ export function Header({ showSearch = true }: HeaderProps) {
           <button
             type="button"
             onClick={() => setIsBurgerOpen(true)}
-            className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 lg:hidden"
-            aria-label={
-              totalNotifications > 0
-                ? `Ouvrir le menu (${totalNotifications} notification${totalNotifications > 1 ? "s" : ""})`
-                : "Ouvrir le menu"
-            }
+            className="rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 lg:hidden"
+            aria-label="Ouvrir le menu"
           >
             <Menu className="h-6 w-6" />
-            {totalNotifications > 0 && (
-              <span className="absolute -right-0.5 -top-0.5">
-                <NotificationBadge count={totalNotifications} />
-              </span>
-            )}
           </button>
           <Image
             src={isDarkMode ? "/appDark.png" : "/appLight.png"}
@@ -227,14 +219,7 @@ export function Header({ showSearch = true }: HeaderProps) {
                   }`}
                   title="Mon profil"
                 >
-                  <span className="relative">
-                    <User className="h-4 w-4" />
-                    {totalNotifications > 0 && (
-                      <span className="absolute -right-1.5 -top-1.5">
-                        <NotificationBadge count={totalNotifications} />
-                      </span>
-                    )}
-                  </span>
+                  <User className="h-4 w-4" />
                 </Link>
                 <button
                   type="button"
@@ -253,6 +238,7 @@ export function Header({ showSearch = true }: HeaderProps) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          {user && <NotificationBell count={totalNotifications} />}
           {showSearch && (
             <button
               type="button"
