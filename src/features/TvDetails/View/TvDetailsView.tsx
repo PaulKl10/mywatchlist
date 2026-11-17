@@ -16,6 +16,7 @@ import {
   MediaDetailsSynopsis,
   MediaDetailsWatchProviders,
   MediaDetailsCast,
+  MediaDetailsFriendsRatings,
 } from "@/components/MediaDetails";
 
 interface TvDetailsViewProps {
@@ -91,6 +92,12 @@ export function TvDetailsView({ tvId }: TvDetailsViewProps) {
       />
 
       <MediaDetailsSynopsis overview={data.overview} />
+
+      <MediaDetailsFriendsRatings
+        mediaId={data.id}
+        mediaType="tv"
+        isAuthenticated={!!user}
+      />
 
       {watchProviders && (
         <MediaDetailsWatchProviders watchProviders={watchProviders} />

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { POSTER_GRID_SIZES, TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatRating } from "@/lib/ratings/format";
 import type { TMediaType } from "@/types/movie.type";
 
 interface RatedTitleCardProps {
@@ -35,9 +36,9 @@ export function RatedTitleCard({ id, mediaType, title, posterPath, rating }: Rat
       </div>
       <span
         className="absolute right-1.5 top-1.5 rounded-full bg-zinc-950/80 px-2 py-0.5 text-xs font-semibold text-amber-400"
-        aria-label={`Note : ${rating} sur 10`}
+        aria-label={`Note : ${formatRating(rating)} sur 10`}
       >
-        ★ {Number.isInteger(rating) ? rating : rating.toFixed(1)}
+        ★ {formatRating(rating)}
       </span>
     </Link>
   );

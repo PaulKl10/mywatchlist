@@ -2,12 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { User } from "lucide-react";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatRating } from "@/lib/ratings/format";
 import type { TActivityItem } from "@/types/activity.type";
 import { formatRelativeTime } from "../utils/relativeTime";
-
-function formatRating(rating: number): string {
-  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
-}
 
 /** « Léa a noté Dune ★ 9 », « Tom a ajouté Oppenheimer à sa watchlist ». */
 export function ActivityRow({ item, now }: { item: TActivityItem; now: Date }) {

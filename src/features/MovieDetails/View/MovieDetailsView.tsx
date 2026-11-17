@@ -16,6 +16,7 @@ import {
   MediaDetailsSynopsis,
   MediaDetailsWatchProviders,
   MediaDetailsCast,
+  MediaDetailsFriendsRatings,
 } from "@/components/MediaDetails";
 
 interface MovieDetailsViewProps {
@@ -89,6 +90,12 @@ export function MovieDetailsView({ movieId }: MovieDetailsViewProps) {
       />
 
       <MediaDetailsSynopsis overview={data.overview} />
+
+      <MediaDetailsFriendsRatings
+        mediaId={data.id}
+        mediaType="movie"
+        isAuthenticated={!!user}
+      />
 
       {watchProviders && (
         <MediaDetailsWatchProviders watchProviders={watchProviders} />

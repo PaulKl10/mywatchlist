@@ -6,3 +6,4 @@ export { MediaDetailsActions } from "./MediaDetailsActions";
 export { MediaDetailsSynopsis } from "./MediaDetailsSynopsis";
 export { MediaDetailsWatchProviders } from "./MediaDetailsWatchProviders";
 export { MediaDetailsCast } from "./MediaDetailsCast";
+export { MediaDetailsFriendsRatings } from "./MediaDetailsFriendsRatings";
